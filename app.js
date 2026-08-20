@@ -13,6 +13,13 @@ const POSTS_DIR = 'posts';
 const STORAGE_KEY = 'bw.pw';
 const THEME_KEY = 'bw.theme';
 
+// 구독 신청을 받는 곳. 이 사이트는 정적 호스팅이라 폼 제출을 받을 수 없어
+// 구글 Apps Script 웹 앱을 접수처로 쓴다. 만드는 법은 docs/signup-setup.md.
+// 이 주소는 소스 보기로 누구나 읽을 수 있다. 그래도 되는 이유는
+// 이 창구가 '접수'만 하기 때문이다. 명부를 돌려주는 쪽은 키를 따로 확인한다.
+// 비어 있으면 잠금화면에 신청 버튼이 나오지 않는다.
+const SIGNUP_URL = '';
+
 // 작성자 정보. 이름·소속·연락처는 개인정보라 이 파일에 적어두지 않는다.
 // 여기 적으면 정적 호스팅에서 소스 보기만으로 누구나 읽을 수 있다.
 // 실제 값은 posts/author.enc.json 에 암호문으로 있고, 잠금해제 때 채워진다.
@@ -35,6 +42,13 @@ const els = {
   lockBtn: document.getElementById('lock-btn'),
   toast: document.getElementById('toast'),
   footId: document.getElementById('foot-id'),
+  signupOpen: document.getElementById('signup-open'),
+  signupForm: document.getElementById('signup-form'),
+  signupBtn: document.getElementById('signup-btn'),
+  signupError: document.getElementById('signup-error'),
+  signupCancel: document.getElementById('signup-cancel'),
+  signupDone: document.getElementById('signup-done'),
+  signupBack: document.getElementById('signup-back'),
 };
 
 // 푸터의 작성자 줄. 잠금해제로 AUTHOR 가 채워진 뒤에만 그린다.
@@ -800,12 +814,67 @@ function toggleTheme() {
 function showLock(message) {
   els.app.hidden = true;
   els.lock.hidden = false;
+  showSignup(false);
   els.lockError.hidden = !message;
   els.lockError.textContent = message || '';
   els.unlockBtn.disabled = false;
   els.unlockBtn.textContent = '열기';
   els.pw.value = '';
   els.pw.focus();
+}
+
+/* ================= 구독 신청 ================= */
+
+// 잠금화면 안에서 세 장(비밀번호 / 신청서 / 접수완료) 중 하나만 보인다.
+function showSignup(on, done) {
+  if (!els.signupForm) return;
+  els.lockForm.hidden = !!on || !!done;
+  els.signupForm.hidden = !on;
+  els.signupDone.hidden = !done;
+  if (!on) {
+    els.signupError.hidden = true;
+    els.signupBtn.disabled = false;
+    els.signupBtn.textContent = '신청하기';
+  }
+}
+
+async function submitSignup() {
+  const val = (id) => (document.getElementById(id).value || '').trim();
+  const body = {
+    name: val('su-name'),
+    org: val('su-org'),
+    segment: val('su-segment'),
+    role: val('su-role'),
+    email: val('su-email'),
+    phone: val('su-phone'),
+    note: val('su-note'),
+    hp: val('su-hp'),
+  };
+
+  // Content-Type 을 text/plain 으로 둔다. application/json 으로 보내면
+  // 브라우저가 사전 요청(preflight)을 먼저 보내는데 Apps Script 는 그걸
+  // 처리하지 못해 요청이 통째로 막힌다. 받는 쪽에서 JSON 으로 파싱한다.
+  let res;
+  try {
+    res = await fetch(SIGNUP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(body),
+      redirect: 'follow',
+    });
+  } catch {
+    // 네트워크 오류는 'Failed to fetch' 로 온다. 그대로 보여줄 말이 아니다.
+    throw new Error('접수처에 연결하지 못했습니다. 잠시 후 다시 시도해주세요.');
+  }
+  if (!res.ok) throw new Error(`접수처가 응답하지 않았습니다 (${res.status}).`);
+
+  let out;
+  try {
+    out = await res.json();
+  } catch {
+    throw new Error('접수처의 응답을 읽지 못했습니다. 잠시 후 다시 시도해주세요.');
+  }
+  if (!out.ok) throw new Error(out.error || '접수하지 못했습니다.');
 }
 
 async function unlock(password, persist) {
@@ -893,6 +962,36 @@ els.lockForm.addEventListener('submit', async (e) => {
     showLock(err.message === 'AUTH_FAILED' ? '비밀번호가 맞지 않습니다.' : `열지 못했습니다: ${err.message}`);
   }
 });
+
+// 접수처가 아직 연결되지 않았으면 신청 버튼을 아예 감춘다.
+// 눌렀는데 아무 일도 안 일어나는 것보다 없는 편이 낫다.
+if (!SIGNUP_URL) {
+  if (els.signupOpen) els.signupOpen.closest('.lock-alt').hidden = true;
+} else {
+  els.signupOpen.addEventListener('click', () => {
+    showSignup(true);
+    document.getElementById('su-name').focus();
+  });
+  els.signupCancel.addEventListener('click', () => showSignup(false));
+  els.signupBack.addEventListener('click', () => showSignup(false));
+
+  els.signupForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    els.signupError.hidden = true;
+    els.signupBtn.disabled = true;
+    els.signupBtn.textContent = '보내는 중…';
+    try {
+      await submitSignup();
+      els.signupForm.reset();
+      showSignup(false, true);
+    } catch (err) {
+      els.signupError.textContent = err.message;
+      els.signupError.hidden = false;
+      els.signupBtn.disabled = false;
+      els.signupBtn.textContent = '신청하기';
+    }
+  });
+}
 
 els.themeBtn.addEventListener('click', toggleTheme);
 els.lockBtn.addEventListener('click', lockUp);

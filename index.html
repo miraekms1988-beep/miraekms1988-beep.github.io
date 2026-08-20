@@ -34,7 +34,75 @@
     </label>
     <button type="submit" id="unlock-btn">열기</button>
     <p class="lock-error" id="lock-error" role="alert" hidden></p>
+    <p class="lock-alt">비밀번호가 없으신가요?
+      <button type="button" id="signup-open">구독 신청</button></p>
   </form>
+
+  <!-- 구독 신청. 비밀번호를 모르는 사람이 보는 유일한 화면이므로
+       여기에도 작성자 이름·소속·연락처는 적지 않는다. 받기만 한다. -->
+  <form class="lock-card signup-card" id="signup-form" autocomplete="off" hidden>
+    <h2 class="signup-title">구독 신청</h2>
+    <p class="signup-sub">확인 후 비밀번호를 메일로 보내드립니다.</p>
+
+    <div class="signup-grid">
+      <label class="fld">
+        <span>이름 <b aria-hidden="true">*</b></span>
+        <input id="su-name" name="name" type="text" maxlength="60" required autocomplete="name">
+      </label>
+      <label class="fld">
+        <span>구분 <b aria-hidden="true">*</b></span>
+        <select id="su-segment" name="segment" required>
+          <option value="시행사">시행사</option>
+          <option value="금융사">금융사</option>
+          <option value="시공사">시공사</option>
+          <option value="기타">기타</option>
+        </select>
+      </label>
+      <label class="fld fld-wide">
+        <span>소속 <b aria-hidden="true">*</b></span>
+        <input id="su-org" name="org" type="text" maxlength="80" required autocomplete="organization"
+               placeholder="회사명">
+      </label>
+      <label class="fld">
+        <span>직함</span>
+        <input id="su-role" name="role" type="text" maxlength="40" autocomplete="organization-title">
+      </label>
+      <label class="fld">
+        <span>연락처</span>
+        <input id="su-phone" name="phone" type="tel" maxlength="40" autocomplete="tel">
+      </label>
+      <label class="fld fld-wide">
+        <span>이메일 <b aria-hidden="true">*</b></span>
+        <input id="su-email" name="email" type="email" maxlength="120" required autocomplete="email">
+      </label>
+      <label class="fld fld-wide">
+        <span>한마디</span>
+        <textarea id="su-note" name="note" maxlength="500" rows="2"
+                  placeholder="어떤 내용을 기대하시는지 적어주시면 도움이 됩니다"></textarea>
+      </label>
+    </div>
+
+    <!-- 사람 눈에는 안 보이는 칸. 자동 프로그램은 폼의 모든 칸을 채우므로
+         여기 값이 들어오면 접수하지 않는다. hidden 속성을 쓰면 건너뛰므로
+         화면 밖으로 밀어내는 방식으로 감춘다. -->
+    <div class="hp" aria-hidden="true">
+      <label>이 칸은 비워두세요
+        <input id="su-hp" name="hp" type="text" tabindex="-1" autocomplete="off"></label>
+    </div>
+
+    <button type="submit" id="signup-btn">신청하기</button>
+    <p class="lock-error" id="signup-error" role="alert" hidden></p>
+    <p class="signup-privacy">적어주신 정보는 구독 안내와 모임 연락에만 씁니다.</p>
+    <p class="lock-alt"><button type="button" id="signup-cancel">비밀번호 입력으로 돌아가기</button></p>
+  </form>
+
+  <!-- 접수 완료 -->
+  <div class="lock-card signup-done" id="signup-done" hidden>
+    <div class="lock-mark" aria-hidden="true">✓</div>
+    <h2 class="signup-title">신청이 접수되었습니다</h2>
+    <p class="signup-sub">확인 후 비밀번호를 메일로 보내드리겠습니다.</p>
+    <p class="lock-alt"><button type="button" id="signup-back">비밀번호 입력으로 돌아가기</button></p>
+  </div>
 </div>
 
 <!-- 본문 -->

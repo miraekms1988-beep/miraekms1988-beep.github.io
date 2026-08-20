@@ -227,6 +227,106 @@ body {
   color: var(--up);
 }
 
+/* ================= 구독 신청 ================= */
+
+/* .lock-card button 이 모든 버튼을 큼직한 채움 버튼으로 만들어 두었다.
+   여기 글자 버튼은 그걸 되돌린다. */
+.lock-alt {
+  margin: 18px 0 0;
+  font-size: 13px;
+  color: var(--text-3);
+}
+.lock-alt button {
+  width: auto;
+  padding: 2px 1px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  background: none;
+  border-radius: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.lock-alt button:hover {
+  background: none;
+  color: var(--navy);
+  border-bottom-color: var(--navy);
+}
+
+.signup-card { max-width: 460px; text-align: left; padding: 32px 30px 26px; }
+.signup-done { max-width: 372px; }
+
+.signup-title {
+  font-size: 19px; font-weight: 750;
+  margin: 0 0 6px; letter-spacing: -.03em;
+}
+.signup-sub {
+  font-size: 13.5px; line-height: 1.6;
+  color: var(--text-3); margin: 0 0 22px;
+}
+.signup-done .signup-title,
+.signup-done .signup-sub { text-align: center; }
+
+/* 이름·구분처럼 짧은 것은 나란히, 소속·이메일처럼 긴 것은 한 줄 통째로. */
+.signup-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 13px 12px;
+}
+.fld-wide { grid-column: 1 / -1; }
+
+.fld { display: flex; flex-direction: column; gap: 6px; }
+.fld > span {
+  font-size: 12.5px; font-weight: 600;
+  color: var(--text-2); letter-spacing: -.01em;
+}
+.fld > span b { color: var(--accent); font-weight: 700; }
+
+.signup-card input,
+.signup-card select,
+.signup-card textarea {
+  width: 100%;
+  padding: 11px 13px;
+  /* 16px 미만이면 아이폰이 입력할 때 화면을 확대해 버린다. */
+  font-size: 16px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1.5px solid transparent;
+  border-radius: 11px;
+  outline: none;
+  transition: border-color .16s, background .16s;
+}
+.signup-card textarea { resize: vertical; min-height: 62px; line-height: 1.55; }
+.signup-card input::placeholder,
+.signup-card textarea::placeholder { color: var(--text-3); }
+.signup-card input:focus,
+.signup-card select:focus,
+.signup-card textarea:focus {
+  border-color: var(--accent-2);
+  background: var(--surface);
+}
+
+#signup-btn { margin-top: 20px; }
+
+.signup-privacy {
+  margin: 14px 0 0;
+  font-size: 12px; line-height: 1.55;
+  color: var(--text-3);
+}
+
+/* 자동 프로그램 거르는 칸. display:none 은 건너뛰는 봇이 있어 화면 밖으로 민다. */
+.hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px; height: 1px;
+  overflow: hidden;
+}
+
+@media (max-width: 420px) {
+  .signup-card { padding: 28px 22px 22px; }
+  .signup-grid { grid-template-columns: 1fr; }
+}
+
 /* ================= 앱 셸 ================= */
 .app { min-height: 100dvh; display: flex; flex-direction: column; }
 
