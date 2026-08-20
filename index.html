@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="채권동향">
+<title>주간 채권동향</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<!-- Pretendard. 오프라인이거나 차단되면 아래 시스템 폰트로 자연스럽게 넘어간다. -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- 잠금 화면: 올바른 비밀번호 없이는 글 목록조차 복호화되지 않는다 -->
+<div id="lock" class="lock" hidden>
+  <form class="lock-card" id="lock-form" autocomplete="off">
+    <div class="lock-mark" aria-hidden="true">채</div>
+    <h1 class="lock-title">주간 채권시장 동향</h1>
+    <!-- 잠금화면은 비밀번호 없이도 보이는 화면이다.
+         작성자 이름·소속·연락처는 여기 적지 않는다. -->
+    <p class="lock-sub">공유받은 비밀번호를 입력하세요</p>
+    <label class="sr-only" for="pw">비밀번호</label>
+    <input id="pw" type="password" inputmode="text" autocomplete="current-password" placeholder="비밀번호" required>
+    <label class="lock-remember">
+      <input type="checkbox" id="remember"> 이 기기에서 기억
+    </label>
+    <button type="submit" id="unlock-btn">열기</button>
+    <p class="lock-error" id="lock-error" role="alert" hidden></p>
+  </form>
+</div>
+
+<!-- 본문 -->
+<div id="app" class="app" hidden>
+  <!-- 읽은 만큼 차는 선. 글을 볼 때만 켜진다. -->
+  <div class="progress" id="progress" aria-hidden="true"><i></i></div>
+
+  <header class="topbar">
+    <button class="icon-btn" id="back-btn" hidden aria-label="목록으로">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <div class="brand" id="brand">
+      <span class="brand-mark" aria-hidden="true">채</span>
+      <span class="brand-text">주간 채권동향</span>
+    </div>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="theme-btn" aria-label="화면 모드 전환">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M20 13a8 8 0 11-9-9 7 7 0 009 9z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="icon-btn" id="lock-btn" aria-label="잠그기">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 10V7a4 4 0 118 0v3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="view" class="view" tabindex="-1"></main>
+
+  <footer class="foot">
+    <!-- 잠금해제 후 app.js 가 채운다. HTML 소스에는 남기지 않는다. -->
+    <p id="foot-id"></p>
+    <p class="foot-note">본 사이트의 글은 필자 개인의 견해이며 투자 권유가 아닙니다.<br>
+    인용 기사의 저작권은 각 언론사에 있습니다.</p>
+  </footer>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>
