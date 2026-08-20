@@ -18,7 +18,7 @@ const THEME_KEY = 'bw.theme';
 // 이 주소는 소스 보기로 누구나 읽을 수 있다. 그래도 되는 이유는
 // 이 창구가 '접수'만 하기 때문이다. 명부를 돌려주는 쪽은 키를 따로 확인한다.
 // 비어 있으면 잠금화면에 신청 버튼이 나오지 않는다.
-const SIGNUP_URL = '';
+const SIGNUP_URL = 'https://script.google.com/macros/s/AKfycbxWgN0pXVPbzgxkER8CJxPPrNefC046e-Z_TfP6eeT8PNc5Ll-vEWFa4o_TCZjI9nvJ/exec';
 
 // 작성자 정보. 이름·소속·연락처는 개인정보라 이 파일에 적어두지 않는다.
 // 여기 적으면 정적 호스팅에서 소스 보기만으로 누구나 읽을 수 있다.
