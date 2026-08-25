@@ -860,6 +860,15 @@ function renderPolicyCard(p) {
       </ul>
     </details>` : '';
 
+  // 바뀌는 값은 채권동향의 서두 요약과 같은 하늘색 상자에 담는다.
+  // 카드 안이 온통 하얀색이면 무엇이 요점인지 눈이 잡지 못한다.
+  const digest = (p.lead || changes) ? `
+    <aside class="digest pc-digest">
+      <div class="digest-label">요약</div>
+      ${p.lead ? `<p class="digest-lead">${escapeHtml(p.lead)}</p>` : ''}
+      ${changes ? `<ul class="pc-changes">${changes}</ul>` : ''}
+    </aside>` : '';
+
   return `
     <article class="pcard">
       <header class="pc-head">
@@ -869,8 +878,7 @@ function renderPolicyCard(p) {
           ${p.effect ? `<span class="pc-effect">${escapeHtml(p.effect)}</span>` : ''}
         </div>
       </header>
-      ${p.lead ? `<p class="pc-lead">${escapeHtml(p.lead)}</p>` : ''}
-      ${changes ? `<ul class="pc-changes">${changes}</ul>` : ''}
+      ${digest}
       ${details}
       ${articles}
     </article>`;

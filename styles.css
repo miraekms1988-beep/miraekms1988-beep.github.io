@@ -1408,3 +1408,72 @@ body {
   .pc-row { grid-template-columns: 1fr; }
   .pc-move { margin-top: 2px; }
 }
+
+/* ================= 제도 카드 - 요약 상자 안 ================= */
+
+/* 채권동향 서두 요약과 같은 하늘색 상자를 쓴다. 카드 안이 온통
+   하얀색이면 무엇이 요점인지 눈이 잡지 못한다. */
+.pc-digest { margin: 0 0 6px; padding: 16px 18px 14px; }
+.pc-digest .digest-lead {
+  font-size: 14.5px; font-weight: 600;
+  margin-bottom: 14px;
+  text-align: justify;
+  text-justify: inter-character;
+}
+
+/* 상자 안이라 선 색을 파란 계열로 맞춘다. 회색 선을 그대로 쓰면
+   상자 위에 떠 보인다. */
+.pc-digest .pc-changes { border-top-color: color-mix(in srgb, var(--accent) 20%, transparent); }
+.pc-digest .pc-row { border-bottom-color: color-mix(in srgb, var(--accent) 16%, transparent); }
+.pc-digest .pc-row:last-child { border-bottom: 0; padding-bottom: 2px; }
+.pc-digest .pc-label { color: var(--text); font-weight: 650; }
+.pc-digest .pc-from { color: var(--text-3); }
+
+/* ================= 본문 양쪽정렬 ================= */
+
+/* 한글은 글자폭이 고르기 때문에 양쪽정렬이 깔끔하게 떨어진다.
+   낱말 사이가 벌어지지 않도록 글자 단위로 늘린다. */
+.pfold > p,
+.pc-lead,
+.pc-intro,
+.page-body .prose p {
+  text-align: justify;
+  text-justify: inter-character;
+  word-break: keep-all;
+}
+
+/* ================= 용어 노트 목차 ================= */
+
+/* 온통 하얀 카드라 제목이 묻힌다. 왼쪽에 색 막대를 세우고
+   글자를 파랗게 해 어디가 묶음의 머리인지 바로 보이게 한다. */
+.slide[data-slug="glossary"] .pcard > h2 {
+  position: relative;
+  padding-left: 12px;
+  border-bottom: 0;
+  margin-bottom: 10px;
+  color: var(--accent);
+  font-size: 15px;
+}
+.slide[data-slug="glossary"] .pcard > h2::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 3px; bottom: 3px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+.slide[data-slug="glossary"] .pcard { padding: 18px 20px 14px; }
+
+/* 용어 하나하나. 굵은 글씨로 시작하는 문단이 표제어다. */
+.slide[data-slug="glossary"] .prose p {
+  margin: 0 0 14px;
+  font-size: 14.5px;
+  color: var(--text-2);
+}
+.slide[data-slug="glossary"] .prose p > strong:first-child {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--text);
+  font-weight: 700;
+  font-size: 14.5px;
+}
