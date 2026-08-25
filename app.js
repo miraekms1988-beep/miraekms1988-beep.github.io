@@ -69,6 +69,8 @@ const state = {
   lite: false,
   keys: null,
   index: [],
+  // 상시 페이지(금리 현황·시장 온도계·제도·용어). 글과 달리 등급 구분이 없다.
+  pages: [],
   cache: new Map(),
   issCache: new Map(),
   chart: null,
@@ -654,8 +656,19 @@ function renderList() {
     ? `<button class="more" id="more-btn" type="button">이전 글 ${rest}편 더 보기</button>`
     : '';
 
+  // 상시 페이지. 주간 글은 일요일에만 바뀌지만 이쪽은 주중에도 바뀐다.
+  // 여기 들어올 이유를 만드는 자리라 글 목록보다 위에 둔다.
+  const shelf = state.pages.length
+    ? `<div class="shelf">${state.pages.map((p) => `
+        <a class="shelf-card" href="#/x/${encodeURIComponent(p.slug)}">
+          <b>${escapeHtml(p.title)}</b>
+          <span>${escapeHtml(p.sub || '')}</span>
+        </a>`).join('')}</div>`
+    : '';
+
   els.view.innerHTML = `
     ${hero}
+    ${shelf}
     <div class="list-head">
       <h2>발행글</h2>
       <span class="list-count">${shown} / ${total}편</span>
@@ -675,6 +688,30 @@ function renderList() {
   }
 
   setProgress(false);
+}
+
+// 상시 페이지. 글과 달리 목록에 없고 발행 주차도 없다.
+function renderPage(slug) {
+  const page = state.pages.find((p) => p.slug === slug);
+  if (!page) { location.hash = '#/'; return; }
+
+  els.backBtn.hidden = false;
+  document.title = `${page.title} · 주간 채권동향`;
+
+  els.view.innerHTML = `
+    <article>
+      <header class="post-head">
+        <h1 class="post-title">${escapeHtml(page.title)}</h1>
+        ${page.sub ? `<p class="post-sub">${escapeHtml(page.sub)}</p>` : ''}
+      </header>
+      <div class="prose">${renderMarkdown(page.body)}</div>
+    </article>`;
+
+  window.scrollTo(0, 0);
+  els.view.focus();
+  setProgress(false);
+  // 금리 현황 페이지의 ::chart:: 자리를 채운다.
+  mountCharts(els.view, null);
 }
 
 async function renderPost(slug) {
@@ -750,9 +787,11 @@ async function renderPost(slug) {
 
 function route() {
   const hash = location.hash || '#/';
-  const m = hash.match(/^#\/p\/(.+)$/);
-  if (m) renderPost(decodeURIComponent(m[1]));
-  else renderList();
+  const post = hash.match(/^#\/p\/(.+)$/);
+  if (post) { renderPost(decodeURIComponent(post[1])); return; }
+  const page = hash.match(/^#\/x\/(.+)$/);
+  if (page) { renderPage(decodeURIComponent(page[1])); return; }
+  renderList();
 }
 
 /* ================= 읽기 시간 ================= */
@@ -937,6 +976,12 @@ async function unlock(password, persist) {
   const parsed = JSON.parse(await openEnvelope(keys, indexJson));
   state.index = (Array.isArray(parsed) ? parsed.flat() : [parsed]).filter(Boolean);
   state.index.sort((a, b) => (a.date < b.date ? 1 : -1));
+
+  // 상시 페이지. 아직 안 구웠으면 없는 대로 둔다 - 글은 읽을 수 있어야 한다.
+  try {
+    const pagesEnv = await fetchJson(`${POSTS_DIR}/${encPath('pages.enc.json')}`);
+    state.pages = JSON.parse(await openEnvelope(keys, pagesEnv)) || [];
+  } catch { state.pages = []; }
 
   (persist ? localStorage : sessionStorage).setItem(STORAGE_KEY, password);
 

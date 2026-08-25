@@ -1030,3 +1030,48 @@ body {
   .view { padding: 34px 20px 64px; }
   .post-head h1 { font-size: 28px; }
 }
+
+/* ================= 상시 페이지 ================= */
+
+/* 주간 글은 일요일에만 바뀌지만 이쪽은 주중에도 바뀐다.
+   들어올 이유를 만드는 자리라 글 목록보다 위에 둔다. */
+/* 2열로 떨어뜨린다. 3열이면 네 장 중 마지막 하나가 혼자 남아 허전하다. */
+.shelf {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 10px;
+  margin: 22px 0 4px;
+}
+
+.shelf-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 15px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  text-decoration: none;
+  transition: border-color .16s, transform .1s;
+}
+.shelf-card:hover { border-color: var(--accent-2); }
+.shelf-card:active { transform: scale(.99); }
+.shelf-card b {
+  font-size: 14.5px; font-weight: 700;
+  color: var(--text); letter-spacing: -.02em;
+}
+.shelf-card span {
+  font-size: 11.5px; line-height: 1.45;
+  color: var(--text-3);
+}
+
+.post-sub {
+  margin: 8px 0 0;
+  font-size: 13.5px;
+  color: var(--text-3);
+}
+
+@media (max-width: 420px) {
+  .shelf { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .shelf-card { padding: 12px 12px; border-radius: 12px; }
+}
