@@ -783,13 +783,17 @@ function tabList() {
  * 마지막 칸에서는 방향을 뒤집어 처음으로 돌아간다. */
 function renderNext() {
   if (tabList().length < 2) return '';
-  return `
-    <button class="nextbtn" id="next-btn" type="button" aria-label="다음 화면">
+  const arrow = (dir) => `
+    <button class="navbtn ${dir}" type="button" data-dir="${dir}"
+            aria-label="${dir === 'next' ? '다음' : '이전'} 화면">
       <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
         <path d="M9 5l7 7-7 7" fill="none" stroke="currentColor"
               stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </button>`;
+  // 화면 가장자리가 아니라 본문 상자 옆에 붙인다. 끝으로 밀어두면
+  // 넓은 화면에서 본문과 멀어져 눈에 안 들어온다.
+  return `<div class="navwrap">${arrow('prev')}${arrow('next')}</div>`;
 }
 
 /* 상시 페이지 본문을 카드로 나눈다.
@@ -806,13 +810,28 @@ function groupIntoCards(root) {
 
   const frag = document.createDocumentFragment();
   let card = null;
+  let fold = null;   // 카드 안의 h3 은 눌러서 펴는 상세로 접는다
   for (const el of kids) {
     if (el.tagName === 'H2') {
       card = document.createElement('section');
       card.className = 'pcard';
+      fold = null;
       frag.appendChild(card);
+      card.appendChild(el);
+      continue;
     }
-    (card || frag).appendChild(el);
+    if (el.tagName === 'H3' && card) {
+      // 항목마다 접었다 편다. 다 펴 두면 표 밑으로 글이 한없이 이어져
+      // 무엇이 있는지 한눈에 안 들어온다.
+      fold = document.createElement('details');
+      fold.className = 'pfold';
+      const sum = document.createElement('summary');
+      sum.innerHTML = el.innerHTML;
+      fold.appendChild(sum);
+      card.appendChild(fold);
+      continue;
+    }
+    (fold || card || frag).appendChild(el);
   }
   prose.appendChild(frag);
 }
@@ -844,8 +863,12 @@ function mountDeck() {
     state.tab = slug;
     // 마지막 칸에서는 화살표를 뒤집는다. 더 갈 데가 없는데 오른쪽을
     // 가리키고 있으면 눌러도 아무 일이 없어 고장난 것처럼 보인다.
-    const btn = els.view.querySelector('.nextbtn');
-    if (btn) btn.classList.toggle('back', i >= slugs.length - 1);
+    // 양 끝에서는 그쪽 화살표를 흐리게 한다. 눌러도 갈 데가 없는데
+    // 멀쩡히 떠 있으면 고장난 것처럼 보인다.
+    const prev = els.view.querySelector('.navbtn.prev');
+    const nxt  = els.view.querySelector('.navbtn.next');
+    if (prev) prev.classList.toggle('off', i <= 0);
+    if (nxt)  nxt.classList.toggle('off', i >= slugs.length - 1);
     document.title = slug === 'posts'
       ? '주간 채권동향'
       : `${(state.pages.find((p) => p.slug === slug) || {}).title} · 주간 채권동향`;
@@ -861,18 +884,26 @@ function mountDeck() {
   }, { passive: true });
 
   // 화살표를 누르면 다음 칸으로. 마지막이면 처음으로 돌아간다.
-  const next = els.view.querySelector('.nextbtn');
-  if (next) {
-    next.addEventListener('click', () => {
+  els.view.querySelectorAll('.navbtn').forEach((btn) => {
+    btn.addEventListener('click', () => {
       const i = Math.round(deck.scrollLeft / deck.clientWidth);
-      const to = i >= slugs.length - 1 ? 0 : i + 1;
+      const to = btn.dataset.dir === 'next' ? i + 1 : i - 1;
+      if (to < 0 || to >= slugs.length) return;
       deck.scrollTo({ left: to * deck.clientWidth, behavior: 'smooth' });
     });
-  }
+  });
 
   // 처음 열 때는 주소가 가리키는 칸에서 시작한다. 애니메이션 없이 바로.
   const start = slugs.indexOf(state.tab);
   if (start > 0) deck.scrollLeft = start * deck.clientWidth;
+
+  // 화살표 흐림 상태를 처음에도 맞춰 둔다. sync() 는 칸이 바뀔 때만
+  // 도는데, 첫 화면에서는 바뀐 것이 없어 왼쪽 화살표가 멀쩡히 남는다.
+  const i0 = Math.max(0, start);
+  const p0 = els.view.querySelector('.navbtn.prev');
+  const n0 = els.view.querySelector('.navbtn.next');
+  if (p0) p0.classList.toggle('off', i0 <= 0);
+  if (n0) n0.classList.toggle('off', i0 >= slugs.length - 1);
 }
 
 /* 주소로 바로 들어온 경우(#/x/glossary)는 그 칸에서 시작하도록

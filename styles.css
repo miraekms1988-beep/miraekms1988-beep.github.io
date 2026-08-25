@@ -1120,45 +1120,58 @@ body {
   .bn-spark { height: 16px; }
 }
 
-/* ================= 다음 화면 화살표 ================= */
+/* ================= 좌우 이동 화살표 ================= */
 
-/* 점을 여러 개 늘어놓으면 '표시'로만 읽히고 눌러볼 생각을 안 한다.
-   화살표 하나가 가장자리에 떠 있으면 "뭐가 더 있나" 하고 눌러보게 된다.
-   처음 몇 초만 살짝 흔들어 눈에 띄게 하고, 그 뒤에는 조용히 있는다. */
-.nextbtn {
+/* 화면 가장자리가 아니라 본문 상자 옆에 붙인다. 끝으로 밀어두면
+   넓은 화면에서 본문과 멀어져 눈에 안 들어온다.
+   본문 폭(--maxw)에 맞춰 그 바로 바깥에 세운다. */
+.navwrap {
   position: fixed;
-  right: max(14px, env(safe-area-inset-right));
   top: 50%;
-  transform: translateY(-50%);
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(calc(var(--maxw) + 96px), calc(100vw - 16px));
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
   z-index: 15;
-  width: 42px; height: 42px;
+}
+
+.navbtn {
+  pointer-events: auto;
+  width: 40px; height: 40px;
   display: grid; place-items: center;
   color: var(--accent);
-  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
   border: 1px solid var(--border);
   border-radius: 999px;
   box-shadow: var(--shadow);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   cursor: pointer;
-  animation: nudge 1.6s ease-in-out 3;
-  transition: background .16s, transform .16s;
+  transition: background .16s, transform .12s, opacity .2s;
 }
-.nextbtn:hover { background: var(--surface); }
-.nextbtn:active { transform: translateY(-50%) scale(.94); }
-.nextbtn svg { transition: transform .22s cubic-bezier(.22,.61,.36,1); }
-.nextbtn.back svg { transform: rotate(180deg); }
+.navbtn:hover { background: var(--surface); }
+.navbtn:active { transform: scale(.92); }
+.navbtn.prev svg { transform: rotate(180deg); }
 
+/* 양 끝에서는 흐리게. 눌러도 갈 데가 없는데 멀쩡히 떠 있으면
+   고장난 것처럼 보인다. */
+.navbtn.off { opacity: .18; pointer-events: none; }
+
+/* 처음 몇 번만 살짝 흔들어 "뭐가 더 있나" 하고 눌러보게 만든다. */
+.navbtn.next { animation: nudge 1.6s ease-in-out 3; }
 @keyframes nudge {
-  0%, 100% { transform: translateY(-50%) translateX(0); }
-  50%      { transform: translateY(-50%) translateX(5px); }
+  0%, 100% { transform: translateX(0); }
+  50%      { transform: translateX(4px); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .nextbtn { animation: none; }
+  .navbtn.next { animation: none; }
 }
 
-@media (max-width: 480px) {
-  .nextbtn { width: 38px; height: 38px; right: 10px; }
+@media (max-width: 720px) {
+  .navwrap { width: calc(100vw - 12px); }
+  .navbtn { width: 36px; height: 36px; }
 }
 /* ================= 가로 데크 ================= */
 
@@ -1253,3 +1266,48 @@ body {
 
 /* 카드 앞의 안내 문단 */
 .page-body .prose > p:first-child { color: var(--text-2); }
+
+/* ================= 접히는 상세 ================= */
+
+/* 항목마다 접었다 편다. 다 펴 두면 표 밑으로 글이 한없이 이어져
+   무엇이 있는지 한눈에 안 들어온다. */
+.pfold {
+  border-top: 1px solid var(--border-soft);
+  margin: 0;
+}
+.pfold:first-of-type { border-top: 0; margin-top: 4px; }
+
+.pfold > summary {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 2px;
+  font-size: 14.5px; font-weight: 650;
+  letter-spacing: -.02em;
+  color: var(--text);
+  cursor: pointer;
+  list-style: none;
+  transition: color .16s;
+}
+.pfold > summary::-webkit-details-marker { display: none; }
+.pfold > summary::marker { content: ''; }
+.pfold > summary:hover { color: var(--accent); }
+
+/* 오른쪽 끝의 펼침 표시 */
+.pfold > summary::after {
+  content: '';
+  margin-left: auto;
+  width: 7px; height: 7px;
+  border-right: 2px solid var(--text-3);
+  border-bottom: 2px solid var(--text-3);
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform .18s;
+}
+.pfold[open] > summary::after { transform: rotate(-135deg) translateY(-2px); }
+.pfold[open] > summary { color: var(--accent); }
+
+.pfold > *:not(summary) {
+  margin: 0 0 12px;
+  font-size: 14.5px;
+  color: var(--text-2);
+}
+.pfold > *:last-child { margin-bottom: 14px; }
+.pfold ul, .pfold ol { padding-left: 20px; }
