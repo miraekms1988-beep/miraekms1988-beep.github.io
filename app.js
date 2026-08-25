@@ -64,6 +64,9 @@ function renderFoot() {
 
 const state = {
   manifest: null,
+  // 시행사·기타 구독자는 전단채 표가 빠진 축소판을 본다. 비밀번호가
+  // 어느 쪽인지로 갈린다 (posts/*.lite.enc.json).
+  lite: false,
   keys: null,
   index: [],
   cache: new Map(),
@@ -413,7 +416,7 @@ async function mountCharts(root, postDate) {
 
   if (!state.chart) {
     try {
-      const env = await fetchJson(`${POSTS_DIR}/rates.enc.json`);
+      const env = await fetchJson(`${POSTS_DIR}/${encPath('rates.enc.json')}`);
       state.chart = JSON.parse(await openEnvelope(state.keys, env));
     } catch {
       boxes.forEach((b) => { b.innerHTML = '<p class="chart-empty">금리 데이터를 불러오지 못했습니다.</p>'; });
@@ -544,7 +547,7 @@ async function mountEventArticles(root, week) {
 
   let data;
   try {
-    const env = await fetchJson(`${POSTS_DIR}/${week}.events.enc.json`);
+    const env = await fetchJson(`${POSTS_DIR}/${encPath(`${week}.events.enc.json`)}`);
     data = JSON.parse(await openEnvelope(state.keys, env));
   } catch {
     return;   // 아직 갱신 전이거나 붙을 기사가 없다
@@ -877,21 +880,36 @@ async function submitSignup() {
   if (!out.ok) throw new Error(out.error || '접수하지 못했습니다.');
 }
 
+// 축소판일 때는 같은 이름의 .lite 파일을 받는다. 파일이 아예 다르므로
+// 표가 든 원본은 내려받아도 열 수 없다.
+function encPath(name) {
+  return state.lite ? name.replace(/\.enc\.json$/, '.lite.enc.json') : name;
+}
+
 async function unlock(password, persist) {
   const keys = await deriveKeys(password, state.manifest.kdf.salt, state.manifest.kdf.iterations);
-  // 검증용 봉투를 먼저 열어 비밀번호가 맞는지 확인한다.
-  await openEnvelope(keys, state.manifest.verify);
+
+  // 검증용 봉투로 비밀번호가 맞는지, 그리고 어느 쪽 비밀번호인지 가린다.
+  let lite = false;
+  try {
+    await openEnvelope(keys, state.manifest.verify);
+  } catch (err) {
+    if (!state.manifest.verifyLite) throw err;
+    await openEnvelope(keys, state.manifest.verifyLite);   // 틀렸으면 여기서 던진다
+    lite = true;
+  }
 
   state.keys = keys;
+  state.lite = lite;
 
   // 작성자 정보도 암호문으로 받아온다. 실패해도 글은 읽을 수 있어야 하므로 막지 않는다.
   try {
-    const authorEnv = await fetchJson(`${POSTS_DIR}/author.enc.json`);
+    const authorEnv = await fetchJson(`${POSTS_DIR}/${encPath('author.enc.json')}`);
     AUTHOR = Object.assign(AUTHOR, JSON.parse(await openEnvelope(keys, authorEnv)));
     renderFoot();
   } catch { /* 서명란이 비는 정도로 그친다 */ }
 
-  const indexJson = await fetchJson(`${POSTS_DIR}/index.enc.json`);
+  const indexJson = await fetchJson(`${POSTS_DIR}/${encPath('index.enc.json')}`);
   const parsed = JSON.parse(await openEnvelope(keys, indexJson));
   state.index = (Array.isArray(parsed) ? parsed.flat() : [parsed]).filter(Boolean);
   state.index.sort((a, b) => (a.date < b.date ? 1 : -1));

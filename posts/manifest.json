@@ -10,5 +10,10 @@
                    "ct":  "hjPvx0tKCeZxXTB6Qxg70A==",
                    "mac":  "Qi8Q0aWsGzsa+mzubzrxUfLYzXsXk4vGzMgju2N3CpU="
                },
-    "updated":  "20260823101638"
+    "verifyLite":  {
+                       "iv":  "jOL92uSsHCTsqqUKeIngOA==",
+                       "ct":  "Y3lxOi1vIL0mxeGYOUUmiA==",
+                       "mac":  "z4+eScT0IG+VbHU7eXZ1T3xCVs9SoHzY//f/CWX00A0="
+                   },
+    "updated":  "20260825134219"
 }
