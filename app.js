@@ -1078,12 +1078,19 @@ async function unlock(password, persist) {
   state.index.sort((a, b) => (a.date < b.date ? 1 : -1));
 
   // 상시 지표와 탭. 아직 안 구웠으면 없는 대로 둔다 - 글은 읽을 수 있어야 한다.
+  //
+  // 실패를 조용히 삼키지 않는다. 한 번 그렇게 뒀다가 경로에서 posts/ 가
+  // 빠진 것을 못 보고, 배너가 안 뜨는 이유를 캐시 탓으로 한참 헤맸다.
   try {
     const extra = JSON.parse(await openEnvelope(keys,
-      await fetchJson(`/${encPath('pages.enc.json')}`)));
+      await fetchJson(`${POSTS_DIR}/${encPath('pages.enc.json')}`)));
     state.banner = extra.banner || [];
     state.pages = extra.pages || [];
-  } catch { state.banner = []; state.pages = []; }
+  } catch (err) {
+    console.warn('상시 지표를 불러오지 못했습니다:', err);
+    state.banner = [];
+    state.pages = [];
+  }
 
   (persist ? localStorage : sessionStorage).setItem(STORAGE_KEY, password);
 
