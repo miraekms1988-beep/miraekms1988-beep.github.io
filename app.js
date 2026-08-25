@@ -711,7 +711,11 @@ function renderList(startTab) {
   // 제도는 전용 서식으로 그린다. 마크다운을 거치지 않는다.
   const policySlide = state.policy.length ? `
     <section class="slide" data-slug="policy">
-      ${pageHero({ kicker: 'POLICY & REGULATION', title: '부동산 제도 규제', sub: `${state.policy.length}건 · 발표일 기준` })}
+      ${pageHero({
+        kicker: 'POLICY & REGULATION',
+        title: '부동산 제도 규제',
+        sub: '정부가 발표한 부동산·가계대출 제도를 정리해놨습니다. 항목을 누르면 세부 내용이 열립니다',
+      })}
       ${banner}
       <div class="page-body">${renderPolicySlide()}</div>
     </section>` : '';
@@ -884,10 +888,10 @@ function renderPolicyCard(p) {
     </article>`;
 }
 
+/* 안내 문구는 표지의 부제로 올린다. 배너 바로 밑에 또 글을 두면
+ * 표지·배너·안내가 세 겹으로 쌓여 정작 내용이 한참 아래로 밀린다. */
 function renderPolicySlide() {
   return `
-    <p class="pc-intro">정부가 발표한 부동산·가계대출 제도입니다.
-      항목을 누르면 세부 내용이 열립니다.</p>
     ${state.policy.map(renderPolicyCard).join('')}
     <p class="pc-foot">정확한 내용은 각 부처 발표 자료를 확인하세요.</p>`;
 }

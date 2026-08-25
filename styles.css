@@ -1477,3 +1477,11 @@ body {
   font-weight: 700;
   font-size: 14.5px;
 }
+
+/* 상시 페이지 표지의 부제. 안내 문장이 들어가므로 한 줄로 가두지 않는다.
+   채권동향 표지의 '7편 · 기간' 은 짧아 문제가 없었다. */
+.slide:not([data-slug="posts"]) .hero-stats {
+  display: block;
+  line-height: 1.6;
+  word-break: keep-all;
+}
