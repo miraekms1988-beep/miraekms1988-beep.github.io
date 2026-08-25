@@ -69,8 +69,10 @@ const state = {
   lite: false,
   keys: null,
   index: [],
-  // 상시 페이지(금리 현황·시장 온도계·제도·용어). 글과 달리 등급 구분이 없다.
-  pages: [],
+  // 상시로 두는 것들. 글과 달리 등급 구분이 없어 축소판에도 그대로 나간다.
+  banner: [],   // 상단에 늘 떠 있는 지표 (COFIX 신잔액 / CD 91일 / CP 91일)
+  pages: [],    // 옆으로 넘겨 보는 탭 (제도·규제 / 용어 노트)
+  tab: 'posts',
   cache: new Map(),
   issCache: new Map(),
   chart: null,
@@ -656,25 +658,18 @@ function renderList() {
     ? `<button class="more" id="more-btn" type="button">이전 글 ${rest}편 더 보기</button>`
     : '';
 
-  // 상시 페이지. 주간 글은 일요일에만 바뀌지만 이쪽은 주중에도 바뀐다.
-  // 여기 들어올 이유를 만드는 자리라 글 목록보다 위에 둔다.
-  const shelf = state.pages.length
-    ? `<div class="shelf">${state.pages.map((p) => `
-        <a class="shelf-card" href="#/x/${encodeURIComponent(p.slug)}">
-          <b>${escapeHtml(p.title)}</b>
-          <span>${escapeHtml(p.sub || '')}</span>
-        </a>`).join('')}</div>`
-    : '';
-
   els.view.innerHTML = `
     ${hero}
-    ${shelf}
+    ${renderBanner()}
+    ${renderTabs('posts')}
     <div class="list-head">
       <h2>발행글</h2>
       <span class="list-count">${shown} / ${total}편</span>
     </div>
     ${cards}
     ${more}`;
+
+  mountSwipe();
 
   const btn = document.getElementById('more-btn');
   if (btn) {
@@ -690,16 +685,122 @@ function renderList() {
   setProgress(false);
 }
 
+/* ================= 상시 배너 ================= */
+
+/* 매일 보는 지표 셋만 띄운다. 열 개를 늘어놓으면 아무것도 눈에 안 들어온다.
+ * COFIX 는 월 1회 공시라 '몇 월분'인지 같이 적는다 - 안 적으면 오늘
+ * 숫자로 오해한다. */
+function sparkPath(vals, w, h) {
+  if (!vals || vals.length < 2) return '';
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const span = max - min || 1;
+  const step = w / (vals.length - 1);
+  return vals.map((v, i) =>
+    `${i ? 'L' : 'M'}${(i * step).toFixed(1)},${(h - ((v - min) / span) * h).toFixed(1)}`).join(' ');
+}
+
+function renderBanner() {
+  const items = state.banner;
+  if (!items || !items.length) return '';
+
+  const cells = items.map((b) => {
+    const d = b.delta;
+    const cls = d > 0 ? 'up' : d < 0 ? 'down' : '';
+    const sign = d > 0 ? '+' : '';
+    const delta = (d === null || d === undefined)
+      ? ''
+      : `<span class="bn-delta ${cls}">${sign}${d.toFixed(2)}<i>${escapeHtml(b.deltaNote || '')}</i></span>`;
+    const path = sparkPath(b.spark, 64, 20);
+    const spark = path
+      ? `<svg class="bn-spark" viewBox="0 0 64 20" preserveAspectRatio="none" aria-hidden="true">
+           <path d="${path}" fill="none" stroke="currentColor" stroke-width="1.6"
+                 stroke-linecap="round" stroke-linejoin="round"/>
+         </svg>`
+      : '';
+    return `
+      <div class="bn-item">
+        <span class="bn-label">${escapeHtml(b.label)}</span>
+        <span class="bn-value">${escapeHtml(b.value)}<em>${escapeHtml(b.unit || '')}</em></span>
+        ${delta}
+        ${spark}
+        <span class="bn-note">${escapeHtml(b.note || '')}</span>
+      </div>`;
+  }).join('');
+
+  return `<section class="banner" aria-label="주요 지표">${cells}</section>`;
+}
+
+/* ================= 탭 ================= */
+
+/* 발행글 / 제도·규제 / 용어 노트를 옆으로 넘겨 오간다.
+ * 세 화면이 같은 틀을 쓰므로 탭 줄을 각 화면이 똑같이 그린다. */
+function tabList() {
+  return [{ slug: 'posts', title: '채권동향' }]
+    .concat(state.pages.map((p) => ({ slug: p.slug, title: p.title })));
+}
+
+function renderTabs(active) {
+  const tabs = tabList();
+  if (tabs.length < 2) return '';
+  return `<nav class="tabs" role="tablist">${tabs.map((t) => `
+    <a class="tab${t.slug === active ? ' on' : ''}" role="tab"
+       aria-selected="${t.slug === active}"
+       href="${t.slug === 'posts' ? '#/' : `#/x/${encodeURIComponent(t.slug)}`}">${escapeHtml(t.title)}</a>`).join('')}</nav>`;
+}
+
+/* 손가락으로 옆으로 밀면 이웃 탭으로 넘어간다.
+ * 세로 스크롤이 주된 동작이라, 가로 이동이 세로보다 확실히 클 때만 잡는다.
+ * 안 그러면 글을 읽으려고 스크롤할 때마다 탭이 넘어간다. */
+function mountSwipe() {
+  const root = els.view;
+  let x0 = null, y0 = null, lock = null;
+
+  root.addEventListener('touchstart', (e) => {
+    if (e.touches.length !== 1) { x0 = null; return; }
+    x0 = e.touches[0].clientX;
+    y0 = e.touches[0].clientY;
+    lock = null;
+  }, { passive: true });
+
+  root.addEventListener('touchmove', (e) => {
+    if (x0 === null || lock === 'y') return;
+    const dx = e.touches[0].clientX - x0;
+    const dy = e.touches[0].clientY - y0;
+    if (lock === null && (Math.abs(dx) > 12 || Math.abs(dy) > 12)) {
+      lock = Math.abs(dx) > Math.abs(dy) * 1.6 ? 'x' : 'y';
+    }
+    if (lock === 'x') root.style.transform = `translateX(${dx * 0.25}px)`;
+  }, { passive: true });
+
+  root.addEventListener('touchend', (e) => {
+    root.style.transform = '';
+    if (x0 === null || lock !== 'x') { x0 = null; return; }
+    const dx = e.changedTouches[0].clientX - x0;
+    x0 = null;
+    if (Math.abs(dx) < 60) return;
+
+    const tabs = tabList();
+    const cur = tabs.findIndex((t) => t.slug === state.tab);
+    const next = cur + (dx < 0 ? 1 : -1);
+    if (next < 0 || next >= tabs.length) return;
+    const t = tabs[next];
+    location.hash = t.slug === 'posts' ? '#/' : `#/x/${encodeURIComponent(t.slug)}`;
+  }, { passive: true });
+}
+
 // 상시 페이지. 글과 달리 목록에 없고 발행 주차도 없다.
 function renderPage(slug) {
   const page = state.pages.find((p) => p.slug === slug);
   if (!page) { location.hash = '#/'; return; }
 
-  els.backBtn.hidden = false;
+  state.tab = slug;
+  els.backBtn.hidden = true;
   document.title = `${page.title} · 주간 채권동향`;
 
   els.view.innerHTML = `
-    <article>
+    ${renderBanner()}
+    ${renderTabs(slug)}
+    <article class="page">
       <header class="post-head">
         <h1 class="post-title">${escapeHtml(page.title)}</h1>
         ${page.sub ? `<p class="post-sub">${escapeHtml(page.sub)}</p>` : ''}
@@ -710,8 +811,7 @@ function renderPage(slug) {
   window.scrollTo(0, 0);
   els.view.focus();
   setProgress(false);
-  // 금리 현황 페이지의 ::chart:: 자리를 채운다.
-  mountCharts(els.view, null);
+  mountSwipe();
 }
 
 async function renderPost(slug) {
@@ -977,11 +1077,13 @@ async function unlock(password, persist) {
   state.index = (Array.isArray(parsed) ? parsed.flat() : [parsed]).filter(Boolean);
   state.index.sort((a, b) => (a.date < b.date ? 1 : -1));
 
-  // 상시 페이지. 아직 안 구웠으면 없는 대로 둔다 - 글은 읽을 수 있어야 한다.
+  // 상시 지표와 탭. 아직 안 구웠으면 없는 대로 둔다 - 글은 읽을 수 있어야 한다.
   try {
-    const pagesEnv = await fetchJson(`${POSTS_DIR}/${encPath('pages.enc.json')}`);
-    state.pages = JSON.parse(await openEnvelope(keys, pagesEnv)) || [];
-  } catch { state.pages = []; }
+    const extra = JSON.parse(await openEnvelope(keys,
+      await fetchJson(`/${encPath('pages.enc.json')}`)));
+    state.banner = extra.banner || [];
+    state.pages = extra.pages || [];
+  } catch { state.banner = []; state.pages = []; }
 
   (persist ? localStorage : sessionStorage).setItem(STORAGE_KEY, password);
 

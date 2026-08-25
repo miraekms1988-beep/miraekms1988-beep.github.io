@@ -1031,47 +1031,131 @@ body {
   .post-head h1 { font-size: 28px; }
 }
 
-/* ================= 상시 페이지 ================= */
+/* ================= 상시 지표 배너 ================= */
 
-/* 주간 글은 일요일에만 바뀌지만 이쪽은 주중에도 바뀐다.
-   들어올 이유를 만드는 자리라 글 목록보다 위에 둔다. */
-/* 2열로 떨어뜨린다. 3열이면 네 장 중 마지막 하나가 혼자 남아 허전하다. */
-.shelf {
+/* 매일 보는 셋만 띄운다. 페이지를 열면 제일 먼저 눈에 들어와야 하므로
+   글 목록보다 위, 표지 바로 아래에 붙인다. */
+.banner {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 10px;
-  margin: 22px 0 4px;
-}
-
-.shelf-card {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 14px 15px;
-  background: var(--surface);
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  margin: 20px 0 6px;
+  background: var(--border);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  text-decoration: none;
-  transition: border-color .16s, transform .1s;
-}
-.shelf-card:hover { border-color: var(--accent-2); }
-.shelf-card:active { transform: scale(.99); }
-.shelf-card b {
-  font-size: 14.5px; font-weight: 700;
-  color: var(--text); letter-spacing: -.02em;
-}
-.shelf-card span {
-  font-size: 11.5px; line-height: 1.45;
-  color: var(--text-3);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
 
+.bn-item {
+  position: relative;
+  display: grid;
+  grid-template-areas:
+    "label label"
+    "value delta"
+    "spark spark"
+    "note  note";
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  gap: 2px 8px;
+  padding: 13px 14px 11px;
+  background: var(--surface);
+}
+
+.bn-label {
+  grid-area: label;
+  font-size: 11.5px; font-weight: 650;
+  color: var(--text-3);
+  letter-spacing: -.01em;
+  white-space: nowrap;
+}
+
+.bn-value {
+  grid-area: value;
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: 22px; font-weight: 750;
+  color: var(--text);
+  letter-spacing: -.03em;
+  line-height: 1.25;
+}
+.bn-value em { font-size: 12.5px; font-weight: 600; font-style: normal; margin-left: 1px; color: var(--text-3); }
+
+.bn-delta {
+  grid-area: delta;
+  display: flex; flex-direction: column; align-items: flex-end;
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px; font-weight: 700;
+  color: var(--text-3);
+  line-height: 1.2;
+}
+.bn-delta.up { color: var(--up); }
+.bn-delta.down { color: var(--down); }
+.bn-delta i { font-size: 9.5px; font-weight: 500; font-style: normal; color: var(--text-3); }
+
+/* 추이선. 숫자 하나만 보면 방향을 알 수 없어 옆에 얇게 깐다. */
+.bn-spark {
+  grid-area: spark;
+  width: 100%; height: 20px;
+  margin: 5px 0 3px;
+  color: var(--accent-2);
+  opacity: .55;
+}
+
+.bn-note {
+  grid-area: note;
+  font-size: 10px;
+  color: var(--text-3);
+  letter-spacing: -.01em;
+}
+
+@media (max-width: 560px) {
+  .banner { border-radius: 14px; }
+  .bn-item { padding: 11px 10px 9px; }
+  .bn-value { font-size: 18px; }
+  .bn-value em { font-size: 11px; }
+  .bn-label { font-size: 10.5px; }
+  .bn-delta { font-size: 11px; }
+  .bn-spark { height: 16px; }
+}
+
+/* ================= 탭 ================= */
+
+/* 채권동향 / 제도·규제 / 용어 노트. 손가락으로 옆으로 밀어도 넘어간다. */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin: 18px 0 4px;
+  padding: 4px;
+  background: var(--surface-2);
+  border-radius: 12px;
+}
+
+.tab {
+  flex: 1;
+  padding: 9px 6px;
+  text-align: center;
+  font-size: 13.5px; font-weight: 650;
+  letter-spacing: -.02em;
+  color: var(--text-3);
+  text-decoration: none;
+  border-radius: 9px;
+  transition: color .16s, background .16s, box-shadow .16s;
+}
+.tab:hover { color: var(--text-2); }
+.tab.on {
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+/* 옆으로 미는 동안 화면이 손가락을 따라온다. 손을 떼면 제자리로. */
+.view { transition: transform .18s cubic-bezier(.22,.61,.36,1); will-change: transform; }
+
+.page .post-head { margin-bottom: 18px; }
 .post-sub {
   margin: 8px 0 0;
   font-size: 13.5px;
   color: var(--text-3);
-}
-
-@media (max-width: 420px) {
-  .shelf { grid-template-columns: 1fr 1fr; gap: 8px; }
-  .shelf-card { padding: 12px 12px; border-radius: 12px; }
 }
