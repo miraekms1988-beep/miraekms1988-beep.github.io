@@ -886,18 +886,42 @@ function encPath(name) {
   return state.lite ? name.replace(/\.enc\.json$/, '.lite.enc.json') : name;
 }
 
-async function unlock(password, persist) {
-  const keys = await deriveKeys(password, state.manifest.kdf.salt, state.manifest.kdf.iterations);
+/* 비밀번호 -> 콘텐츠 키.
+ *
+ * 비밀번호는 'k3f-x7m2qp9w' 꼴이고 앞 세 글자가 꾸러미 번호다. 그 번호로
+ * keys.json 에서 자기 꾸러미만 찾아 풀고, 안에 든 콘텐츠 키를 꺼낸다.
+ * 번호가 없으면 모든 꾸러미를 하나씩 풀어봐야 하는데, PBKDF2 20만 회를
+ * 사람 수만큼 돌리면 20명만 돼도 로그인이 8초씩 걸린다.
+ *
+ * 번호는 공개돼도 된다. 그것만으로는 아무것도 열리지 않는다.
+ */
+async function unwrapKeys(password) {
+  const store = await fetchJson(`${POSTS_DIR}/keys.json`, false);
+  const id = String(password).split('-')[0];
+  const entry = store.entries && store.entries[id];
+  // 번호가 없는 것과 비밀번호가 틀린 것을 굳이 구분해 알리지 않는다.
+  if (!entry) throw new Error('AUTH_FAILED');
 
-  // 검증용 봉투로 비밀번호가 맞는지, 그리고 어느 쪽 비밀번호인지 가린다.
-  let lite = false;
+  const wrap = await deriveKeys(password, entry.salt, store.iterations);
+  let payload;
   try {
-    await openEnvelope(keys, state.manifest.verify);
-  } catch (err) {
-    if (!state.manifest.verifyLite) throw err;
-    await openEnvelope(keys, state.manifest.verifyLite);   // 틀렸으면 여기서 던진다
-    lite = true;
+    payload = JSON.parse(await openEnvelope(wrap, entry));
+  } catch {
+    throw new Error('AUTH_FAILED');
   }
+
+  const raw = new Uint8Array([...b64ToBytes(payload.aes), ...b64ToBytes(payload.mac)]);
+  return {
+    keys: {
+      aes: await crypto.subtle.importKey('raw', raw.slice(0, 32), { name: 'AES-CBC' }, false, ['decrypt']),
+      mac: await crypto.subtle.importKey('raw', raw.slice(32, 64), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']),
+    },
+    lite: entry.tier === 'lite',
+  };
+}
+
+async function unlock(password, persist) {
+  const { keys, lite } = await unwrapKeys(password);
 
   state.keys = keys;
   state.lite = lite;

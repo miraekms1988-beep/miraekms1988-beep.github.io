@@ -1,19 +1,5 @@
 {
-    "v":  1,
-    "alg":  "PBKDF2-SHA256 / AES-256-CBC / HMAC-SHA256",
-    "kdf":  {
-                "salt":  "Rodsh3GEhKrvSmPAiAxg1A==",
-                "iterations":  200000
-            },
-    "verify":  {
-                   "iv":  "ZtA/5JPJVkddOqvzULd09g==",
-                   "ct":  "hjPvx0tKCeZxXTB6Qxg70A==",
-                   "mac":  "Qi8Q0aWsGzsa+mzubzrxUfLYzXsXk4vGzMgju2N3CpU="
-               },
-    "verifyLite":  {
-                       "iv":  "jOL92uSsHCTsqqUKeIngOA==",
-                       "ct":  "Y3lxOi1vIL0mxeGYOUUmiA==",
-                       "mac":  "z4+eScT0IG+VbHU7eXZ1T3xCVs9SoHzY//f/CWX00A0="
-                   },
-    "updated":  "20260825134219"
+    "v":  2,
+    "alg":  "PBKDF2-SHA256 / AES-256-CBC / HMAC-SHA256 (key wrapping)",
+    "updated":  "20260825140043"
 }

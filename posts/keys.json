@@ -1,0 +1,63 @@
+{
+    "v":  2,
+    "alg":  "PBKDF2-SHA256 / AES-256-CBC / HMAC-SHA256 (key wrapping)",
+    "iterations":  200000,
+    "entries":  {
+                    "gpq":  {
+                                "tier":  "full",
+                                "salt":  "X2DrVuG2tMJgH/ypW+MR1g==",
+                                "iv":  "WmmWZpiaJ1djYYxNSc0VjA==",
+                                "ct":  "fFPoL6GEmYRt8utLZsW6n9i1gFrTP50KDLcQKUenhsUJuas7KaQvlfgBiYiPZLwE+Wgu01rNy2YT1JrXSGjI1Dq4bYL49R2BJUP33JNY8nEDLQs6y5S0ARLinF39/HKdQgbThqWy2kaumbb7qQYSdA==",
+                                "mac":  "LqSRVMHoGalxLUb0Gt4OD1n7GJuNyUVyyb1ezOnOrOY="
+                            },
+                    "etm":  {
+                                "tier":  "full",
+                                "salt":  "fXOLEtoDYammKcvhhcQiow==",
+                                "iv":  "Lq3gfyRA+quL7kDNk2ghXQ==",
+                                "ct":  "74+W1ob9uSU7Faj9zYw/ptFx8tRczq6SLNv9QmZufGlt6OeI2zAkDGJqzMT9PT476R9u9GJyVSwTa0dDnyyui4oY1lSrJdfIW7gyDsJ6qIkWypT6GTLbnIbufB6HL/vj3yEHZ+mBQ88j50lE4jtdJg==",
+                                "mac":  "iJifkzqYKS0UiBVDDStaMbKWwUHkGaRbbzNw2bsg+Vs="
+                            },
+                    "bda":  {
+                                "tier":  "full",
+                                "salt":  "W+t3wDW1LNXuFQJXrfnU3Q==",
+                                "iv":  "Sz6n9pFrIlwSe7q+DQIebQ==",
+                                "ct":  "auziqUp6/wyBqWMfkdSLcfQwhyGjjIorTfSN7YzE7gJWjroinJhxBS9D0qoDDZia/5uKATcwPLyd4mWmBbAzKk7rgNbVvf0fSqHD313FT4uEHv0jsv+s+6qRLXguyEETvsjum2Sc2Qvv6jYPKjk9Iw==",
+                                "mac":  "dpV2xqg8LWHWvlMcPLYxaMl9mUynQYKHpBbOhzDehOs="
+                            },
+                    "3mt":  {
+                                "tier":  "full",
+                                "salt":  "3fyGrBlfJ0444Zv5skGgIg==",
+                                "iv":  "RrKWZmi6Yz7WrqMsgaDGAw==",
+                                "ct":  "dcTBFHometOx2CLiKcCxZtFqrVYeTlBWmdyBK0Q9EAhhMfyBQpoFQPThngAkp1bM3qEbSATeKn3J+dMmVc7s7x///Heo9TJVYImjKuKrLnIx8tTmp1dL68mlyCGkvSKNypZ2AWRp3h4B29YR5LSDDA==",
+                                "mac":  "MsxKVdEnVXK/lCfK5JFxidf5Sm9kulTH8Bu+qZdS+Qc="
+                            },
+                    "vz4":  {
+                                "tier":  "full",
+                                "salt":  "qEHsPTsw018OcbFxi7wjDw==",
+                                "iv":  "+9Te0g+7Y2I1O60+4HOJlw==",
+                                "ct":  "FJSdfMhjp/VoPeTpi1HSIYGRM7mdh+sf8HvcG+oKlprHYH9dSQ2tCxfC5OapR9a4v6z485oTTsXdcQEC4gVBnpx2MXIy52F0WjJNQWMKYlD0hW7AmES2OT9Efgj2fo4uT9sL3RIEpw3JYAs/YkNrjA==",
+                                "mac":  "HPiqtcwZmCHOkIJ0j0DTey9DDZY5Ij+lT7oadsSm2gg="
+                            },
+                    "sge":  {
+                                "tier":  "full",
+                                "salt":  "7O8oDGPY86Q1HqInik6I0w==",
+                                "iv":  "CT3NAaE8F7Ov4ZRsHrL9XQ==",
+                                "ct":  "jcxkX59L3/gfK94Lf1CuBH+d9yKOOE9GcHL5+3Mn9KEpaqcmNb+f+zRRe5XX19io74jkw1FLcDKr7JSOxTACqFEv1kEq43PZJOT5EFK3oklIdNn3A0JyqqBoc9TOPBleXU9bXEEfk6u4DwePeE/rfw==",
+                                "mac":  "eWT2zNdrC74qChaRb6C4t36ZdXz61dpyNsAZBFMNI2E="
+                            },
+                    "953":  {
+                                "tier":  "full",
+                                "salt":  "nLk8BgmntQ0OjC0jXjVr6w==",
+                                "iv":  "9ACEo1nTmjgvuiQrJNlwew==",
+                                "ct":  "6CdS7j1S9qSyrvzT4gjGzKnNv0yFP3k0TsU/2LochSGT1bxvfXAQms3ZijxKHK2rRjeM8dBYtaLFOO6HzQKYqjv8CiMlEUzLaAxdIxIaYai0FidRqKfT75/qkuhpLUZHvBzGAjoscfUhk10d3HK1fg==",
+                                "mac":  "VUdqYnqLQnMNTe+MifQ0FwtyUkt9Bfk4H/Wmj9pSSyA="
+                            },
+                    "7g2":  {
+                                "tier":  "full",
+                                "salt":  "0D0RU76Nbc4CMsK7+Zakgg==",
+                                "iv":  "E1yL+BFUEo9S6ewOas+GSg==",
+                                "ct":  "ncsvdyOjR/VGGx6RPGS+WSBFQGl3m7YAQahvgeCmK+OfSySNSskobFqRTewoVV5Tuxhjt1+5p27/e5kAQ9KTs7ecOM3/MngWcQiqws019yLtaNsnUBk6xfeDyE8BXnA7Cls/E00YFlqpMhHqK4H3yA==",
+                                "mac":  "UDNUFmKLhDSlhh7dkoaDeEezMYdcWFFzTq0XQ8t70VQ="
+                            }
+                }
+}
