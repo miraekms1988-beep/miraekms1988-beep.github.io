@@ -71,7 +71,8 @@ const state = {
   index: [],
   // 상시로 두는 것들. 글과 달리 등급 구분이 없어 축소판에도 그대로 나간다.
   banner: [],   // 상단에 늘 떠 있는 지표 (COFIX 신잔액 / CD 91일 / CP 91일)
-  pages: [],    // 옆으로 넘겨 보는 탭 (제도·규제 / 용어 노트)
+  policy: [],   // 부동산 제도 (data\policy.json -> 전용 서식으로 그린다)
+  pages: [],    // 마크다운 탭 (용어 노트)
   tab: 'posts',
   cache: new Map(),
   issCache: new Map(),
@@ -646,12 +647,25 @@ function renderList(startTab) {
       </div>
     </header>`;
 
-  // 상시 페이지의 표지. 작성자 줄은 넣지 않는다 - 글이 아니라 자료다.
+  // 상시 페이지의 표지. 제목만 다르고 틀은 채권동향과 똑같이 간다.
+  // 작성자 줄도 그대로 둔다 - 어느 화면에 있든 누가 만든 자료인지 보여야 한다.
+  const author = `
+    <div class="hero-author">
+      <span class="hero-avatar" aria-hidden="true">${escapeHtml(AUTHOR.name[0] || '')}</span>
+      <span class="hero-who">
+        <b>${escapeHtml(AUTHOR.name)} ${escapeHtml(AUTHOR.title)}</b>
+        <span>${escapeHtml(AUTHOR.org)} ${escapeHtml(AUTHOR.team)}</span>
+        <a class="hero-tel" href="tel:${escapeHtml((AUTHOR.tel || '').replace(/-/g, ''))}">${escapeHtml(AUTHOR.tel)}</a>
+      </span>
+      <span class="hero-cert">${escapeHtml(AUTHOR.cert)}</span>
+    </div>`;
+
   const pageHero = (p) => `
     <header class="hero">
       <div class="hero-body">
         <p class="hero-kicker">${escapeHtml(p.kicker || 'REFERENCE')}</p>
         <h1 class="hero-title">${escapeHtml(p.title)}</h1>
+        ${author}
         ${p.sub ? `<div class="hero-stats"><span>${escapeHtml(p.sub)}</span></div>` : ''}
       </div>
     </header>`;
@@ -694,6 +708,14 @@ function renderList(startTab) {
       ${more}
     </section>`;
 
+  // 제도는 전용 서식으로 그린다. 마크다운을 거치지 않는다.
+  const policySlide = state.policy.length ? `
+    <section class="slide" data-slug="policy">
+      ${pageHero({ kicker: 'POLICY & REGULATION', title: '부동산 제도 규제', sub: `${state.policy.length}건 · 발표일 기준` })}
+      ${banner}
+      <div class="page-body">${renderPolicySlide()}</div>
+    </section>` : '';
+
   const pageSlides = state.pages.map((p) => `
     <section class="slide" data-slug="${escapeHtml(p.slug)}">
       ${pageHero(p)}
@@ -702,7 +724,7 @@ function renderList(startTab) {
     </section>`).join('');
 
   els.view.innerHTML = `
-    <div class="deck">${postsSlide}${pageSlides}</div>
+    <div class="deck">${postsSlide}${policySlide}${pageSlides}</div>
     ${renderNext()}`;
 
   mountDeck();
@@ -772,8 +794,9 @@ function renderBanner() {
 /* 발행글 / 제도·규제 / 용어 노트를 옆으로 넘겨 오간다.
  * 세 화면이 같은 틀을 쓰므로 탭 줄을 각 화면이 똑같이 그린다. */
 function tabList() {
-  return [{ slug: 'posts', title: '채권동향' }]
-    .concat(state.pages.map((p) => ({ slug: p.slug, title: p.title })));
+  const list = [{ slug: 'posts', title: '채권동향' }];
+  if (state.policy.length) list.push({ slug: 'policy', title: '부동산 제도 규제' });
+  return list.concat(state.pages.map((p) => ({ slug: p.slug, title: p.title })));
 }
 
 /* 옆으로 더 있다는 것을 알리는 화살표 하나.
@@ -794,6 +817,71 @@ function renderNext() {
   // 화면 가장자리가 아니라 본문 상자 옆에 붙인다. 끝으로 밀어두면
   // 넓은 화면에서 본문과 멀어져 눈에 안 들어온다.
   return `<div class="navwrap">${arrow('prev')}${arrow('next')}</div>`;
+}
+
+/* ================= 부동산 제도 ================= */
+
+/* 제도 하나가 카드 하나다.
+ *
+ * 마크다운에 규칙을 얹어 그리던 것을 전용 서식으로 바꿨다. 손으로 쓴 글과
+ * 자동으로 붙는 기사가 따로 놀아 난잡했고, 기사가 제도가 아니라 날짜 밑에
+ * 붙어 무엇에 대한 기사인지 알 수 없었다. 이제 기사는 그 제도 안에 있다.
+ *
+ * 바뀌는 값은 표로 그리지 않는다. 좁은 화면에서 표는 가로로 넘쳐
+ * 읽으려면 옆으로 밀어야 한다. 한 줄에 '항목 / 이전 → 이후' 로 세운다. */
+function renderPolicyCard(p) {
+  const changes = (p.changes || []).map((c) => `
+    <li class="pc-row">
+      <span class="pc-label">${escapeHtml(c.label)}</span>
+      <span class="pc-move">
+        <span class="pc-from">${escapeHtml(c.from)}</span>
+        <span class="pc-arrow" aria-hidden="true">→</span>
+        <b class="pc-to">${escapeHtml(c.to)}</b>
+      </span>
+      ${c.when ? `<span class="pc-when">${escapeHtml(c.when)}</span>` : ''}
+    </li>`).join('');
+
+  const details = (p.details || []).map((d) => `
+    <details class="pfold">
+      <summary>${escapeHtml(d.title)}</summary>
+      ${(d.body || []).map((t) => `<p>${escapeHtml(t)}</p>`).join('')}
+    </details>`).join('');
+
+  const arts = (p.articles || []);
+  const articles = arts.length ? `
+    <details class="pfold pc-arts">
+      <summary>관련 기사 ${arts.length}건</summary>
+      <ul class="pc-links">
+        ${arts.map((a) => `
+          <li>
+            <a href="${escapeHtml(a.link)}" target="_blank" rel="noopener noreferrer">${escapeHtml(a.title)}</a>
+            <span>${escapeHtml(a.date)}</span>
+          </li>`).join('')}
+      </ul>
+    </details>` : '';
+
+  return `
+    <article class="pcard">
+      <header class="pc-head">
+        <h2>${escapeHtml(p.title)}</h2>
+        <div class="pc-meta">
+          ${p.announced ? `<span class="chip">${escapeHtml(p.announced)}</span>` : ''}
+          ${p.effect ? `<span class="pc-effect">${escapeHtml(p.effect)}</span>` : ''}
+        </div>
+      </header>
+      ${p.lead ? `<p class="pc-lead">${escapeHtml(p.lead)}</p>` : ''}
+      ${changes ? `<ul class="pc-changes">${changes}</ul>` : ''}
+      ${details}
+      ${articles}
+    </article>`;
+}
+
+function renderPolicySlide() {
+  return `
+    <p class="pc-intro">정부가 발표한 부동산·가계대출 제도입니다.
+      항목을 누르면 세부 내용이 열립니다.</p>
+    ${state.policy.map(renderPolicyCard).join('')}
+    <p class="pc-foot">정확한 내용은 각 부처 발표 자료를 확인하세요.</p>`;
 }
 
 /* 상시 페이지 본문을 카드로 나눈다.
@@ -1189,10 +1277,12 @@ async function unlock(password, persist) {
     const extra = JSON.parse(await openEnvelope(keys,
       await fetchJson(`${POSTS_DIR}/${encPath('pages.enc.json')}`)));
     state.banner = extra.banner || [];
+    state.policy = extra.policy || [];
     state.pages = extra.pages || [];
   } catch (err) {
     console.warn('상시 지표를 불러오지 못했습니다:', err);
     state.banner = [];
+    state.policy = [];
     state.pages = [];
   }
 
