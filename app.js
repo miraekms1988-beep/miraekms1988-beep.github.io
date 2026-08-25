@@ -617,7 +617,8 @@ function renderList(startTab) {
     return;
   }
 
-  // 표지. 글 목록 위에 한 번만 나온다.
+  // 표지. 화면마다 하나씩 둔다 - 옆으로 넘기면 표지째 넘어가야
+  // 각 화면이 독립된 페이지로 읽힌다.
   const latest = state.index[0];
   const span = state.index.length > 1
     ? `${formatDate(state.index[state.index.length - 1].date)} ~ ${formatDate(latest.date)}`
@@ -645,6 +646,16 @@ function renderList(startTab) {
       </div>
     </header>`;
 
+  // 상시 페이지의 표지. 작성자 줄은 넣지 않는다 - 글이 아니라 자료다.
+  const pageHero = (p) => `
+    <header class="hero">
+      <div class="hero-body">
+        <p class="hero-kicker">${escapeHtml(p.kicker || 'REFERENCE')}</p>
+        <h1 class="hero-title">${escapeHtml(p.title)}</h1>
+        ${p.sub ? `<div class="hero-stats"><span>${escapeHtml(p.sub)}</span></div>` : ''}
+      </div>
+    </header>`;
+
   const total = state.index.length;
   const shown = Math.min(listShown, total);
   const rest = total - shown;
@@ -665,9 +676,16 @@ function renderList(startTab) {
 
   // 세 화면을 한꺼번에 그려 가로로 늘어놓는다. 넘길 때마다 다시 그리면
   // 스크롤 위치가 튀고, 넘기는 도중에 옆 화면이 비어 보인다.
+  //
+  // 표지와 배너를 화면마다 넣는다. 위에 고정해 두면 아래쪽만 미끄러져
+  // '페이지가 넘어간다'는 느낌이 안 난다. 한 번에 한 화면만 보이므로
+  // 배너가 세 번 있어도 겹쳐 보이지 않는다.
+  const banner = renderBanner();
+
   const postsSlide = `
     <section class="slide" data-slug="posts">
       ${hero}
+      ${banner}
       <div class="list-head">
         <h2>발행글</h2>
         <span class="list-count">${shown} / ${total}편</span>
@@ -678,19 +696,14 @@ function renderList(startTab) {
 
   const pageSlides = state.pages.map((p) => `
     <section class="slide" data-slug="${escapeHtml(p.slug)}">
-      <article class="page">
-        <header class="post-head">
-          <h1 class="post-title">${escapeHtml(p.title)}</h1>
-          ${p.sub ? `<p class="post-sub">${escapeHtml(p.sub)}</p>` : ''}
-        </header>
-        <div class="prose">${renderMarkdown(p.body)}</div>
-      </article>
+      ${pageHero(p)}
+      ${banner}
+      <div class="prose">${renderMarkdown(p.body)}</div>
     </section>`).join('');
 
   els.view.innerHTML = `
-    ${renderBanner()}
-    ${renderTabs(state.tab)}
-    <div class="deck">${postsSlide}${pageSlides}</div>`;
+    <div class="deck">${postsSlide}${pageSlides}</div>
+    ${renderDots(state.tab)}`;
 
   mountDeck();
 
@@ -762,14 +775,18 @@ function tabList() {
     .concat(state.pages.map((p) => ({ slug: p.slug, title: p.title })));
 }
 
-function renderTabs(active) {
+/* 지금 몇 번째 화면인지 알려주는 점.
+ * 표지에 제목이 크게 들어가므로 이름표까지 둘 필요는 없다. 다만 화면이
+ * 몇 개인지는 보여야 한다 - 안 그러면 옆으로 넘길 수 있다는 걸 모른다.
+ * 데스크톱에는 손가락이 없으니 눌러서도 갈 수 있게 둔다. */
+function renderDots(active) {
   const tabs = tabList();
   if (tabs.length < 2) return '';
-  return `<nav class="tabs" role="tablist">${tabs.map((t) => `
-    <a class="tab${t.slug === active ? ' on' : ''}" role="tab"
-       data-slug="${escapeHtml(t.slug)}"
-       aria-selected="${t.slug === active}"
-       href="${t.slug === 'posts' ? '#/' : `#/x/${encodeURIComponent(t.slug)}`}">${escapeHtml(t.title)}</a>`).join('')}</nav>`;
+  return `<nav class="dots" role="tablist">${tabs.map((t) => `
+    <button class="dot${t.slug === active ? ' on' : ''}" role="tab" type="button"
+            data-slug="${escapeHtml(t.slug)}"
+            aria-selected="${t.slug === active}"
+            aria-label="${escapeHtml(t.title)}"><i></i><span>${escapeHtml(t.title)}</span></button>`).join('')}</nav>`;
 }
 
 /* 세 화면을 가로로 늘어놓고 스크롤 스냅으로 넘긴다.
@@ -797,7 +814,7 @@ function mountDeck() {
     const slug = slugs[Math.max(0, Math.min(slugs.length - 1, i))];
     if (slug === state.tab) return;
     state.tab = slug;
-    els.view.querySelectorAll('.tab').forEach((el) => {
+    els.view.querySelectorAll('.dot').forEach((el) => {
       const on = el.dataset.slug === slug;
       el.classList.toggle('on', on);
       el.setAttribute('aria-selected', on);
@@ -816,8 +833,8 @@ function mountDeck() {
     timer = setTimeout(sync, 60);
   }, { passive: true });
 
-  // 이름표를 누르면 그 칸으로 밀어준다. 데스크톱에는 손가락이 없다.
-  els.view.querySelectorAll('.tab').forEach((el) => {
+  // 점을 누르면 그 칸으로 밀어준다. 데스크톱에는 손가락이 없다.
+  els.view.querySelectorAll('.dot').forEach((el) => {
     el.addEventListener('click', (e) => {
       e.preventDefault();
       const i = slugs.indexOf(el.dataset.slug);

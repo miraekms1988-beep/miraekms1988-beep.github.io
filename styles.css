@@ -1120,36 +1120,47 @@ body {
   .bn-spark { height: 16px; }
 }
 
-/* ================= 탭 ================= */
+/* ================= 화면 표시 점 ================= */
 
-/* 채권동향 / 제도·규제 / 용어 노트. 손가락으로 옆으로 밀어도 넘어간다. */
-.tabs {
+/* 표지에 제목이 크게 들어가므로 이름표까지 둘 필요는 없다.
+   다만 화면이 몇 개인지는 보여야 한다 - 안 그러면 옆으로 넘길 수 있다는
+   걸 모른다. 아래쪽에 띄워 두고, 누르면 그 칸으로 간다. */
+.dots {
+  flex: 0 0 auto;
   display: flex;
-  gap: 4px;
-  margin: 18px 0 4px;
-  padding: 4px;
-  background: var(--surface-2);
-  border-radius: 12px;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 0 max(12px, env(safe-area-inset-bottom));
 }
 
-.tab {
-  flex: 1;
-  padding: 9px 6px;
-  text-align: center;
-  font-size: 13.5px; font-weight: 650;
+.dot {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 8px;
+  background: none; border: 0; cursor: pointer;
+  border-radius: 999px;
+  transition: background .16s;
+}
+.dot i {
+  display: block;
+  width: 6px; height: 6px;
+  border-radius: 999px;
+  background: var(--text-3);
+  opacity: .4;
+  transition: opacity .16s, width .16s, background .16s;
+}
+.dot span {
+  max-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 12px; font-weight: 650;
+  color: var(--accent);
   letter-spacing: -.02em;
-  color: var(--text-3);
-  text-decoration: none;
-  border-radius: 9px;
-  transition: color .16s, background .16s, box-shadow .16s;
+  transition: max-width .22s ease;
 }
-.tab:hover { color: var(--text-2); }
-.tab.on {
-  color: var(--text);
-  background: var(--surface);
-  box-shadow: var(--shadow-sm);
-}
-
+.dot.on i { width: 6px; opacity: 1; background: var(--accent); }
+.dot.on span { max-width: 120px; }
+.dot:hover i { opacity: .75; }
 /* ================= 가로 데크 ================= */
 
 /* 세 화면을 가로로 늘어놓고 스크롤 스냅으로 넘긴다.
@@ -1206,6 +1217,5 @@ body {
 .app:has(.view.deck-mode) { height: 100dvh; overflow: hidden; }
 .app:has(.view.deck-mode) .foot { display: none; }
 
-/* 이름표는 지금 어느 칸인지 알려주는 표시다. 눌러도 그 칸으로 밀어준다. */
-.tabs { flex: 0 0 auto; }
-.banner { flex: 0 0 auto; }
+/* 배너는 이제 각 화면 안에 있다. 표지 바로 아래에 붙는다. */
+.slide .banner { margin: -18px 0 22px; }
