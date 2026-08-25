@@ -597,11 +597,16 @@ function formatDate(iso) {
 const LIST_PAGE = 5;
 let listShown = LIST_PAGE;
 
-function renderList() {
+function renderList(startTab) {
   els.backBtn.hidden = true;
-  document.title = '주간 채권동향';
+  els.view.classList.add('deck-mode');
+  state.tab = startTab || 'posts';
+  document.title = state.tab === 'posts'
+    ? '주간 채권동향'
+    : `${(state.pages.find((p) => p.slug === state.tab) || {}).title} · 주간 채권동향`;
 
   if (!state.index.length) {
+    els.view.classList.remove('deck-mode');
     els.view.innerHTML = `
       <div class="empty">
         <p>아직 발행된 글이 없습니다.</p>
@@ -658,18 +663,36 @@ function renderList() {
     ? `<button class="more" id="more-btn" type="button">이전 글 ${rest}편 더 보기</button>`
     : '';
 
-  els.view.innerHTML = `
-    ${hero}
-    ${renderBanner()}
-    ${renderTabs('posts')}
-    <div class="list-head">
-      <h2>발행글</h2>
-      <span class="list-count">${shown} / ${total}편</span>
-    </div>
-    ${cards}
-    ${more}`;
+  // 세 화면을 한꺼번에 그려 가로로 늘어놓는다. 넘길 때마다 다시 그리면
+  // 스크롤 위치가 튀고, 넘기는 도중에 옆 화면이 비어 보인다.
+  const postsSlide = `
+    <section class="slide" data-slug="posts">
+      ${hero}
+      <div class="list-head">
+        <h2>발행글</h2>
+        <span class="list-count">${shown} / ${total}편</span>
+      </div>
+      ${cards}
+      ${more}
+    </section>`;
 
-  mountSwipe();
+  const pageSlides = state.pages.map((p) => `
+    <section class="slide" data-slug="${escapeHtml(p.slug)}">
+      <article class="page">
+        <header class="post-head">
+          <h1 class="post-title">${escapeHtml(p.title)}</h1>
+          ${p.sub ? `<p class="post-sub">${escapeHtml(p.sub)}</p>` : ''}
+        </header>
+        <div class="prose">${renderMarkdown(p.body)}</div>
+      </article>
+    </section>`).join('');
+
+  els.view.innerHTML = `
+    ${renderBanner()}
+    ${renderTabs(state.tab)}
+    <div class="deck">${postsSlide}${pageSlides}</div>`;
+
+  mountDeck();
 
   const btn = document.getElementById('more-btn');
   if (btn) {
@@ -744,79 +767,84 @@ function renderTabs(active) {
   if (tabs.length < 2) return '';
   return `<nav class="tabs" role="tablist">${tabs.map((t) => `
     <a class="tab${t.slug === active ? ' on' : ''}" role="tab"
+       data-slug="${escapeHtml(t.slug)}"
        aria-selected="${t.slug === active}"
        href="${t.slug === 'posts' ? '#/' : `#/x/${encodeURIComponent(t.slug)}`}">${escapeHtml(t.title)}</a>`).join('')}</nav>`;
 }
 
-/* 손가락으로 옆으로 밀면 이웃 탭으로 넘어간다.
- * 세로 스크롤이 주된 동작이라, 가로 이동이 세로보다 확실히 클 때만 잡는다.
- * 안 그러면 글을 읽으려고 스크롤할 때마다 탭이 넘어간다. */
-function mountSwipe() {
-  const root = els.view;
-  let x0 = null, y0 = null, lock = null;
+/* 세 화면을 가로로 늘어놓고 스크롤 스냅으로 넘긴다.
+ *
+ * 직접 손가락을 따라가게 만들지 않는다. 브라우저의 가로 스크롤에 맡기면
+ * 관성과 튕김이 공짜로 따라오고, 세로 스크롤과의 충돌도 브라우저가
+ * 알아서 가른다. 손으로 만들면 그 둘을 다 흉내내야 하고 늘 어설프다.
+ *
+ * 각 화면은 자기 세로 스크롤을 따로 갖는다. 그래서 용어 노트를 아래까지
+ * 읽다가 옆으로 넘겨도 채권동향은 보던 자리에 그대로 있다. */
+function mountDeck() {
+  const deck = els.view.querySelector('.deck');
+  if (!deck) return;
 
-  root.addEventListener('touchstart', (e) => {
-    if (e.touches.length !== 1) { x0 = null; return; }
-    x0 = e.touches[0].clientX;
-    y0 = e.touches[0].clientY;
-    lock = null;
+  const slugs = tabList().map((t) => t.slug);
+
+  // 지금 보고 있는 칸을 이름표에 반영한다.
+  //
+  // requestAnimationFrame 을 쓰면 안 된다. 화면이 그려지지 않는 상태
+  // (다른 탭에 가려짐 등)에서는 아예 불리지 않아 이름표가 멈춘다.
+  // 타이머는 상황을 타지 않는다.
+  let timer = null;
+  const sync = () => {
+    const i = Math.round(deck.scrollLeft / deck.clientWidth);
+    const slug = slugs[Math.max(0, Math.min(slugs.length - 1, i))];
+    if (slug === state.tab) return;
+    state.tab = slug;
+    els.view.querySelectorAll('.tab').forEach((el) => {
+      const on = el.dataset.slug === slug;
+      el.classList.toggle('on', on);
+      el.setAttribute('aria-selected', on);
+    });
+    document.title = slug === 'posts'
+      ? '주간 채권동향'
+      : `${(state.pages.find((p) => p.slug === slug) || {}).title} · 주간 채권동향`;
+    // 뒤로가기로 돌아올 자리를 남긴다. 히스토리를 쌓지는 않는다 -
+    // 쌓으면 옆으로 몇 번 넘긴 만큼 뒤로가기를 눌러야 사이트를 빠져나간다.
+    const hash = slug === 'posts' ? '#/' : `#/x/${encodeURIComponent(slug)}`;
+    if (location.hash !== hash) history.replaceState(null, '', hash);
+  };
+
+  deck.addEventListener('scroll', () => {
+    clearTimeout(timer);
+    timer = setTimeout(sync, 60);
   }, { passive: true });
 
-  root.addEventListener('touchmove', (e) => {
-    if (x0 === null || lock === 'y') return;
-    const dx = e.touches[0].clientX - x0;
-    const dy = e.touches[0].clientY - y0;
-    if (lock === null && (Math.abs(dx) > 12 || Math.abs(dy) > 12)) {
-      lock = Math.abs(dx) > Math.abs(dy) * 1.6 ? 'x' : 'y';
-    }
-    if (lock === 'x') root.style.transform = `translateX(${dx * 0.25}px)`;
-  }, { passive: true });
+  // 이름표를 누르면 그 칸으로 밀어준다. 데스크톱에는 손가락이 없다.
+  els.view.querySelectorAll('.tab').forEach((el) => {
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      const i = slugs.indexOf(el.dataset.slug);
+      if (i >= 0) deck.scrollTo({ left: i * deck.clientWidth, behavior: 'smooth' });
+    });
+  });
 
-  root.addEventListener('touchend', (e) => {
-    root.style.transform = '';
-    if (x0 === null || lock !== 'x') { x0 = null; return; }
-    const dx = e.changedTouches[0].clientX - x0;
-    x0 = null;
-    if (Math.abs(dx) < 60) return;
-
-    const tabs = tabList();
-    const cur = tabs.findIndex((t) => t.slug === state.tab);
-    const next = cur + (dx < 0 ? 1 : -1);
-    if (next < 0 || next >= tabs.length) return;
-    const t = tabs[next];
-    location.hash = t.slug === 'posts' ? '#/' : `#/x/${encodeURIComponent(t.slug)}`;
-  }, { passive: true });
+  // 처음 열 때는 주소가 가리키는 칸에서 시작한다. 애니메이션 없이 바로.
+  const start = slugs.indexOf(state.tab);
+  if (start > 0) deck.scrollLeft = start * deck.clientWidth;
 }
 
-// 상시 페이지. 글과 달리 목록에 없고 발행 주차도 없다.
+/* 주소로 바로 들어온 경우(#/x/glossary)는 그 칸에서 시작하도록
+ * 목록 전체를 그리고 자리만 옮긴다. 별도 화면으로 그리지 않는다 -
+ * 그러면 옆으로 넘길 이웃이 없어진다. */
 function renderPage(slug) {
-  const page = state.pages.find((p) => p.slug === slug);
-  if (!page) { location.hash = '#/'; return; }
-
-  state.tab = slug;
-  els.backBtn.hidden = true;
-  document.title = `${page.title} · 주간 채권동향`;
-
-  els.view.innerHTML = `
-    ${renderBanner()}
-    ${renderTabs(slug)}
-    <article class="page">
-      <header class="post-head">
-        <h1 class="post-title">${escapeHtml(page.title)}</h1>
-        ${page.sub ? `<p class="post-sub">${escapeHtml(page.sub)}</p>` : ''}
-      </header>
-      <div class="prose">${renderMarkdown(page.body)}</div>
-    </article>`;
-
-  window.scrollTo(0, 0);
-  els.view.focus();
-  setProgress(false);
-  mountSwipe();
+  if (!state.pages.some((p) => p.slug === slug)) { location.hash = '#/'; return; }
+  renderList(slug);
 }
 
 async function renderPost(slug) {
   const meta = state.index.find((p) => p.slug === slug);
   if (!meta) { location.hash = '#/'; return; }
+
+  // 글을 열 때는 가로 데크에서 빠져나온다. 글 안에서까지 옆으로 넘어가면
+  // 읽다가 손이 스치기만 해도 딴 화면으로 튄다.
+  els.view.classList.remove('deck-mode');
 
   els.backBtn.hidden = false;
   document.title = `${meta.title} · 주간 채권동향`;

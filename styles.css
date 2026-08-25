@@ -1150,8 +1150,49 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
-/* 옆으로 미는 동안 화면이 손가락을 따라온다. 손을 떼면 제자리로. */
-.view { transition: transform .18s cubic-bezier(.22,.61,.36,1); will-change: transform; }
+/* ================= 가로 데크 ================= */
+
+/* 세 화면을 가로로 늘어놓고 스크롤 스냅으로 넘긴다.
+   브라우저의 가로 스크롤에 맡기면 관성과 튕김이 공짜로 따라오고,
+   세로 스크롤과의 충돌도 브라우저가 알아서 가른다. */
+.view.deck-mode {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  /* 데크가 화면 높이를 꽉 채워야 각 칸이 자기 세로 스크롤을 갖는다.
+     아래 여백은 데크 안쪽으로 옮긴다. */
+  padding-bottom: 0;
+  overflow: hidden;
+}
+
+.deck {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  /* scroll-behavior: smooth 를 여기 두면 안 된다. 자리를 잡아 줄 때까지
+     애니메이션이 걸려서, 주소로 바로 들어왔을 때(#/x/glossary) 첫 칸에서
+     스르륵 밀려가는 꼴이 된다. 부드럽게 갈 곳은 이름표를 눌렀을 때뿐이라
+     거기서만 scrollTo({behavior:'smooth'}) 로 준다. */
+  overscroll-behavior-x: contain;
+  /* 가로 스크롤막대는 감춘다. 손가락과 이름표로만 움직인다. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  margin: 0 -18px;          /* .view 좌우 여백을 칸 안쪽으로 넘긴다 */
+}
+.deck::-webkit-scrollbar { display: none; }
+
+.slide {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;   /* 한 번에 한 칸씩만 넘어간다 */
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding: 0 18px 56px;
+  -webkit-overflow-scrolling: touch;
+}
 
 .page .post-head { margin-bottom: 18px; }
 .post-sub {
@@ -1159,3 +1200,12 @@ body {
   font-size: 13.5px;
   color: var(--text-3);
 }
+
+/* 데크 모드에서는 앱이 화면 높이에 갇힌다. 그래야 각 칸이 자기 세로
+   스크롤을 갖고, 옆으로 넘겨도 보던 자리가 유지된다. */
+.app:has(.view.deck-mode) { height: 100dvh; overflow: hidden; }
+.app:has(.view.deck-mode) .foot { display: none; }
+
+/* 이름표는 지금 어느 칸인지 알려주는 표시다. 눌러도 그 칸으로 밀어준다. */
+.tabs { flex: 0 0 auto; }
+.banner { flex: 0 0 auto; }
