@@ -698,14 +698,15 @@ function renderList(startTab) {
     <section class="slide" data-slug="${escapeHtml(p.slug)}">
       ${pageHero(p)}
       ${banner}
-      <div class="prose">${renderMarkdown(p.body)}</div>
+      <div class="page-body"><div class="prose">${renderMarkdown(p.body)}</div></div>
     </section>`).join('');
 
   els.view.innerHTML = `
     <div class="deck">${postsSlide}${pageSlides}</div>
-    ${renderDots(state.tab)}`;
+    ${renderNext()}`;
 
   mountDeck();
+  els.view.querySelectorAll('.slide .page-body').forEach(groupIntoCards);
 
   const btn = document.getElementById('more-btn');
   if (btn) {
@@ -775,18 +776,45 @@ function tabList() {
     .concat(state.pages.map((p) => ({ slug: p.slug, title: p.title })));
 }
 
-/* 지금 몇 번째 화면인지 알려주는 점.
- * 표지에 제목이 크게 들어가므로 이름표까지 둘 필요는 없다. 다만 화면이
- * 몇 개인지는 보여야 한다 - 안 그러면 옆으로 넘길 수 있다는 걸 모른다.
- * 데스크톱에는 손가락이 없으니 눌러서도 갈 수 있게 둔다. */
-function renderDots(active) {
-  const tabs = tabList();
-  if (tabs.length < 2) return '';
-  return `<nav class="dots" role="tablist">${tabs.map((t) => `
-    <button class="dot${t.slug === active ? ' on' : ''}" role="tab" type="button"
-            data-slug="${escapeHtml(t.slug)}"
-            aria-selected="${t.slug === active}"
-            aria-label="${escapeHtml(t.title)}"><i></i><span>${escapeHtml(t.title)}</span></button>`).join('')}</nav>`;
+/* 옆으로 더 있다는 것을 알리는 화살표 하나.
+ *
+ * 점을 여러 개 늘어놓으면 '표시'로만 읽히고 눌러볼 생각을 안 한다.
+ * 화살표 하나가 가장자리에 떠 있으면 "뭐가 더 있나" 하고 눌러보게 된다.
+ * 마지막 칸에서는 방향을 뒤집어 처음으로 돌아간다. */
+function renderNext() {
+  if (tabList().length < 2) return '';
+  return `
+    <button class="nextbtn" id="next-btn" type="button" aria-label="다음 화면">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+        <path d="M9 5l7 7-7 7" fill="none" stroke="currentColor"
+              stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>`;
+}
+
+/* 상시 페이지 본문을 카드로 나눈다.
+ *
+ * 마크다운은 h2 로만 나뉘어 있어 그대로 두면 글자만 길게 이어진다.
+ * 발행글 목록의 하얀 상자처럼 덩어리를 지어 주면 훑기가 쉬워진다.
+ * 마크다운 문법을 늘리는 대신 그린 뒤에 묶는다 - 본문 쓰는 쪽은 그대로 둔다. */
+function groupIntoCards(root) {
+  const prose = root.querySelector('.prose');
+  if (!prose) return;
+
+  const kids = [...prose.children];
+  if (!kids.some((el) => el.tagName === 'H2')) return;
+
+  const frag = document.createDocumentFragment();
+  let card = null;
+  for (const el of kids) {
+    if (el.tagName === 'H2') {
+      card = document.createElement('section');
+      card.className = 'pcard';
+      frag.appendChild(card);
+    }
+    (card || frag).appendChild(el);
+  }
+  prose.appendChild(frag);
 }
 
 /* 세 화면을 가로로 늘어놓고 스크롤 스냅으로 넘긴다.
@@ -814,11 +842,10 @@ function mountDeck() {
     const slug = slugs[Math.max(0, Math.min(slugs.length - 1, i))];
     if (slug === state.tab) return;
     state.tab = slug;
-    els.view.querySelectorAll('.dot').forEach((el) => {
-      const on = el.dataset.slug === slug;
-      el.classList.toggle('on', on);
-      el.setAttribute('aria-selected', on);
-    });
+    // 마지막 칸에서는 화살표를 뒤집는다. 더 갈 데가 없는데 오른쪽을
+    // 가리키고 있으면 눌러도 아무 일이 없어 고장난 것처럼 보인다.
+    const btn = els.view.querySelector('.nextbtn');
+    if (btn) btn.classList.toggle('back', i >= slugs.length - 1);
     document.title = slug === 'posts'
       ? '주간 채권동향'
       : `${(state.pages.find((p) => p.slug === slug) || {}).title} · 주간 채권동향`;
@@ -833,14 +860,15 @@ function mountDeck() {
     timer = setTimeout(sync, 60);
   }, { passive: true });
 
-  // 점을 누르면 그 칸으로 밀어준다. 데스크톱에는 손가락이 없다.
-  els.view.querySelectorAll('.dot').forEach((el) => {
-    el.addEventListener('click', (e) => {
-      e.preventDefault();
-      const i = slugs.indexOf(el.dataset.slug);
-      if (i >= 0) deck.scrollTo({ left: i * deck.clientWidth, behavior: 'smooth' });
+  // 화살표를 누르면 다음 칸으로. 마지막이면 처음으로 돌아간다.
+  const next = els.view.querySelector('.nextbtn');
+  if (next) {
+    next.addEventListener('click', () => {
+      const i = Math.round(deck.scrollLeft / deck.clientWidth);
+      const to = i >= slugs.length - 1 ? 0 : i + 1;
+      deck.scrollTo({ left: to * deck.clientWidth, behavior: 'smooth' });
     });
-  });
+  }
 
   // 처음 열 때는 주소가 가리키는 칸에서 시작한다. 애니메이션 없이 바로.
   const start = slugs.indexOf(state.tab);

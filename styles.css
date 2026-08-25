@@ -1120,47 +1120,46 @@ body {
   .bn-spark { height: 16px; }
 }
 
-/* ================= 화면 표시 점 ================= */
+/* ================= 다음 화면 화살표 ================= */
 
-/* 표지에 제목이 크게 들어가므로 이름표까지 둘 필요는 없다.
-   다만 화면이 몇 개인지는 보여야 한다 - 안 그러면 옆으로 넘길 수 있다는
-   걸 모른다. 아래쪽에 띄워 두고, 누르면 그 칸으로 간다. */
-.dots {
-  flex: 0 0 auto;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 0 max(12px, env(safe-area-inset-bottom));
-}
-
-.dot {
-  display: flex; align-items: center; gap: 6px;
-  padding: 5px 8px;
-  background: none; border: 0; cursor: pointer;
-  border-radius: 999px;
-  transition: background .16s;
-}
-.dot i {
-  display: block;
-  width: 6px; height: 6px;
-  border-radius: 999px;
-  background: var(--text-3);
-  opacity: .4;
-  transition: opacity .16s, width .16s, background .16s;
-}
-.dot span {
-  max-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  font-size: 12px; font-weight: 650;
+/* 점을 여러 개 늘어놓으면 '표시'로만 읽히고 눌러볼 생각을 안 한다.
+   화살표 하나가 가장자리에 떠 있으면 "뭐가 더 있나" 하고 눌러보게 된다.
+   처음 몇 초만 살짝 흔들어 눈에 띄게 하고, 그 뒤에는 조용히 있는다. */
+.nextbtn {
+  position: fixed;
+  right: max(14px, env(safe-area-inset-right));
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 15;
+  width: 42px; height: 42px;
+  display: grid; place-items: center;
   color: var(--accent);
-  letter-spacing: -.02em;
-  transition: max-width .22s ease;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  cursor: pointer;
+  animation: nudge 1.6s ease-in-out 3;
+  transition: background .16s, transform .16s;
 }
-.dot.on i { width: 6px; opacity: 1; background: var(--accent); }
-.dot.on span { max-width: 120px; }
-.dot:hover i { opacity: .75; }
+.nextbtn:hover { background: var(--surface); }
+.nextbtn:active { transform: translateY(-50%) scale(.94); }
+.nextbtn svg { transition: transform .22s cubic-bezier(.22,.61,.36,1); }
+.nextbtn.back svg { transform: rotate(180deg); }
+
+@keyframes nudge {
+  0%, 100% { transform: translateY(-50%) translateX(0); }
+  50%      { transform: translateY(-50%) translateX(5px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nextbtn { animation: none; }
+}
+
+@media (max-width: 480px) {
+  .nextbtn { width: 38px; height: 38px; right: 10px; }
+}
 /* ================= 가로 데크 ================= */
 
 /* 세 화면을 가로로 늘어놓고 스크롤 스냅으로 넘긴다.
@@ -1219,3 +1218,38 @@ body {
 
 /* 배너는 이제 각 화면 안에 있다. 표지 바로 아래에 붙는다. */
 .slide .banner { margin: -18px 0 22px; }
+
+/* 세로 스크롤막대를 감춘다. 화면마다 막대가 하나씩 생기면 지저분하다. */
+.slide { scrollbar-width: none; -ms-overflow-style: none; }
+.slide::-webkit-scrollbar { display: none; }
+
+/* ================= 상시 페이지 카드 ================= */
+
+/* 발행글 목록의 하얀 상자와 같은 결. 글자만 길게 이어지면 훑기가 어렵다. */
+.page-body .prose { max-width: none; }
+
+.pcard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 20px 20px 16px;
+  margin: 0 0 14px;
+}
+
+.pcard > h2 {
+  margin: 0 0 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-soft);
+  font-size: 16px; font-weight: 750;
+  letter-spacing: -.028em;
+  color: var(--text);
+}
+.pcard > h2 + * { margin-top: 0; }
+.pcard > *:last-child { margin-bottom: 0; }
+
+/* 카드 안의 표는 테두리를 덜어낸다. 상자 안에 상자가 생긴다. */
+.pcard .table-wrap { margin: 12px 0; border: 0; box-shadow: none; }
+
+/* 카드 앞의 안내 문단 */
+.page-body .prose > p:first-child { color: var(--text-2); }
