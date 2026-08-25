@@ -58,6 +58,13 @@
                                 "iv":  "E1yL+BFUEo9S6ewOas+GSg==",
                                 "ct":  "ncsvdyOjR/VGGx6RPGS+WSBFQGl3m7YAQahvgeCmK+OfSySNSskobFqRTewoVV5Tuxhjt1+5p27/e5kAQ9KTs7ecOM3/MngWcQiqws019yLtaNsnUBk6xfeDyE8BXnA7Cls/E00YFlqpMhHqK4H3yA==",
                                 "mac":  "UDNUFmKLhDSlhh7dkoaDeEezMYdcWFFzTq0XQ8t70VQ="
+                            },
+                    "yb4":  {
+                                "tier":  "full",
+                                "salt":  "wBsYdmEAX+UVjmRqMVjiew==",
+                                "iv":  "/jwiSd96hcXk1Z5y4y+r7g==",
+                                "ct":  "UzNV4n+m2DgbUpxOoEX/BpX09nLrm9pSKINkx9Hm5gRZe5926ixPZmo5IgTLLtyzmuiYdJ3IrbX5vQCH7q3+ehM5mYK2pjUqSxDhbvL/cydlEJ7d5w7dFBP9bO+GYwY8eWqVfNmcRFwkG+1gjPnWcg==",
+                                "mac":  "EdmcLwhgFZp96GYPtCLiAraFGXBIXd49th0oM98ZKvE="
                             }
                 }
 }
