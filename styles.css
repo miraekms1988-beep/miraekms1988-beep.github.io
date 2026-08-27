@@ -1110,6 +1110,35 @@ body {
   letter-spacing: -.01em;
 }
 
+/* 마지막 수집 시각.
+ *
+ * 평소에는 배너 바닥에 깔린 작은 글씨로 두어 읽는 데 방해가 되지 않게
+ * 하고, 낡으면 그때 눈에 띄게 바꾼다. 늘 노란 띠로 떠 있으면 며칠 만에
+ * 배경이 되어 정작 멈췄을 때 안 보인다.
+ *
+ * 배너가 3열 격자라 한 줄을 통으로 쓰려면 끝까지 걸쳐야 한다. */
+.bn-fresh {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 7px 12px;
+  background: var(--surface);
+  font-size: 11px;
+  color: var(--text-3);
+  text-align: center;
+  letter-spacing: -.01em;
+}
+.bn-fresh i { font-style: normal; opacity: .72; }
+
+.bn-fresh.stale {
+  background: color-mix(in srgb, #b4540a 12%, var(--surface));
+  color: color-mix(in srgb, #b4540a 82%, var(--text));
+  font-size: 12px;
+}
+.bn-fresh.stale b {
+  font-weight: 700;
+  color: color-mix(in srgb, #b4540a 92%, var(--text));
+}
+
 @media (max-width: 560px) {
   .banner { border-radius: 14px; }
   .bn-item { padding: 11px 10px 9px; }

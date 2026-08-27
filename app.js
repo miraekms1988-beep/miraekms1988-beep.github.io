@@ -73,6 +73,8 @@ const state = {
   banner: [],   // 상단에 늘 떠 있는 지표 (COFIX 신잔액 / CD 91일 / CP 91일)
   policy: [],   // 부동산 제도 (data\policy.json -> 전용 서식으로 그린다)
   pages: [],    // 마크다운 탭 (용어 노트)
+  updated: '',    // 파이프라인이 마지막으로 돈 시각 (KST 표기용)
+  updatedAt: '',  // 같은 시각의 UTC 원본. 신선도 계산은 이걸로 한다.
   tab: 'posts',
   cache: new Map(),
   issCache: new Map(),
@@ -790,7 +792,45 @@ function renderBanner() {
       </div>`;
   }).join('');
 
-  return `<section class="banner" aria-label="주요 지표">${cells}</section>`;
+  return `<section class="banner" aria-label="주요 지표">${cells}${renderFreshness()}</section>`;
+}
+
+/* 마지막으로 수집이 돈 시각.
+ *
+ * 수집이 멈춰도 아무 소리가 안 난다. Actions 의 실패 알림은 if: failure()
+ * 라서 '실행이 아예 안 되는' 경우를 못 잡고, 저장소는 커밋이 끊길 뿐이고,
+ * 사이트는 옛 화면을 그대로 보여준다. 8/26 밤에 예약 실행이 조용히 멈췄을
+ * 때 Actions 탭은 101건 전부 초록색이었고, 그래서 8/27 금통위 기사를
+ * 하루 통째로 놓쳤다.
+ *
+ * 그래서 Actions 밖에 신호를 하나 둔다. 사이트를 열 때마다 보이므로
+ * 예약 실행이 멈춰도 작동한다 - 오히려 멈춰야 눈에 띈다. */
+const STALE_HOURS = 8;   // 3시간 주기니 두세 번 걸러야 낡은 것으로 본다
+
+function renderFreshness() {
+  const iso = state.updatedAt;
+  const shown = state.updated;
+  if (!shown) return '';
+
+  // updatedAt 이 없는 옛 파일이면 시각만 조용히 적고 판정은 하지 않는다.
+  const t = iso ? Date.parse(iso) : NaN;
+  if (!isFinite(t)) {
+    return `<p class="bn-fresh">마지막 수집 ${escapeHtml(shown)}</p>`;
+  }
+
+  const hours = (Date.now() - t) / 3600000;
+  // 러너 시계가 조금 앞서 있어도 '-1시간 전'이 되지 않게 바닥을 둔다.
+  const age = hours < 1
+    ? '방금'
+    : hours < 24
+      ? `${Math.floor(hours)}시간 전`
+      : `${Math.floor(hours / 24)}일 전`;
+
+  const stale = hours >= STALE_HOURS;
+  const mark = stale ? '<b>수집이 멈춰 있습니다</b> · ' : '';
+  return `<p class="bn-fresh${stale ? ' stale' : ''}">
+            ${mark}마지막 수집 ${escapeHtml(shown)} <i>(${age})</i>
+          </p>`;
 }
 
 /* ================= 탭 ================= */
@@ -1291,11 +1331,15 @@ async function unlock(password, persist) {
     state.banner = extra.banner || [];
     state.policy = extra.policy || [];
     state.pages = extra.pages || [];
+    state.updated = extra.updated || '';
+    state.updatedAt = extra.updatedAt || '';
   } catch (err) {
     console.warn('상시 지표를 불러오지 못했습니다:', err);
     state.banner = [];
     state.policy = [];
     state.pages = [];
+    state.updated = '';
+    state.updatedAt = '';
   }
 
   (persist ? localStorage : sessionStorage).setItem(STORAGE_KEY, password);
