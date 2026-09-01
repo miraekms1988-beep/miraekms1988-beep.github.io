@@ -874,16 +874,22 @@ function renderNext() {
  * 바뀌는 값은 표로 그리지 않는다. 좁은 화면에서 표는 가로로 넘쳐
  * 읽으려면 옆으로 밀어야 한다. 한 줄에 '항목 / 이전 → 이후' 로 세운다. */
 function renderPolicyCard(p) {
-  const changes = (p.changes || []).map((c) => `
+  // 새로 생기는 제도는 '전' 이 없다. 그때 '— → 30% 이상' 으로 그리면
+  // 취소선 그은 줄표가 먼저 눈에 걸리고 줄만 길어진다. 값만 보여준다.
+  const changes = (p.changes || []).map((c) => {
+    const had = c.from && c.from !== '—' && c.from !== '-';
+    const move = had
+      ? `<span class="pc-from">${escapeHtml(c.from)}</span>
+         <span class="pc-arrow" aria-hidden="true">→</span>
+         <b class="pc-to">${escapeHtml(c.to)}</b>`
+      : `<b class="pc-to">${escapeHtml(c.to)}</b>`;
+    return `
     <li class="pc-row">
       <span class="pc-label">${escapeHtml(c.label)}</span>
-      <span class="pc-move">
-        <span class="pc-from">${escapeHtml(c.from)}</span>
-        <span class="pc-arrow" aria-hidden="true">→</span>
-        <b class="pc-to">${escapeHtml(c.to)}</b>
-      </span>
+      <span class="pc-move">${move}</span>
       ${c.when ? `<span class="pc-when">${escapeHtml(c.when)}</span>` : ''}
-    </li>`).join('');
+    </li>`;
+  }).join('');
 
   const details = (p.details || []).map((d) => `
     <details class="pfold">

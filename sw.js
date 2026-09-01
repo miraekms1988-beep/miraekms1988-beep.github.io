@@ -5,7 +5,7 @@
  */
 /* 이름을 바꾸면 activate 에서 옛 캐시를 지우고 셸을 새로 받는다.
    CSS/JS 를 고쳤는데 화면이 안 바뀌면 여기 숫자를 올린다. */
-const CACHE = 'bond-weekly-v19';
+const CACHE = 'bond-weekly-v20';
 const SHELL = [
   './',
   './index.html',
