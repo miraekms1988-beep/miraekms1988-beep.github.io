@@ -1137,7 +1137,7 @@ function mountLatestSwap(root, meta) {
     if (swapSeen()) sw.classList.add('seen');
     sw.innerHTML = `
       <button type="button" class="on" data-v="week">해당 주차</button>
-      <button type="button" data-v="new">최신 <b>${escapeHtml(shortDate(asOf))}</b></button>`;
+      <button type="button" data-v="new"><span>최신 <b>${escapeHtml(shortDate(asOf))}</b></span></button>`;
     head.after(sw);
 
     sw.addEventListener('click', (e) => {

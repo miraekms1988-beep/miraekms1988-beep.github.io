@@ -1593,50 +1593,16 @@ body {
    바뀐 표에 표시를 남기지 않는다 - 서식이 완전히 같아야 눈이 같은 자리에서
    숫자만 따라간다. 무엇을 보고 있는지는 스위치가 말해 준다. */
 .tswitch {
-  position: relative;
   display: inline-flex;
   margin: -2px 0 9px;
-  padding: 2px;
-  border: 0;
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-/* 테두리를 한 바퀴 도는 파란 빛.
-   스위치가 있는 줄 모르면 표가 바뀔 수 있다는 것도 모른다. 그래서 처음
-   보는 사람에게는 눈에 띄어야 한다. 한 번 눌러 본 뒤에는 멈춘다(.seen) -
-   계속 돌면 읽는 데 방해가 된다. */
-.tswitch::before {
-  content: '';
-  position: absolute;
-  left: 50%; top: 50%;
-  width: 240%; aspect-ratio: 1;
-  transform: translate(-50%, -50%);
-  background: conic-gradient(transparent 0 60%, var(--accent) 80%, transparent 92%);
-  animation: tspin 2.4s linear infinite;
-}
-/* 안쪽을 덮어 1.5px 테두리만 남긴다 */
-.tswitch::after {
-  content: '';
-  position: absolute;
-  inset: 1.5px;
+  padding: 1px;
+  border: 1px solid var(--border);
   border-radius: 999px;
   background: color-mix(in srgb, var(--text) 4%, var(--surface));
-}
-.tswitch.seen::before { display: none; }
-.tswitch.seen { border: 1px solid var(--border); padding: 1px; }
-
-@keyframes tspin { to { transform: translate(-50%, -50%) rotate(1turn); } }
-
-/* 움직임을 줄여 달라고 한 사람에게는 돌리지 않는다. 대신 테두리를 남겨
-   여기에 무언가 있다는 것은 알린다. */
-@media (prefers-reduced-motion: reduce) {
-  .tswitch::before { animation: none; background: var(--accent); }
 }
 
 .tswitch button {
   position: relative;
-  z-index: 1;
   padding: 3px 11px;
   border: 0; border-radius: 999px;
   background: transparent;
@@ -1655,6 +1621,45 @@ body {
   box-shadow: 0 1px 2px rgba(0, 0, 0, .08);
 }
 .tswitch button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* '최신' 쪽에만 파란 빛이 한 바퀴 돈다.
+   스위치 전체를 두르면 어느 쪽을 누르라는 것인지 안 보인다. 새 것이 있는
+   쪽만 돌아야 눈이 거기로 간다.
+   한 번 눌러 본 뒤에는 멈춘다(.seen) - 있는 줄 알고 나면 계속 도는 것이
+   읽는 데 방해가 된다. */
+.tswitch button[data-v="new"] { overflow: hidden; }
+.tswitch button[data-v="new"]::before {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 200%; aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: conic-gradient(transparent 0 58%, var(--accent) 80%, transparent 92%);
+  animation: tspin 2.2s linear infinite;
+}
+/* 안쪽을 덮어 1.5px 테두리만 남긴다. 선택된 상태면 흰 알약 색으로 덮는다. */
+.tswitch button[data-v="new"]::after {
+  content: '';
+  position: absolute;
+  inset: 1.5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 4%, var(--surface));
+}
+.tswitch button[data-v="new"].on::after { background: var(--surface); }
+/* 글자가 테두리·덮개보다 위에 있어야 한다 */
+.tswitch button[data-v="new"] > * { position: relative; z-index: 1; }
+.tswitch button[data-v="new"] { z-index: 0; }
+
+.tswitch.seen button[data-v="new"]::before,
+.tswitch.seen button[data-v="new"]::after { display: none; }
+
+@keyframes tspin { to { transform: translate(-50%, -50%) rotate(1turn); } }
+
+/* 움직임을 줄여 달라고 한 사람에게는 돌리지 않는다. 대신 테두리를 남겨
+   여기에 무언가 있다는 것은 알린다. */
+@media (prefers-reduced-motion: reduce) {
+  .tswitch button[data-v="new"]::before { animation: none; background: var(--accent); }
+}
 
 @media (max-width: 460px) {
   .tswitch button { padding: 3px 9px; font-size: 11px; }
