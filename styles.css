@@ -1586,92 +1586,47 @@ body {
   word-break: keep-all;
 }
 
-/* ================= 최신 금리 팝업 ================= */
+/* ================= 표 위 전환 스위치 ================= */
 
-/* 글은 그 주에 얼어붙는다. 지난주 글을 여는 사람이 알고 싶은 것은 어제
-   숫자라, 글 머리의 이 칩을 누르면 최신 표가 뜬다. 글 안의 표는 그 주의
-   기록이라 그대로 둔다. */
-.freshbtn {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 2px 9px 2px 7px;
-  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--accent) 8%, transparent);
-  color: var(--accent);
-  font: inherit; font-size: 11.5px; font-weight: 650;
-  letter-spacing: -.01em;
-  cursor: pointer;
-  transition: background .15s, border-color .15s;
-}
-.freshbtn:hover { background: color-mix(in srgb, var(--accent) 15%, transparent); }
-.freshbtn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.freshbtn svg { flex: 0 0 auto; }
-
-body.modal-open { overflow: hidden; }
-
-.modal-back {
-  position: fixed; inset: 0; z-index: 60;
-  display: flex; align-items: center; justify-content: center;
-  padding: 16px;
-  background: color-mix(in srgb, #0b0f17 62%, transparent);
-  animation: modalIn .14s ease-out;
-}
-@keyframes modalIn { from { opacity: 0 } to { opacity: 1 } }
-
-.modal {
-  display: flex; flex-direction: column;
-  width: min(760px, 100%);
-  max-height: min(86vh, 900px);
-  border-radius: 16px;
-  background: var(--card);
+/* 전단채 두 표만 그 자리에서 최신 것으로 바꿀 수 있다. 글의 표는 그 주의
+   기록이라 지우지 않고 되돌릴 수 있게 둔다. 서식이 같으므로 눈이 같은
+   자리에서 숫자만 따라가면 된다. */
+.tswitch {
+  display: inline-flex;
+  margin: -2px 0 9px;
+  padding: 2px;
   border: 1px solid var(--line);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, .28);
-  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 4%, transparent);
 }
-
-.modal-head {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
-  padding: 16px 18px 13px;
-  border-bottom: 1px solid var(--line);
-}
-.modal-head h2 { margin: 0; font-size: 16.5px; letter-spacing: -.02em; }
-
-/* 글의 표와 이 창의 숫자가 다른 것은 정상이다. 기준일 두 개를 나란히
-   적어 두지 않으면 어느 쪽이 맞는지 묻게 된다. */
-.lt-when { margin: 3px 0 0; font-size: 12px; color: var(--text-3); }
-.lt-when b { color: var(--accent); font-weight: 700; }
-
-.modal-x {
-  flex: 0 0 auto;
-  width: 30px; height: 30px;
-  border: 0; border-radius: 8px;
-  background: transparent; color: var(--text-3);
-  font-size: 22px; line-height: 1; cursor: pointer;
-}
-.modal-x:hover { background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text); }
-
-.modal-body { padding: 4px 18px 16px; overflow-y: auto; }
-.lt-sec { margin-top: 16px; }
-.lt-sec h3 {
-  margin: 0 0 2px;
-  font-size: 13.5px; font-weight: 700;
+.tswitch button {
+  padding: 3px 11px;
+  border: 0; border-radius: 999px;
+  background: transparent;
+  color: var(--text-3);
+  font: inherit; font-size: 11.5px; font-weight: 600;
   letter-spacing: -.01em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .15s, color .15s;
 }
-.lt-note { margin: 0 0 8px; font-size: 11.5px; color: var(--text-3); }
+.tswitch button b { font-weight: 700; }
+.tswitch button:hover { color: var(--text-2); }
+.tswitch button.on {
+  background: var(--card);
+  color: var(--accent);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .08);
+}
+.tswitch button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
-/* 표가 넓으면 창 안에서만 옆으로 흐르게 한다. 본문이 밀리면 안 된다. */
-.modal-body .prose { overflow-x: auto; }
-.modal-body .prose table { font-size: 12.5px; }
-
-.modal-foot {
-  padding: 11px 18px;
-  border-top: 1px solid var(--line);
-  background: color-mix(in srgb, var(--accent) 5%, transparent);
-  font-size: 11.5px; color: var(--text-3);
+/* 최신 표일 때만 왼쪽에 색 띠를 둔다. 스위치를 안 보고 표만 봐도
+   지금 무엇을 보고 있는지 알 수 있어야 한다. */
+.table-wrap.is-fresh {
+  border-left: 3px solid var(--accent);
+  padding-left: 9px;
+  margin-left: -12px;
 }
 
-@media (max-width: 560px) {
-  .modal { max-height: 92vh; border-radius: 14px; }
-  .modal-body { padding: 4px 13px 14px; }
-  .modal-head, .modal-foot { padding-left: 13px; padding-right: 13px; }
+@media (max-width: 460px) {
+  .tswitch button { padding: 3px 9px; font-size: 11px; }
 }

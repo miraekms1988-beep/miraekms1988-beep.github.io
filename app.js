@@ -1060,71 +1060,70 @@ function renderPage(slug) {
   renderList(slug);
 }
 
-/* 글은 그 주에 얼어붙는다. 지난주 글을 여는 사람이 정작 알고 싶은 것은
- * 어제 숫자다. 글 안의 표는 그대로 두고 - 그건 그 주의 기록이라 바뀌면 안 된다 -
- * 최신 표를 따로 띄운다.
+/* 전단채 두 표만 그 자리에서 최신 것으로 바꿔 준다.
  *
- * 표 내용은 pages.enc.json 의 latest 에 담겨 오고, 3시간마다 다시 구워진다.
- * 확약기관별·시공사별은 full 키로 푼 파일에만 들어 있다. 굽는 쪽에서 갈랐으므로
- * 여기서 등급을 따로 볼 필요가 없다. */
-function latestChip(postDate) {
-  if (!state.latest || !(state.latest.tables || []).length) return '';
-  const asOf = state.latest.asOf || '';
-  // 글보다 오래된 데이터면 띄울 이유가 없다. 발행 당일에는 같은 날짜라 안 뜬다.
-  if (asOf && postDate && asOf <= postDate) return '';
-  return `<button type="button" class="freshbtn" data-latest="1">
-    <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M20 11a8 8 0 1 0-.6 3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M20 5v6h-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>최신 ${escapeHtml(shortDate(asOf))}</button>`;
+ * 글의 표는 그 주의 기록이라 지우지 않는다. 원본을 들고 있다가 되돌린다.
+ * 표 위에 '그 주 / 전일 기준' 두 칸짜리 스위치를 두고 누르면 표만 갈린다.
+ * 서식이 같으므로 눈이 같은 자리에서 숫자만 따라가면 된다.
+ *
+ * 가장 최근 글에서만 켠다. 몇 달 전 글 옆에 오늘 숫자를 놓으면 그 글을
+ * 읽는 맥락과 어긋나 오히려 헷갈린다.
+ *
+ * 확약기관별·시공사별은 full 로 푼 pages.enc.json 에만 들어 있다.
+ * 굽는 쪽에서 등급을 갈랐으므로 여기서 따로 볼 것이 없다 - lite 로 열면
+ * state.latest 에 그 표가 아예 없어서 스위치가 안 생긴다. */
+const LATEST_SWAP = [
+  { key: 'fin', head: '매입확약 기관별 유동화 전단채' },
+  { key: 'con', head: '시공사 신용보강별 유동화 전단채' },
+];
+
+function mountLatestSwap(root, meta) {
+  const L = state.latest;
+  if (!L || !(L.tables || []).length) return;
+  // 가장 최근 글인가. index 는 최신순으로 들어온다.
+  if (!state.index.length || state.index[0].slug !== meta.slug) return;
+  if (L.asOf && meta.date && L.asOf <= meta.date) return;
+
+  const byKey = {};
+  for (const t of L.tables) if (t.key) byKey[t.key] = t;
+
+  for (const spec of LATEST_SWAP) {
+    const fresh = byKey[spec.key];
+    if (!fresh) continue;
+
+    const head = [...root.querySelectorAll('.prose > p')]
+      .find((p) => p.textContent.trim().startsWith(spec.head));
+    if (!head) continue;
+    const wrap = head.nextElementSibling;
+    if (!wrap || !wrap.classList.contains('table-wrap')) continue;
+
+    const original = wrap.innerHTML;
+    const holder = document.createElement('div');
+    holder.innerHTML = renderMarkdown(fresh.table);
+    const freshWrap = holder.querySelector('.table-wrap');
+    if (!freshWrap) continue;
+
+    const sw = document.createElement('div');
+    sw.className = 'tswitch';
+    sw.innerHTML = `
+      <button type="button" class="on" data-v="week">그 주</button>
+      <button type="button" data-v="new">전일 기준 <b>${escapeHtml(shortDate(L.asOf))}</b></button>`;
+    head.after(sw);
+
+    sw.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn || btn.classList.contains('on')) return;
+      for (const b of sw.querySelectorAll('button')) b.classList.toggle('on', b === btn);
+      wrap.innerHTML = btn.dataset.v === 'new' ? freshWrap.innerHTML : original;
+      wrap.classList.toggle('is-fresh', btn.dataset.v === 'new');
+    });
+  }
 }
 
 function shortDate(iso) {
   if (!iso) return '';
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
   return m ? `${Number(m[2])}/${Number(m[3])}` : iso;
-}
-
-function openLatestModal(postDate) {
-  const L = state.latest;
-  if (!L) return;
-
-  const body = (L.tables || []).map((t) => `
-    <section class="lt-sec">
-      <h3>${escapeHtml(t.title)}</h3>
-      ${t.note ? `<p class="lt-note">${escapeHtml(t.note)}</p>` : ''}
-      <div class="prose">${renderMarkdown(t.table)}</div>
-    </section>`).join('');
-
-  const back = document.createElement('div');
-  back.className = 'modal-back';
-  back.innerHTML = `
-    <div class="modal" role="dialog" aria-modal="true" aria-label="최신 금리">
-      <header class="modal-head">
-        <div>
-          <h2>최신 금리</h2>
-          <p class="lt-when">데이터 기준 <b>${escapeHtml(L.asOf || '-')}</b>
-            · 글 기준 ${escapeHtml(postDate || '-')}</p>
-        </div>
-        <button type="button" class="modal-x" aria-label="닫기">&times;</button>
-      </header>
-      <div class="modal-body">
-        ${body || '<p class="empty-line">아직 만들어진 표가 없습니다.</p>'}
-      </div>
-      <footer class="modal-foot">글 안의 표는 그 주의 기록이라 그대로 둡니다. 이 창의 숫자가 최신입니다.</footer>
-    </div>`;
-
-  const close = () => {
-    document.removeEventListener('keydown', onKey);
-    back.remove();
-    document.body.classList.remove('modal-open');
-  };
-  const onKey = (e) => { if (e.key === 'Escape') close(); };
-
-  back.addEventListener('click', (e) => { if (e.target === back) close(); });
-  back.querySelector('.modal-x').addEventListener('click', close);
-  document.addEventListener('keydown', onKey);
-
-  document.body.classList.add('modal-open');
-  document.body.appendChild(back);
-  back.querySelector('.modal-x').focus();
 }
 
 async function renderPost(slug) {
@@ -1159,7 +1158,6 @@ async function renderPost(slug) {
           <span>${formatDate(meta.date)}</span>
           <span class="readtime">
             <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 7.2v5l3.2 2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>${readingMinutes(md)}분 읽기</span>
-          ${latestChip(meta.date)}
         </div>
         <h1>${escapeHtml(meta.title)}</h1>
         <p class="byline">
@@ -1185,8 +1183,7 @@ async function renderPost(slug) {
   mountCharts(els.view, meta.date);
   mountEventArticles(els.view, meta.week);
 
-  const fresh = els.view.querySelector('.freshbtn[data-latest]');
-  if (fresh) fresh.addEventListener('click', () => openLatestModal(meta.date));
+  mountLatestSwap(els.view, meta);
 
   // 발행내역 상세는 이 글을 열 때만 따로 받아온다. 목록에 함께 실으면
   // 잠금해제 한 번에 글 수만큼의 상세가 통째로 딸려온다.
