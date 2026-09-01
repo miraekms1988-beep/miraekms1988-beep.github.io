@@ -73,6 +73,8 @@ const state = {
   banner: [],   // 상단에 늘 떠 있는 지표 (COFIX 신잔액 / CD 91일 / CP 91일)
   policy: [],   // 부동산 제도 (data\policy.json -> 전용 서식으로 그린다)
   pages: [],    // 마크다운 탭 (용어 노트)
+  latest: null,        // 전일 기준 최신 표 (표 위 스위치가 쓴다)
+  postIssuance: null,  // 지금 연 글의 발행내역 상세. 표를 되돌릴 때 다시 단다.
   updated: '',    // 파이프라인이 마지막으로 돈 시각 (KST 표기용)
   updatedAt: '',  // 같은 시각의 UTC 원본. 신선도 계산은 이걸로 한다.
   tab: 'posts',
@@ -495,7 +497,10 @@ function issuanceRowsHtml(list) {
 function mountSpcToggles(root, issuance) {
   if (!issuance) return;
 
-  root.querySelectorAll('.prose table').forEach((table) => {
+  // 글 전체(.prose 안)로도, 표 하나(.table-wrap)로도 부를 수 있어야 한다.
+  // 표를 바꿔 끼운 뒤 그 표에만 다시 달기 때문이다. 머리글 이름으로
+  // 거르므로 다른 표가 섞여 들어와도 그냥 지나간다.
+  root.querySelectorAll('table').forEach((table) => {
     const head = [...table.rows[0].cells].map((c) => c.textContent.trim());
     const roleIdx = head.findIndex((h) => h === '매입확약' || h === '시공사');
     // 펼치기 버튼은 '건수' 칸에 단다. SPC 곳수보다 거래 건수 쪽이
@@ -1106,21 +1111,40 @@ function mountLatestSwap(root, meta) {
     const freshWrap = holder.querySelector('.table-wrap');
     if (!freshWrap) continue;
 
+    // 원본을 여기에 매달아 둔다. 발행내역 상세가 글보다 늦게 도착해서
+    // 건수 버튼을 나중에 다는데, 그때 원본을 다시 떠야 하기 때문이다.
+    wrap._weekHtml = original;
+
     const sw = document.createElement('div');
     sw.className = 'tswitch';
     sw.innerHTML = `
-      <button type="button" class="on" data-v="week">그 주</button>
-      <button type="button" data-v="new">전일 기준 <b>${escapeHtml(shortDate(asOf))}</b></button>`;
+      <button type="button" class="on" data-v="week">해당 주차</button>
+      <button type="button" data-v="new">최신 <b>${escapeHtml(shortDate(asOf))}</b></button>`;
     head.after(sw);
 
     sw.addEventListener('click', (e) => {
       const btn = e.target.closest('button');
       if (!btn || btn.classList.contains('on')) return;
+      const toFresh = btn.dataset.v === 'new';
       for (const b of sw.querySelectorAll('button')) b.classList.toggle('on', b === btn);
-      wrap.innerHTML = btn.dataset.v === 'new' ? freshWrap.innerHTML : original;
-      wrap.classList.toggle('is-fresh', btn.dataset.v === 'new');
+      wrap.innerHTML = toFresh ? freshWrap.innerHTML : wrap._weekHtml;
+      wrap.classList.toggle('is-fresh', toFresh);
+      // innerHTML 을 갈면 버튼에 걸어 둔 것이 다 날아간다. 다시 단다.
+      // 구간이 다르면 펼칠 목록도 다르므로 짝이 맞는 상세를 준다.
+      mountSpcToggles(wrap, toFresh ? (L.issuance || null) : state.postIssuance);
     });
   }
+}
+
+/* 발행내역 상세는 글 본문보다 늦게 도착한다. 그 전에 떠 둔 원본에는 건수
+ * 버튼이 없어서, 최신으로 갔다가 '해당 주차' 로 돌아오면 목록이 안 펼쳐졌다.
+ * 버튼이 붙은 뒤의 모습으로 원본을 다시 뜬다. */
+function refreshSwapOriginals(root) {
+  root.querySelectorAll('.table-wrap').forEach((wrap) => {
+    if (wrap._weekHtml !== undefined && !wrap.classList.contains('is-fresh')) {
+      wrap._weekHtml = wrap.innerHTML;
+    }
+  });
 }
 
 function shortDate(iso) {
@@ -1202,7 +1226,14 @@ async function renderPost(slug) {
       }
     }
     // 사용자가 그 사이 다른 글로 넘어갔으면 붙이지 않는다.
-    if (iss && location.hash === `#/p/${slug}`) mountSpcToggles(els.view, iss);
+    if (iss && location.hash === `#/p/${slug}`) {
+      // 표를 최신으로 바꿔 끼울 때 다시 달아야 하므로 들고 있는다.
+      state.postIssuance = iss;
+      mountSpcToggles(els.view, iss);
+      // 이 상세는 글보다 늦게 도착한다. 그 전에 저장해 둔 원본에는 건수
+      // 버튼이 없어서, 최신으로 갔다가 돌아오면 목록이 안 펼쳐졌다.
+      refreshSwapOriginals(els.view);
+    }
   }
 }
 
