@@ -1060,6 +1060,73 @@ function renderPage(slug) {
   renderList(slug);
 }
 
+/* 글은 그 주에 얼어붙는다. 지난주 글을 여는 사람이 정작 알고 싶은 것은
+ * 어제 숫자다. 글 안의 표는 그대로 두고 - 그건 그 주의 기록이라 바뀌면 안 된다 -
+ * 최신 표를 따로 띄운다.
+ *
+ * 표 내용은 pages.enc.json 의 latest 에 담겨 오고, 3시간마다 다시 구워진다.
+ * 확약기관별·시공사별은 full 키로 푼 파일에만 들어 있다. 굽는 쪽에서 갈랐으므로
+ * 여기서 등급을 따로 볼 필요가 없다. */
+function latestChip(postDate) {
+  if (!state.latest || !(state.latest.tables || []).length) return '';
+  const asOf = state.latest.asOf || '';
+  // 글보다 오래된 데이터면 띄울 이유가 없다. 발행 당일에는 같은 날짜라 안 뜬다.
+  if (asOf && postDate && asOf <= postDate) return '';
+  return `<button type="button" class="freshbtn" data-latest="1">
+    <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><path d="M20 11a8 8 0 1 0-.6 3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M20 5v6h-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>최신 ${escapeHtml(shortDate(asOf))}</button>`;
+}
+
+function shortDate(iso) {
+  if (!iso) return '';
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  return m ? `${Number(m[2])}/${Number(m[3])}` : iso;
+}
+
+function openLatestModal(postDate) {
+  const L = state.latest;
+  if (!L) return;
+
+  const body = (L.tables || []).map((t) => `
+    <section class="lt-sec">
+      <h3>${escapeHtml(t.title)}</h3>
+      ${t.note ? `<p class="lt-note">${escapeHtml(t.note)}</p>` : ''}
+      <div class="prose">${renderMarkdown(t.table)}</div>
+    </section>`).join('');
+
+  const back = document.createElement('div');
+  back.className = 'modal-back';
+  back.innerHTML = `
+    <div class="modal" role="dialog" aria-modal="true" aria-label="최신 금리">
+      <header class="modal-head">
+        <div>
+          <h2>최신 금리</h2>
+          <p class="lt-when">데이터 기준 <b>${escapeHtml(L.asOf || '-')}</b>
+            · 글 기준 ${escapeHtml(postDate || '-')}</p>
+        </div>
+        <button type="button" class="modal-x" aria-label="닫기">&times;</button>
+      </header>
+      <div class="modal-body">
+        ${body || '<p class="empty-line">아직 만들어진 표가 없습니다.</p>'}
+      </div>
+      <footer class="modal-foot">글 안의 표는 그 주의 기록이라 그대로 둡니다. 이 창의 숫자가 최신입니다.</footer>
+    </div>`;
+
+  const close = () => {
+    document.removeEventListener('keydown', onKey);
+    back.remove();
+    document.body.classList.remove('modal-open');
+  };
+  const onKey = (e) => { if (e.key === 'Escape') close(); };
+
+  back.addEventListener('click', (e) => { if (e.target === back) close(); });
+  back.querySelector('.modal-x').addEventListener('click', close);
+  document.addEventListener('keydown', onKey);
+
+  document.body.classList.add('modal-open');
+  document.body.appendChild(back);
+  back.querySelector('.modal-x').focus();
+}
+
 async function renderPost(slug) {
   const meta = state.index.find((p) => p.slug === slug);
   if (!meta) { location.hash = '#/'; return; }
@@ -1092,6 +1159,7 @@ async function renderPost(slug) {
           <span>${formatDate(meta.date)}</span>
           <span class="readtime">
             <svg viewBox="0 0 24 24" width="12" height="12" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 7.2v5l3.2 2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>${readingMinutes(md)}분 읽기</span>
+          ${latestChip(meta.date)}
         </div>
         <h1>${escapeHtml(meta.title)}</h1>
         <p class="byline">
@@ -1116,6 +1184,9 @@ async function renderPost(slug) {
   setProgress(true);
   mountCharts(els.view, meta.date);
   mountEventArticles(els.view, meta.week);
+
+  const fresh = els.view.querySelector('.freshbtn[data-latest]');
+  if (fresh) fresh.addEventListener('click', () => openLatestModal(meta.date));
 
   // 발행내역 상세는 이 글을 열 때만 따로 받아온다. 목록에 함께 실으면
   // 잠금해제 한 번에 글 수만큼의 상세가 통째로 딸려온다.
@@ -1339,6 +1410,7 @@ async function unlock(password, persist) {
     state.pages = extra.pages || [];
     state.updated = extra.updated || '';
     state.updatedAt = extra.updatedAt || '';
+    state.latest = extra.latest || null;
   } catch (err) {
     console.warn('상시 지표를 불러오지 못했습니다:', err);
     state.banner = [];
@@ -1346,6 +1418,7 @@ async function unlock(password, persist) {
     state.pages = [];
     state.updated = '';
     state.updatedAt = '';
+    state.latest = null;
   }
 
   (persist ? localStorage : sessionStorage).setItem(STORAGE_KEY, password);
