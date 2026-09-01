@@ -1082,7 +1082,6 @@ function mountLatestSwap(root, meta) {
   if (!L || !(L.tables || []).length) return;
   // 가장 최근 글인가. index 는 최신순으로 들어온다.
   if (!state.index.length || state.index[0].slug !== meta.slug) return;
-  if (L.asOf && meta.date && L.asOf <= meta.date) return;
 
   const byKey = {};
   for (const t of L.tables) if (t.key) byKey[t.key] = t;
@@ -1090,6 +1089,10 @@ function mountLatestSwap(root, meta) {
   for (const spec of LATEST_SWAP) {
     const fresh = byKey[spec.key];
     if (!fresh) continue;
+    // 표마다 제 기준일이 있다. 전단채는 금리와 갱신 주기가 달라서
+    // 하나로 뭉뚱그리면 최신인데도 스위치가 안 뜬다.
+    const asOf = fresh.asOf || L.asOf || '';
+    if (asOf && meta.date && asOf <= meta.date) continue;
 
     const head = [...root.querySelectorAll('.prose > p')]
       .find((p) => p.textContent.trim().startsWith(spec.head));
@@ -1107,7 +1110,7 @@ function mountLatestSwap(root, meta) {
     sw.className = 'tswitch';
     sw.innerHTML = `
       <button type="button" class="on" data-v="week">그 주</button>
-      <button type="button" data-v="new">전일 기준 <b>${escapeHtml(shortDate(L.asOf))}</b></button>`;
+      <button type="button" data-v="new">전일 기준 <b>${escapeHtml(shortDate(asOf))}</b></button>`;
     head.after(sw);
 
     sw.addEventListener('click', (e) => {
