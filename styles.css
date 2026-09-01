@@ -1630,3 +1630,8 @@ body {
 @media (max-width: 460px) {
   .tswitch button { padding: 3px 9px; font-size: 11px; }
 }
+/* 금액 칸이 붙어 열이 일곱이 됐다. 좁은 화면에서 100% 로 눌러 담으면
+   글자가 줄줄이 접히므로, 최소 너비를 두고 상자 안에서만 옆으로 흐르게 한다.
+   (.spc-detail 이 이미 overflow-x: auto 다) */
+.spc-table { min-width: 460px; }
+.spc-table td.num, .spc-table th.num { white-space: nowrap; }

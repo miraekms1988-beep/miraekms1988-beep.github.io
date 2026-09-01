@@ -474,11 +474,22 @@ function fmtDate(d) {
   return `${+d.slice(4, 6)}/${+d.slice(6, 8)}`;
 }
 
+/* 억 단위로 줄인다. 원 단위 열두 자리는 눈으로 못 읽는다.
+ * 100억을 넘으면 소수점을 버린다 - 437.7억에서 소수 한 자리가 주는 정보가
+ * 없고, 5.0억처럼 작은 건에서만 자리가 쓸모 있다. */
+function fmtAmount(v) {
+  const n = Number(v);
+  if (!isFinite(n) || n <= 0) return '';
+  const eok = n / 1e8;
+  return (eok >= 100 ? Math.round(eok).toLocaleString() : eok.toFixed(1)) + '억';
+}
+
 function issuanceRowsHtml(list) {
   const rows = list.map((d) => `
     <tr>
       <td>${escapeHtml(d.spc)}</td>
       <td class="num">${escapeHtml(String(d.rate))}</td>
+      <td class="num">${escapeHtml(fmtAmount(d.amount))}</td>
       <td class="num">${escapeHtml(String(d.days))}일</td>
       <td>${fmtDate(d.issued)}~${fmtDate(d.maturity)}</td>
       <td>${escapeHtml(d.trade)}</td>
@@ -487,7 +498,7 @@ function issuanceRowsHtml(list) {
   return `
     <div class="spc-detail">
       <table class="spc-table">
-        <thead><tr><th>SPC</th><th class="num">금리</th><th class="num">잔존</th><th>발행~만기</th><th>거래</th><th>구분</th></tr></thead>
+        <thead><tr><th>SPC</th><th class="num">금리</th><th class="num">금액</th><th class="num">잔존</th><th>발행~만기</th><th>거래</th><th>구분</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>`;
