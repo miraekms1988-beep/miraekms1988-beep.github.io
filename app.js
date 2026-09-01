@@ -1096,8 +1096,12 @@ function mountLatestSwap(root, meta) {
     if (!fresh) continue;
     // 표마다 제 기준일이 있다. 전단채는 금리와 갱신 주기가 달라서
     // 하나로 뭉뚱그리면 최신인데도 스위치가 안 뜬다.
+    //
+    // 기준일을 글 날짜와 견주지 않는다. 글의 date 는 예고하는 주의 월요일인데
+    // 표가 담는 것은 그 전 주(월~금)라 애초에 서로 다른 것을 비교하게 된다.
+    // 두 번 그것 때문에 스위치가 통째로 사라졌다. 최신 표는 늘 '최근 7일'
+    // 이라 지나간 주의 표보다 오래될 수 없으므로 그냥 띄운다.
     const asOf = fresh.asOf || L.asOf || '';
-    if (asOf && meta.date && asOf <= meta.date) continue;
 
     const head = [...root.querySelectorAll('.prose > p')]
       .find((p) => p.textContent.trim().startsWith(spec.head));
