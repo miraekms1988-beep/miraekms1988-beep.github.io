@@ -1589,17 +1589,54 @@ body {
 /* ================= 표 위 전환 스위치 ================= */
 
 /* 전단채 두 표만 그 자리에서 최신 것으로 바꿀 수 있다. 글의 표는 그 주의
-   기록이라 지우지 않고 되돌릴 수 있게 둔다. 서식이 같으므로 눈이 같은
-   자리에서 숫자만 따라가면 된다. */
+   기록이라 지우지 않고 되돌릴 수 있게 둔다.
+   바뀐 표에 표시를 남기지 않는다 - 서식이 완전히 같아야 눈이 같은 자리에서
+   숫자만 따라간다. 무엇을 보고 있는지는 스위치가 말해 준다. */
 .tswitch {
+  position: relative;
   display: inline-flex;
   margin: -2px 0 9px;
   padding: 2px;
-  border: 1px solid var(--line);
+  border: 0;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--text) 4%, transparent);
+  overflow: hidden;
 }
+
+/* 테두리를 한 바퀴 도는 파란 빛.
+   스위치가 있는 줄 모르면 표가 바뀔 수 있다는 것도 모른다. 그래서 처음
+   보는 사람에게는 눈에 띄어야 한다. 한 번 눌러 본 뒤에는 멈춘다(.seen) -
+   계속 돌면 읽는 데 방해가 된다. */
+.tswitch::before {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 240%; aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: conic-gradient(transparent 0 60%, var(--accent) 80%, transparent 92%);
+  animation: tspin 2.4s linear infinite;
+}
+/* 안쪽을 덮어 1.5px 테두리만 남긴다 */
+.tswitch::after {
+  content: '';
+  position: absolute;
+  inset: 1.5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 4%, var(--surface));
+}
+.tswitch.seen::before { display: none; }
+.tswitch.seen { border: 1px solid var(--border); padding: 1px; }
+
+@keyframes tspin { to { transform: translate(-50%, -50%) rotate(1turn); } }
+
+/* 움직임을 줄여 달라고 한 사람에게는 돌리지 않는다. 대신 테두리를 남겨
+   여기에 무언가 있다는 것은 알린다. */
+@media (prefers-reduced-motion: reduce) {
+  .tswitch::before { animation: none; background: var(--accent); }
+}
+
 .tswitch button {
+  position: relative;
+  z-index: 1;
   padding: 3px 11px;
   border: 0; border-radius: 999px;
   background: transparent;
@@ -1613,19 +1650,11 @@ body {
 .tswitch button b { font-weight: 700; }
 .tswitch button:hover { color: var(--text-2); }
 .tswitch button.on {
-  background: var(--card);
+  background: var(--surface);
   color: var(--accent);
   box-shadow: 0 1px 2px rgba(0, 0, 0, .08);
 }
 .tswitch button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-
-/* 최신 표일 때만 왼쪽에 색 띠를 둔다. 스위치를 안 보고 표만 봐도
-   지금 무엇을 보고 있는지 알 수 있어야 한다. */
-.table-wrap.is-fresh {
-  border-left: 3px solid var(--accent);
-  padding-left: 9px;
-  margin-left: -12px;
-}
 
 @media (max-width: 460px) {
   .tswitch button { padding: 3px 9px; font-size: 11px; }
