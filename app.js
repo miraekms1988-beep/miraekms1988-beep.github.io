@@ -1133,8 +1133,9 @@ function mountLatestSwap(root, meta) {
     const sw = document.createElement('div');
     sw.className = 'tswitch';
     // 한 번 눌러 본 사람에게는 테두리를 돌리지 않는다. 있는 줄 알고 나면
-    // 계속 도는 것이 읽는 데 방해가 된다.
-    if (swapSeen()) sw.classList.add('seen');
+    // 계속 도는 것이 읽는 데 방해가 된다. 다만 기준일이 바뀌면 다시 돌린다 -
+    // 안 그러면 첫 클릭 뒤로 새 자료가 와도 영영 조용해진다.
+    if (swapSeen(asOf)) sw.classList.add('seen');
     sw.innerHTML = `
       <button type="button" class="on" data-v="week">해당 주차</button>
       <button type="button" data-v="new"><span>최신 <b>${escapeHtml(shortDate(asOf))}</b></span></button>`;
@@ -1143,7 +1144,7 @@ function mountLatestSwap(root, meta) {
     sw.addEventListener('click', (e) => {
       const btn = e.target.closest('button');
       if (!btn || btn.classList.contains('on')) return;
-      markSwapSeen();
+      markSwapSeen(asOf);
       for (const s of document.querySelectorAll('.tswitch')) s.classList.add('seen');
       const toFresh = btn.dataset.v === 'new';
       for (const b of sw.querySelectorAll('button')) b.classList.toggle('on', b === btn);
@@ -1173,15 +1174,19 @@ function shortDate(iso) {
   return m ? `${Number(m[2])}/${Number(m[3])}` : iso;
 }
 
-/* 스위치를 눌러 본 적이 있는지. 사생활 보호 모드나 저장을 막아 둔 브라우저는
- * 읽기·쓰기 둘 다에서 예외를 던지므로 감싸 둔다. 실패하면 그냥 매번 돌린다 -
- * 안 도는 것보다 낫다. */
+/* 이 기준일의 표를 눌러 본 적이 있는지. '봤다'를 참·거짓으로 두면 첫 클릭
+ * 뒤로 새 자료가 와도 영영 안 돈다. 본 날짜를 적어 두고 그날 것만 재운다.
+ *
+ * 사생활 보호 모드나 저장을 막아 둔 브라우저는 읽기·쓰기 둘 다에서 예외를
+ * 던지므로 감싸 둔다. 실패하면 그냥 매번 돌린다 - 안 도는 것보다 낫다. */
 const SWAP_SEEN_KEY = 'bw.swapSeen';
-function swapSeen() {
-  try { return localStorage.getItem(SWAP_SEEN_KEY) === '1'; } catch (e) { return false; }
+function swapSeen(asOf) {
+  if (!asOf) return false;
+  try { return localStorage.getItem(SWAP_SEEN_KEY) === asOf; } catch (e) { return false; }
 }
-function markSwapSeen() {
-  try { localStorage.setItem(SWAP_SEEN_KEY, '1'); } catch (e) { /* 저장 못 해도 그만 */ }
+function markSwapSeen(asOf) {
+  if (!asOf) return;
+  try { localStorage.setItem(SWAP_SEEN_KEY, asOf); } catch (e) { /* 저장 못 해도 그만 */ }
 }
 
 async function renderPost(slug) {
