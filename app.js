@@ -821,7 +821,12 @@ function renderBanner() {
  *
  * 그래서 Actions 밖에 신호를 하나 둔다. 사이트를 열 때마다 보이므로
  * 예약 실행이 멈춰도 작동한다 - 오히려 멈춰야 눈에 띈다. */
-const STALE_HOURS = 8;   // 3시간 주기니 두세 번 걸러야 낡은 것으로 본다
+/* 이 시각을 찍는 것은 수집이 아니라 배포다(publish-pages 의 updatedAt).
+ * 수집은 예전처럼 3시간마다 돌지만, 무료 분을 아끼려고 배포를 하루 두 번
+ * (한국시간 7시 37분, 19시 37분)으로 줄였다. 정상일 때 최대 간격이
+ * 12시간이라 8로 두면 매일 밤 오경보가 뜬다. 한 번을 통째로 거르면
+ * 24시간이 되므로 그 사이에 둔다. */
+const STALE_HOURS = 14;
 
 function renderFreshness() {
   const iso = state.updatedAt;
@@ -831,7 +836,7 @@ function renderFreshness() {
   // updatedAt 이 없는 옛 파일이면 시각만 조용히 적고 판정은 하지 않는다.
   const t = iso ? Date.parse(iso) : NaN;
   if (!isFinite(t)) {
-    return `<p class="bn-fresh">마지막 수집 ${escapeHtml(shown)}</p>`;
+    return `<p class="bn-fresh">마지막 갱신 ${escapeHtml(shown)}</p>`;
   }
 
   const hours = (Date.now() - t) / 3600000;
@@ -843,9 +848,9 @@ function renderFreshness() {
       : `${Math.floor(hours / 24)}일 전`;
 
   const stale = hours >= STALE_HOURS;
-  const mark = stale ? '<b>수집이 멈춰 있습니다</b> · ' : '';
+  const mark = stale ? '<b>갱신이 멈춰 있습니다</b> · ' : '';
   return `<p class="bn-fresh${stale ? ' stale' : ''}">
-            ${mark}마지막 수집 ${escapeHtml(shown)} <i>(${age})</i>
+            ${mark}마지막 갱신 ${escapeHtml(shown)} <i>(${age})</i>
           </p>`;
 }
 
