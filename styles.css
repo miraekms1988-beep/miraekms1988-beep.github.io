@@ -867,6 +867,19 @@ body {
 .spc-table tbody tr:last-child td { border-bottom: 0; }
 .spc-table td:first-child { font-weight: 500; white-space: normal; min-width: 8em; }
 
+/* 금리 칸의 최저~최고, 금액 칸의 건수를 대표값 아래에 작게 붙인다.
+ * 칸을 새로 만들면 휴대폰에서 표가 가로로 넘친다. 배너의 bn-delta i 와
+ * 같은 크기·색으로 둬서 '곁다리 숫자'라는 신호를 맞춘다. */
+.spc-table td i {
+  display: block;
+  font-size: 9.5px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--text-3);
+  letter-spacing: -0.1px;
+}
+
 /* ================= 서두 요약 ================= */
 .digest {
   margin: 0 0 34px;

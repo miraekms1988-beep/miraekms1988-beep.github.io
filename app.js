@@ -484,12 +484,36 @@ function fmtAmount(v) {
   return (eok >= 100 ? Math.round(eok).toLocaleString() : eok.toFixed(1)) + '억';
 }
 
+/* 한 회차를 여러 매수자에게 쪼개 팔면서 금리가 갈린다. publish 쪽에서
+ * 회차 단위로 묶어 금액 가중평균을 rate 로, 최저·최고를 rateMin/rateMax 로
+ * 내보낸다. 대표값을 크게 보이고 갈린 폭은 아래에 작게 붙인다.
+ *
+ * 옛 글의 .iss.enc.json 에는 rateMin/rateMax 가 없다. 그때는 금리 하나만
+ * 찍는다 - 없다고 화면이 비면 지난 글 목록이 통째로 망가진다. */
+function fmtRateCell(d) {
+  const w = Number(d.rate);
+  const main = escapeHtml(isFinite(w) ? w.toFixed(3) : String(d.rate));
+  const lo = Number(d.rateMin);
+  const hi = Number(d.rateMax);
+  if (!isFinite(lo) || !isFinite(hi) || hi - lo < 0.0005) return main;
+  return `${main}<i>${lo.toFixed(3)}~${hi.toFixed(3)}</i>`;
+}
+
+/* 건수는 위의 기관별 표가 세는 단위(거래 건)와 같다. 한 줄이 몇 건을
+ * 합친 것인지 보여야 "23건" 을 눌렀는데 열한 줄만 나오는 것이 설명된다. */
+function fmtAmountCell(d) {
+  const amt = escapeHtml(fmtAmount(d.amount));
+  const n = Number(d.n);
+  if (!isFinite(n) || n <= 1) return amt;
+  return `${amt}<i>${n}건</i>`;
+}
+
 function issuanceRowsHtml(list) {
   const rows = list.map((d) => `
     <tr>
       <td>${escapeHtml(d.spc)}</td>
-      <td class="num">${escapeHtml(String(d.rate))}</td>
-      <td class="num">${escapeHtml(fmtAmount(d.amount))}</td>
+      <td class="num">${fmtRateCell(d)}</td>
+      <td class="num">${fmtAmountCell(d)}</td>
       <td class="num">${escapeHtml(String(d.days))}일</td>
       <td>${fmtDate(d.issued)}~${fmtDate(d.maturity)}</td>
       <td>${escapeHtml(d.trade)}</td>
