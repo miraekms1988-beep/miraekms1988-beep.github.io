@@ -1014,14 +1014,23 @@ body {
      이름 칸은 줄바꿈 없이 둔다.
      10.5px 로 두면 폭이 모자라 '한국투자증/권' 처럼 끝 글자 하나만
      다음 줄로 떨어진다. 그럴 바에는 글자를 줄이고 한 줄에 넣는 편이 낫다. */
+  /* 9열도 같이 받는다. 유동화 표의 만기 칸은 1M·2M·3M·4M+ 네 개라
+     (quotes-lib 의 AbsBuckets) 네 칸이 다 차는 주에는 9열이 된다.
+     4M+ 는 최근 60일 0건이지만 '조용히 버려지지 않게' 일부러 둔 칸이라
+     언젠가 값이 들어온다. 그때 규칙이 안 걸리면 넘침이 그대로 돌아온다. */
   .table-wrap[data-cols="8"] th,
-  .table-wrap[data-cols="8"] td {
+  .table-wrap[data-cols="8"] td,
+  .table-wrap[data-cols="9"] th,
+  .table-wrap[data-cols="9"] td {
     padding: 7px 2px;
     font-size: 9.5px;
   }
-  .table-wrap[data-cols="8"] thead th { font-size: 9.5px; letter-spacing: -.03em; }
-  .table-wrap[data-cols="8"] tbody td:nth-child(3) { white-space: nowrap; }
-  .table-wrap[data-cols="8"] tbody td.num { white-space: nowrap; }
+  .table-wrap[data-cols="8"] thead th,
+  .table-wrap[data-cols="9"] thead th { font-size: 9.5px; letter-spacing: -.03em; }
+  .table-wrap[data-cols="8"] tbody td:nth-child(3),
+  .table-wrap[data-cols="9"] tbody td:nth-child(3) { white-space: nowrap; }
+  .table-wrap[data-cols="8"] tbody td.num,
+  .table-wrap[data-cols="9"] tbody td.num { white-space: nowrap; }
 
   /* 기관·시공사 이름 칸만 줄바꿈을 허용한다. 'IPARK현대산업개발' 같은
      긴 이름이 한 줄을 다 먹는 것이 넘침의 가장 큰 원인이다.
@@ -1056,7 +1065,9 @@ body {
      줄이면 숫자가 안 읽히고, 여백을 여덟 칸에서 1px 씩 줄이면 16px 이
      나와 320px 대에서도 이름이 한 줄에 들어간다. */
   .table-wrap[data-cols="8"] th,
-  .table-wrap[data-cols="8"] td { padding: 6px 1px; }
+  .table-wrap[data-cols="8"] td,
+  .table-wrap[data-cols="9"] th,
+  .table-wrap[data-cols="9"] td { padding: 6px 1px; }
 }
 
 @media (min-width: 720px) {
