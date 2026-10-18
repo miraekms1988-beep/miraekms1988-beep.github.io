@@ -1079,6 +1079,15 @@ body {
 
 /* 매일 보는 셋만 띄운다. 페이지를 열면 제일 먼저 눈에 들어와야 하므로
    글 목록보다 위, 표지 바로 아래에 붙인다. */
+/* 칸 수는 app.js 가 data-n 으로 알려 준다. 기본 3열은 그대로 두고 네 칸일
+   때만 바꾼다 - 3열에 네 개를 넣으면 아랫줄에 하나만 덩그러니 남는다.
+   좁은 화면에서는 네 칸을 2×2 로 접는다. 한 줄에 넷을 넣으면 '3.854%' 가
+   줄바꿈된다. */
+.banner[data-n="4"] { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 560px) {
+  .banner[data-n="4"] { grid-template-columns: repeat(2, 1fr); }
+}
+
 .banner {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

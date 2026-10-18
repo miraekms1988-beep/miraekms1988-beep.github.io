@@ -812,9 +812,13 @@ function renderBanner() {
     const d = b.delta;
     const cls = d > 0 ? 'up' : d < 0 ? 'down' : '';
     const sign = d > 0 ? '+' : '';
+    // 금리는 %p 라 소수 두 자리가 맞지만 스프레드는 bp 라 '+2.00bp' 가 어색하다.
+    // 항목이 자리수와 단위를 들고 오면 그대로 쓰고, 없으면 예전 그대로 둔다.
+    const dg = (b.deltaDigits === undefined || b.deltaDigits === null) ? 2 : Number(b.deltaDigits);
+    const du = b.deltaUnit ? escapeHtml(b.deltaUnit) : '';
     const delta = (d === null || d === undefined)
       ? ''
-      : `<span class="bn-delta ${cls}">${sign}${d.toFixed(2)}<i>${escapeHtml(b.deltaNote || '')}</i></span>`;
+      : `<span class="bn-delta ${cls}">${sign}${d.toFixed(dg)}${du}<i>${escapeHtml(b.deltaNote || '')}</i></span>`;
     const path = sparkPath(b.spark, 64, 20);
     const spark = path
       ? `<svg class="bn-spark" viewBox="0 0 64 20" preserveAspectRatio="none" aria-hidden="true">
@@ -832,7 +836,8 @@ function renderBanner() {
       </div>`;
   }).join('');
 
-  return `<section class="banner" aria-label="주요 지표">${cells}${renderFreshness()}</section>`;
+  // 칸 수를 알려 준다. 3열 고정이라 네 개가 되면 아랫줄에 하나만 떨어진다.
+  return `<section class="banner" data-n="${items.length}" aria-label="주요 지표">${cells}${renderFreshness()}</section>`;
 }
 
 /* 마지막으로 수집이 돈 시각.
