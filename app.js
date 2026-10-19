@@ -528,6 +528,81 @@ function issuanceRowsHtml(list) {
     </div>`;
 }
 
+/* 좁은 화면에서 넓은 표를 접는다.
+ *
+ * 숫자 칸은 하나도 지우지 않는다 - 숫자를 빼면 표를 볼 이유가 없다.
+ * 대신 앞쪽의 묶음 머리(구분·등급)를 이름 칸 밑의 작은 줄로 내린다.
+ * 어차피 묶음의 둘째 줄부터는 비어 있는 칸이라 자리만 먹고 있었다.
+ * SPC 곳수는 건수 버튼을 눌러 보는 상세에 SPC 가 하나씩 다 나오므로
+ * 좁은 화면에서만 감춘다.
+ *
+ * 열이 두셋 줄어든 만큼 글자를 9.5px 에서 11.5px 로 되돌릴 수 있다.
+ * 접는 일 자체는 CSS(@media)가 한다. 여기서는 어느 칸을 접을지
+ * 표시만 해 둔다 - 화면을 돌려 폭이 바뀌어도 다시 그릴 필요가 없다. */
+function foldWideTables(root) {
+  // 글 전체로도, 바꿔 끼운 표 하나로도 부를 수 있어야 한다.
+  const wraps = root.classList && root.classList.contains('table-wrap')
+    ? [root]
+    : [...root.querySelectorAll('.table-wrap')];
+  wraps.forEach((wrap) => {
+    const table = wrap.querySelector('table');
+    if (!table || !table.rows.length || !table.tBodies[0]) return;
+    // 6열까지는 지금 설정으로 창 안에 들어간다. 손대면 오히려 헐거워진다.
+    if (Number(wrap.dataset.cols || 0) < 7) return;
+
+    const headCells = [...table.rows[0].cells];
+    const head = headCells.map((c) => c.textContent.trim());
+    // 오른쪽 정렬(.num)이 시작되기 전까지가 글자 칸이다.
+    const firstNum = headCells.findIndex((c) => c.classList.contains('num'));
+    const lead = firstNum < 0 ? head.length : firstNum;
+    if (lead < 2) return;              // 묶음 머리가 없는 표는 접을 것이 없다
+    const nameIdx = lead - 1;
+    // 접는 표를 이름 칸 머리글로 못박는다. '구분 | 등급 | 1Y | 3Y ...' 처럼
+    // 앞 두 칸이 둘 다 제값인 표(등급별 크레딧 금리)를 접으면 '특수채'가
+    // 사라지고 'AAA' 만 남는다. 열 수만 보고 접으면 그런 표까지 걸린다.
+    if (!['발행사', '매입확약', '시공사'].includes(head[nameIdx])) return;
+    const spcIdx = head.indexOf('SPC');
+
+    // 묶음 머리는 첫 줄에만 적혀 있다. 아래로 내려가며 들고 간다.
+    const carry = new Array(nameIdx).fill('');
+    [...table.tBodies[0].rows].forEach((tr) => {
+      if (tr.classList.contains('spc-row')) return;
+      for (let i = 0; i < nameIdx; i++) {
+        if (!tr.cells[i]) continue;
+        const txt = tr.cells[i].textContent.trim();
+        if (txt) carry[i] = txt;
+        tr.cells[i].classList.add('tc-fold');
+      }
+      if (spcIdx >= 0 && tr.cells[spcIdx]) tr.cells[spcIdx].classList.add('tc-fold');
+
+      const cell = tr.cells[nameIdx];
+      if (!cell) return;
+      cell.classList.add('tc-name');
+      // 표를 바꿔 끼우면 다시 불린다. 이미 붙은 줄에 또 붙이지 않는다.
+      if (cell.querySelector('.rowgrade')) return;
+      // '-' 는 장기 미평정이라는 뜻이다. 배지에서는 말로 적어야 읽힌다.
+      const tag = carry.filter(Boolean).map((v) => (v === '-' ? '미평정' : v)).join(' · ');
+      if (tag) cell.insertAdjacentHTML('beforeend', `<i class="rowgrade">${escapeHtml(tag)}</i>`);
+    });
+
+    headCells.forEach((th, i) => {
+      if (i < nameIdx || i === spcIdx) th.classList.add('tc-fold');
+      if (i === nameIdx) th.classList.add('tc-name');
+    });
+    wrap.dataset.folded = '1';
+  });
+}
+
+/* 이름 칸의 글자. 접은 표에서는 이름 뒤에 등급 배지(.rowgrade)가 붙어
+ * 있어서 textContent 를 그냥 읽으면 '미래에셋증권A1 · AA0' 가 된다.
+ * 그 이름으로 발행내역을 찾으면 한 건도 안 걸린다. */
+function cellName(td) {
+  if (!td) return '';
+  const tag = td.querySelector('.rowgrade');
+  if (!tag) return td.textContent.trim();
+  return [...td.childNodes].filter((n) => n !== tag).map((n) => n.textContent).join('').trim();
+}
+
 // 표 종류를 머리글로 판별한다. '매입확약'이면 증권사(fin), '시공사'면 건설사(con).
 function mountSpcToggles(root, issuance) {
   if (!issuance) return;
@@ -545,7 +620,7 @@ function mountSpcToggles(root, issuance) {
     const role = head[roleIdx] === '시공사' ? 'con' : 'fin';
 
     [...table.tBodies[0].rows].forEach((tr) => {
-      const name = tr.cells[roleIdx] ? tr.cells[roleIdx].textContent.trim() : '';
+      const name = cellName(tr.cells[roleIdx]);
       const cell = tr.cells[countIdx];
       if (!name || !cell) return;
       const list = issuance[`${role}|${name}`];
@@ -878,9 +953,30 @@ function renderFreshness() {
 
   const stale = hours >= STALE_HOURS;
   const mark = stale ? '<b>갱신이 멈춰 있습니다</b> · ' : '';
+  // 갱신이 멈춰 있을 때는 다음 시각을 약속하지 않는다. 멈춰 있다고 적고
+  // 바로 뒤에 '다음 20:40' 을 붙이면 말이 서로 어긋난다.
+  const next = stale ? '' : ` <i>· ${nextRefreshAt()}</i>`;
   return `<p class="bn-fresh${stale ? ' stale' : ''}">
-            ${mark}마지막 갱신 ${escapeHtml(shown)} <i>(${age})</i>
+            ${mark}마지막 갱신 ${escapeHtml(shown)} <i>(${age})</i>${next}
           </p>`;
+}
+
+/* 수치·표를 다시 굽는 회차는 하루 두 번이다 (collect.yml 의 무거운 회차 -
+ * 외부 크론이 KST 08:37·20:37 에 깨우고 10~20분 걸린다). "마지막 갱신
+ * 9시간 전" 만 보이면 멈춘 것으로 읽혀서, 다음 회차를 같이 적어 둔다.
+ *
+ * 읽는 기기의 표준시가 무엇이든 한국시간으로 계산한다. 해외에서 열면
+ * 그 기기 시간으로 '다음 20:40' 이 떠 버리기 때문이다. */
+function nextRefreshAt() {
+  const kst = new Date(Date.now() + (new Date().getTimezoneOffset() + 540) * 60000);
+  const now = kst.getHours() * 60 + kst.getMinutes();
+  const slots = [8 * 60 + 55, 20 * 60 + 55];
+  const hit = slots.find((s) => s > now);
+  const at = hit === undefined ? slots[0] : hit;
+  const hh = String(Math.floor(at / 60)).padStart(2, '0');
+  const mm = String(at % 60).padStart(2, '0');
+  // '다음 내일 08:55' 은 말이 겹친다. 오늘 안이면 '다음', 넘어가면 '내일'.
+  return `${hit === undefined ? '내일' : '다음'} ${hh}:${mm} 무렵`;
 }
 
 /* ================= 탭 ================= */
@@ -1187,6 +1283,9 @@ function mountLatestSwap(root, meta) {
       // innerHTML 을 갈면 버튼에 걸어 둔 것이 다 날아간다. 다시 단다.
       // 구간이 다르면 펼칠 목록도 다르므로 짝이 맞는 상세를 준다.
       mountSpcToggles(wrap, toFresh ? (L.issuance || null) : state.postIssuance);
+      // 최신 표는 접은 적이 없는 새 HTML 이다. 되돌아온 원본은 이미
+      // 접혀 있어 다시 불러도 아무것도 더 붙지 않는다.
+      foldWideTables(wrap);
     });
   }
 }
@@ -1280,6 +1379,7 @@ async function renderPost(slug) {
   mountCharts(els.view, meta.date);
   mountEventArticles(els.view, meta.week);
 
+  foldWideTables(els.view);
   mountLatestSwap(els.view, meta);
 
   // 발행내역 상세는 이 글을 열 때만 따로 받아온다. 목록에 함께 실으면
