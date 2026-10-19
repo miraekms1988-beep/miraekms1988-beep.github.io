@@ -1461,38 +1461,39 @@ body {
 
 .pc-head { margin-bottom: 10px; }
 
-/* 꼭 읽어야 하는 제도. 제목 위에 '중요' 를 달고 카드 왼쪽에 색 띠를 둔다.
-   띠가 있어야 화면을 빠르게 내릴 때도 눈에 걸린다. */
+/* 꼭 읽어야 하는 제도. 제목 위에 '중요' 를 달고 카드 왼쪽에 띠를 둔다.
+   색은 글 머리의 'n분 읽기' 배지와 같은 금색 - 처음엔 주황·초록·파랑을
+   섞었는데 촌스럽다고 해서 사이트에 이미 있는 색 하나로 맞췄다. */
 .pc-imp {
   display: inline-block;
   margin: 0 0 6px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 11px; font-weight: 750;
-  letter-spacing: .03em;
-  color: #fff;
-  background: #e8590c;
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 11.5px; font-weight: 650;
+  letter-spacing: -.01em;
+  color: var(--gold);
+  background: var(--gold-bg);
 }
-.pcard.is-imp { box-shadow: inset 3px 0 0 #e8590c, var(--shadow-sm); }
+.pcard.is-imp { box-shadow: inset 3px 0 0 var(--gold), var(--shadow-sm); }
 
-/* 제목 옆 꼬리표: 확정 · 예정 · 검토.
-   색은 text 와 섞어서 다크 모드에서도 읽히게 한다. */
+/* 제목 옆 꼬리표: 확정 · 예정 · 검토. 같은 금색 테두리로 통일하고
+   글자로만 가른다. 검토는 아직 정해진 것이 없으니 한 톤 흐리게. */
 .pc-status {
   display: inline-block;
   margin-left: 6px;
   padding: 1px 6px;
-  border: 1px solid;
+  border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
   border-radius: 5px;
-  font-size: 11px; font-weight: 700;
+  font-size: 11px; font-weight: 650;
   letter-spacing: 0;
   line-height: 1.5;
   vertical-align: 3px;
   white-space: nowrap;
+  color: var(--gold);
+  background: transparent;
 }
-.st-fix    { color: color-mix(in srgb, #2f9e44 80%, var(--text)); background: color-mix(in srgb, #2f9e44 12%, transparent); border-color: color-mix(in srgb, #2f9e44 40%, transparent); }
-.st-plan   { color: var(--accent); background: var(--accent-bg); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
-.st-review { color: var(--text-3); background: transparent; border-color: var(--border); }
-.pc-leg { display: block; }
+.st-fix    { background: var(--gold-bg); }
+.st-review { color: var(--text-3); border-color: var(--border); }.pc-leg { display: block; }
 .pc-leg + .pc-leg { margin-top: 4px; }
 .pc-foot .pc-status { margin: 0 4px 0 0; vertical-align: 1px; }
 .pc-head h2 {
