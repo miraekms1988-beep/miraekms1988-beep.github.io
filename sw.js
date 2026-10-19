@@ -7,7 +7,7 @@
    deploy-pages.ps1 이 올릴 때 뒤에 앱 셸 지문을 붙인다(v37-1a2b3c4d).
    CSS/JS 가 바뀐 배포마다 이 줄이 바뀌어 휴대폰이 새 셸을 받는다.
    여기 숫자는 손댈 필요 없다. */
-const CACHE = 'bond-weekly-v37-efdedc16';
+const CACHE = 'bond-weekly-v37-32c4649e';
 const SHELL = [
   './',
   './index.html',

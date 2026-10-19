@@ -1435,6 +1435,17 @@ body {
 }
 .pfold > *:last-child { margin-bottom: 14px; }
 .pfold ul, .pfold ol { padding-left: 20px; }
+
+/* 제도 카드는 요약 밑에 접힌 제목이 네댓 개씩 줄선다. 한 줄에 45px 씩이면
+   제목만으로 화면 반을 먹어 다음 카드가 한참 아래로 밀린다. 간격만 조인다.
+   용어 노트·채권동향 글의 접힘은 그대로 둔다. */
+.slide[data-slug="policy"] .pfold > summary {
+  padding: 7px 2px;
+  font-size: 14px;
+  line-height: 1.4;   /* 본문 줄간격(1.8)을 물려받으면 여백을 줄여도 42px 이다 */
+}
+.slide[data-slug="policy"] .pfold:first-of-type { margin-top: 2px; }
+.slide[data-slug="policy"] .pfold > *:last-child { margin-bottom: 10px; }
 /* ================= 부동산 제도 카드 ================= */
 
 .pc-intro {
