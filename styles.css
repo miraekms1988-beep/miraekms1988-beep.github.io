@@ -751,10 +751,6 @@ body {
 .prose tbody tr:last-child td { border-bottom: 0; }
 .prose tbody tr:hover td { background: var(--surface-2); }
 
-/* 이름 밑에 붙는 등급 줄. 넓은 화면에서는 등급 칸이 따로 있으므로
-   숨겨 둔다. 좁은 화면에서만 보인다 (아래 @media). */
-.rowgrade { display: none; }
-
 /* 첫 칸(구분/신용등급/발행사)은 라벨. 길면 줄바꿈을 허용해 폭을 아낀다. */
 .prose tbody td:first-child {
   font-weight: 620; color: var(--text);
@@ -1048,40 +1044,6 @@ body {
   }
   /* 숫자 칸은 자릿수가 어긋나면 못 읽으므로 계속 한 줄로 둔다 */
   .table-wrap[data-cols="7"] tbody td.num { white-space: nowrap; }
-
-  /* ---- 접은 표 (app.js 의 foldWideTables) ----
-     유동화 표의 앞쪽 두 칸(구분·등급)은 묶음 머리라 둘째 줄부터 비어
-     있다. 그 둘을 이름 밑 작은 줄로 내리고 SPC 곳수는 감춘다 (건수를
-     누르면 나오는 상세에 SPC 가 하나씩 다 적혀 있다).
-     숫자 칸은 그대로 둔다 - 숫자를 빼면 표를 볼 이유가 없다.
-     8~9열이 5~6열이 되는 만큼 글자를 9.5px 에서 11.5px 로 되돌린다.
-     data-cols 규칙과 특정도가 같으므로 반드시 그 뒤에 와야 한다. */
-  .table-wrap[data-folded="1"] .tc-fold { display: none; }
-  .table-wrap[data-folded="1"] th,
-  .table-wrap[data-folded="1"] td {
-    padding: 7px 4px;
-    font-size: 11.5px;
-  }
-  .table-wrap[data-folded="1"] thead th { font-size: 11px; letter-spacing: -.02em; }
-  .table-wrap[data-folded="1"] tbody td.num { white-space: nowrap; }
-  .table-wrap[data-folded="1"] tbody td.tc-name {
-    white-space: normal;
-    word-break: keep-all;
-    overflow-wrap: anywhere;
-    line-height: 1.25;
-    text-align: left;
-    padding-left: 7px;
-  }
-  .table-wrap[data-folded="1"] thead th.tc-name { text-align: left; padding-left: 7px; }
-  .table-wrap[data-folded="1"] .rowgrade {
-    display: block;
-    margin-top: 1px;
-    font-size: 9.5px;
-    font-style: normal;
-    font-weight: 500;
-    letter-spacing: -.02em;
-    color: var(--text-3);
-  }
 }
 
 /* 320px 대(구형 소형 기기)에서는 위 설정으로도 20여 px 이 남는다.
@@ -1106,12 +1068,6 @@ body {
   .table-wrap[data-cols="8"] td,
   .table-wrap[data-cols="9"] th,
   .table-wrap[data-cols="9"] td { padding: 6px 1px; }
-
-  /* 접은 표는 열이 줄어 있어 글자까지 줄일 필요는 없다. 여백만 조인다. */
-  .table-wrap[data-folded="1"] th,
-  .table-wrap[data-folded="1"] td { padding: 6px 2px; font-size: 11px; }
-  .table-wrap[data-folded="1"] tbody td.tc-name,
-  .table-wrap[data-folded="1"] thead th.tc-name { padding-left: 5px; }
 }
 
 @media (min-width: 720px) {
@@ -1295,9 +1251,19 @@ body {
   .navbtn.next { animation: none; }
 }
 
+/* 휴대폰에서는 화면 한가운데가 아니라 아래 양 모서리로 내린다.
+   가운데에 두면 배너(4칸이 2×2 로 접힌 뒤)의 오른쪽 위 칸 - CD 91일의
+   전주대비 숫자 - 를 정확히 덮는다. 손가락으로 넘기는 화면이라 화살표는
+   '옆에 더 있다' 는 표시면 되고, 칸 아래 여백(56px)이 있어 끝까지 내리면
+   아무것도 가리지 않는다. */
 @media (max-width: 720px) {
-  .navwrap { width: calc(100vw - 12px); }
-  .navbtn { width: 36px; height: 36px; }
+  .navwrap {
+    top: auto;
+    bottom: max(14px, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    width: calc(100vw - 16px);
+  }
+  .navbtn { width: 34px; height: 34px; }
 }
 /* ================= 가로 데크 ================= */
 
