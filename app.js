@@ -646,7 +646,7 @@ function renderList(startTab) {
   state.tab = startTab || 'posts';
   document.title = state.tab === 'posts'
     ? '주간 채권동향'
-    : `${(state.pages.find((p) => p.slug === state.tab) || {}).title} · 주간 채권동향`;
+    : `${(tabList().find((p) => p.slug === state.tab) || {}).title} · 주간 채권동향`;
 
   if (!state.index.length) {
     els.view.classList.remove('deck-mode');
@@ -770,6 +770,7 @@ function renderList(startTab) {
     </section>`).join('');
 
   els.view.innerHTML = `
+    ${renderTabs()}
     <div class="deck">${postsSlide}${policySlide}${pageSlides}</div>
     ${renderNext()}`;
 
@@ -909,9 +910,24 @@ function nextRefreshAt() {
 /* 발행글 / 제도·규제 / 용어 노트를 옆으로 넘겨 오간다.
  * 세 화면이 같은 틀을 쓰므로 탭 줄을 각 화면이 똑같이 그린다. */
 function tabList() {
-  const list = [{ slug: 'posts', title: '채권동향' }];
+  const list = [{ slug: 'posts', title: '주간 채권동향' }];
   if (state.policy.length) list.push({ slug: 'policy', title: '부동산 제도 규제' });
   return list.concat(state.pages.map((p) => ({ slug: p.slug, title: p.title })));
+}
+
+/* 맨 위 이름표. 옆에 다른 화면이 있다는 것을 글자로 알린다.
+ *
+ * 휴대폰에서 화살표를 화면 가운데에 두면 배너 숫자를 덮고, 아래 모서리로
+ * 내리면 눈에 안 띈다. 이름이 적혀 있으면 무엇이 더 있는지까지 보이고
+ * 누르면 바로 간다. 손가락으로 넘기면 이름표가 따라 바뀐다 (mountDeck). */
+function renderTabs() {
+  const tabs = tabList();
+  if (tabs.length < 2) return '';
+  const cur = tabs.some((t) => t.slug === state.tab) ? state.tab : 'posts';
+  return `<nav class="dtabs" aria-label="화면 이동">${tabs.map((t) => `
+    <button type="button" class="dtab${t.slug === cur ? ' on' : ''}" data-slug="${escapeHtml(t.slug)}"
+            ${t.slug === cur ? 'aria-current="page"' : ''}>${escapeHtml(t.title)}</button>`).join('')}
+  </nav>`;
 }
 
 /* 옆으로 더 있다는 것을 알리는 화살표 하나.
@@ -1078,6 +1094,7 @@ function mountDeck() {
     const slug = slugs[Math.max(0, Math.min(slugs.length - 1, i))];
     if (slug === state.tab) return;
     state.tab = slug;
+    markTab(slug);
     // 마지막 칸에서는 화살표를 뒤집는다. 더 갈 데가 없는데 오른쪽을
     // 가리키고 있으면 눌러도 아무 일이 없어 고장난 것처럼 보인다.
     // 양 끝에서는 그쪽 화살표를 흐리게 한다. 눌러도 갈 데가 없는데
@@ -1088,7 +1105,7 @@ function mountDeck() {
     if (nxt)  nxt.classList.toggle('off', i >= slugs.length - 1);
     document.title = slug === 'posts'
       ? '주간 채권동향'
-      : `${(state.pages.find((p) => p.slug === slug) || {}).title} · 주간 채권동향`;
+      : `${(tabList().find((p) => p.slug === slug) || {}).title} · 주간 채권동향`;
     // 뒤로가기로 돌아올 자리를 남긴다. 히스토리를 쌓지는 않는다 -
     // 쌓으면 옆으로 몇 번 넘긴 만큼 뒤로가기를 눌러야 사이트를 빠져나간다.
     const hash = slug === 'posts' ? '#/' : `#/x/${encodeURIComponent(slug)}`;
@@ -1099,6 +1116,18 @@ function mountDeck() {
     clearTimeout(timer);
     timer = setTimeout(sync, 60);
   }, { passive: true });
+
+  // 이름표를 누르면 그 칸으로 간다.
+  els.view.querySelectorAll('.dtab').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const to = slugs.indexOf(btn.dataset.slug);
+      if (to < 0) return;
+      // 넘어가는 동안 이름표가 앞 칸들을 하나씩 거치며 깜빡이지 않게
+      // 누른 것을 먼저 켠다. 스크롤이 멈추면 sync() 가 같은 값으로 맞춘다.
+      markTab(btn.dataset.slug);
+      deck.scrollTo({ left: to * deck.clientWidth, behavior: 'smooth' });
+    });
+  });
 
   // 화살표를 누르면 다음 칸으로. 마지막이면 처음으로 돌아간다.
   els.view.querySelectorAll('.navbtn').forEach((btn) => {
@@ -1121,6 +1150,14 @@ function mountDeck() {
   const n0 = els.view.querySelector('.navbtn.next');
   if (p0) p0.classList.toggle('off', i0 <= 0);
   if (n0) n0.classList.toggle('off', i0 >= slugs.length - 1);
+}
+
+function markTab(slug) {
+  els.view.querySelectorAll('.dtab').forEach((b) => {
+    const on = b.dataset.slug === slug;
+    b.classList.toggle('on', on);
+    if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+  });
 }
 
 /* 주소로 바로 들어온 경우(#/x/glossary)는 그 칸에서 시작하도록

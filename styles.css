@@ -1251,19 +1251,12 @@ body {
   .navbtn.next { animation: none; }
 }
 
-/* 휴대폰에서는 화면 한가운데가 아니라 아래 양 모서리로 내린다.
-   가운데에 두면 배너(4칸이 2×2 로 접힌 뒤)의 오른쪽 위 칸 - CD 91일의
-   전주대비 숫자 - 를 정확히 덮는다. 손가락으로 넘기는 화면이라 화살표는
-   '옆에 더 있다' 는 표시면 되고, 칸 아래 여백(56px)이 있어 끝까지 내리면
-   아무것도 가리지 않는다. */
+/* 휴대폰에서는 화살표를 아예 뺀다. 화면 가운데에 두면 배너(2×2)의
+   CD 91일 전주대비를 덮고, 아래 모서리로 내리면 눈에 안 띈다.
+   맨 위 이름표(.dtabs)가 다른 화면이 있다는 것과 그 이름까지 알려 주고,
+   손가락으로 넘기는 것도 그대로 된다. */
 @media (max-width: 720px) {
-  .navwrap {
-    top: auto;
-    bottom: max(14px, env(safe-area-inset-bottom));
-    transform: translateX(-50%);
-    width: calc(100vw - 16px);
-  }
-  .navbtn { width: 34px; height: 34px; }
+  .navwrap { display: none; }
 }
 /* ================= 가로 데크 ================= */
 
@@ -1298,6 +1291,45 @@ body {
   margin: 0 -18px;          /* .view 좌우 여백을 칸 안쪽으로 넘긴다 */
 }
 .deck::-webkit-scrollbar { display: none; }
+
+/* 맨 위 이름표 (app.js 의 renderTabs). 데크 바깥에 있어 칸을 넘겨도
+   제자리에 남는다. 세 칸을 같은 폭으로 나눈 한 줄 - 휴대폰에서도
+   '주간 채권동향 / 부동산 제도 규제 / 용어 노트' 가 줄바꿈 없이 들어간다. */
+.dtabs {
+  flex: none;
+  display: flex;
+  gap: 3px;
+  margin: 0 0 14px;
+  padding: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.dtab {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 8px 4px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -.02em;
+  white-space: nowrap;
+  color: var(--text-2);
+  background: transparent;
+  border: 0;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background .16s, color .16s;
+}
+.dtab:hover { color: var(--text); }
+.dtab.on {
+  color: #fff;
+  background: var(--navy);
+  box-shadow: var(--shadow-sm);
+}
+@media (max-width: 360px) {
+  .dtab { font-size: 12px; letter-spacing: -.04em; padding: 8px 2px; }
+}
 
 .slide {
   flex: 0 0 100%;
