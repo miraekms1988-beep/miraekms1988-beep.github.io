@@ -1540,9 +1540,11 @@ body {
    같은 굵기로 늘어놓으면 무엇이 요점이고 무엇이 딸린 값인지 안 갈린다. */
 .pc-digest { margin: 0 0 6px; padding: 15px 17px 13px; }
 
+/* 15px·700 이면 휴대폰에서 요약 한 단락이 화면 절반을 덮고, 그 아래
+   바뀌는 값들보다 더 크게 읽혀 무엇이 요점인지 흐려진다. 한 단계 낮춘다. */
 .pc-digest .digest-lead {
   margin-bottom: 11px;
-  font-size: 15px; font-weight: 700;
+  font-size: 13.5px; font-weight: 600;
   line-height: 1.6;
   color: var(--text);
   text-align: justify;
@@ -1597,18 +1599,29 @@ body {
   color: var(--text-2);
   letter-spacing: -.01em;
 }
+/* 값은 줄을 넘길 수 있어야 한다. 전에는 통째로 nowrap 이라
+   '2029년 5% → 2030년 10% → 2031년 15% → 2032년 20%' 처럼 긴 값이
+   상자 오른쪽 밖으로 튀어나갔다. 이전 값과 화살표만 붙여 두고
+   바뀐 값은 어절 단위로 접는다. */
 .pc-digest .pc-move {
-  flex: 0 0 auto;
-  display: flex; align-items: baseline; gap: 5px;
+  flex: 0 1 auto;
+  min-width: 0;
+  display: flex; flex-wrap: wrap; align-items: baseline;
+  column-gap: 5px;
   font-family: var(--font-num);
   font-variant-numeric: tabular-nums;
   font-size: 13.5px;
   line-height: 1.5;
-  white-space: nowrap;
+  white-space: normal;   /* 위 .pc-move 의 nowrap 을 끊는다 */
 }
-.pc-digest .pc-from { color: var(--text-3); text-decoration: line-through; text-decoration-thickness: 1px; }
-.pc-digest .pc-arrow { color: var(--text-3); font-size: 10.5px; }
-.pc-digest .pc-to { color: var(--accent); font-weight: 750; }
+.pc-digest .pc-from { color: var(--text-3); text-decoration: line-through; text-decoration-thickness: 1px; white-space: nowrap; }
+.pc-digest .pc-arrow { color: var(--text-3); font-size: 10.5px; white-space: nowrap; }
+.pc-digest .pc-to {
+  min-width: 0;
+  color: var(--accent); font-weight: 750;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
 
 /* 시점은 값에 딸린 단서다. 앞의 가운뎃점이 값과 갈라 준다. */
 .pc-digest .pc-when {
@@ -1623,6 +1636,7 @@ body {
 @media (max-width: 460px) {
   .pc-digest .pc-label { flex: 1 0 100%; }
   .pc-digest .pc-row { margin-bottom: 8px; }
+  .pc-digest .digest-lead { font-size: 13px; }
 }
 /* ================= 본문 양쪽정렬 ================= */
 
