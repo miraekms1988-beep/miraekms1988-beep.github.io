@@ -1685,8 +1685,24 @@ window.addEventListener('hashchange', route);
 window.addEventListener('scroll', onScroll, { passive: true });
 
 if ('serviceWorker' in navigator) {
+  // 새 서비스워커가 자리를 잡으면(= CSS/JS 를 새로 배포했으면) 한 번 새로 고친다.
+  // 잠금은 sessionStorage 에 남고 주소(#)도 그대로라 보던 화면으로 돌아온다.
+  // 처음 설치될 때는 바꿀 옛 화면이 없으므로 건너뛴다.
+  const hadController = !!navigator.serviceWorker.controller;
+  let reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (!hadController || reloading) return;
+    reloading = true;
+    location.reload();
+  });
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js').catch(() => { /* 오프라인 캐시는 없어도 동작 */ });
+    navigator.serviceWorker.register('sw.js').then((reg) => {
+      // 홈 화면에 깐 앱은 닫지 않고 다시 열면 페이지를 새로 받지 않는다.
+      // 그래서 고친 화면이 안 보였다. 돌아올 때마다 새 배포가 있는지 묻는다.
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') reg.update().catch(() => {});
+      });
+    }).catch(() => { /* 오프라인 캐시는 없어도 동작 */ });
   });
 }
 
