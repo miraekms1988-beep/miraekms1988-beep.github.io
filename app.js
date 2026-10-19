@@ -1006,10 +1006,17 @@ function renderPolicyCard(p) {
       ${changes ? `<ul class="pc-changes">${changes}</ul>` : ''}
     </aside>` : '';
 
+  // 제목 옆 꼬리표는 이 세 가지만 받는다. 다른 말이 오면 안 그린다 -
+  // 색이 정해지지 않은 꼬리표가 섞이면 무엇이 무엇인지 헷갈린다.
+  const ST = { '확정': 'fix', '예정': 'plan', '검토': 'review' };
+  const status = ST[p.status]
+    ? ` <span class="pc-status st-${ST[p.status]}">${escapeHtml(p.status)}</span>` : '';
+
   return `
-    <article class="pcard">
+    <article class="pcard${p.important ? ' is-imp' : ''}">
       <header class="pc-head">
-        <h2>${escapeHtml(p.title)}</h2>
+        ${p.important ? '<span class="pc-imp">중요</span>' : ''}
+        <h2>${escapeHtml(p.title)}${status}</h2>
         <div class="pc-meta">
           ${p.announced ? `<span class="chip">${escapeHtml(p.announced)}</span>` : ''}
           ${p.effect ? `<span class="pc-effect">${escapeHtml(p.effect)}</span>` : ''}
@@ -1026,7 +1033,12 @@ function renderPolicyCard(p) {
 function renderPolicySlide() {
   return `
     ${state.policy.map(renderPolicyCard).join('')}
-    <p class="pc-foot">정확한 내용은 각 부처 발표 자료를 확인하세요.</p>`;
+    <p class="pc-foot">
+      <span class="pc-leg"><span class="pc-status st-fix">확정</span> 내용과 시행 시점이 정해진 것</span>
+      <span class="pc-leg"><span class="pc-status st-plan">예정</span> 발표됐지만 의결·조례 등 절차가 남은 것</span>
+      <span class="pc-leg"><span class="pc-status st-review">검토</span> 검토 중이거나 보도 단계</span>
+      <span class="pc-leg">정확한 내용은 각 부처 발표 자료를 확인하세요.</span>
+    </p>`;
 }
 
 /* 상시 페이지 본문을 카드로 나눈다.

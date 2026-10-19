@@ -1460,6 +1460,41 @@ body {
 }
 
 .pc-head { margin-bottom: 10px; }
+
+/* 꼭 읽어야 하는 제도. 제목 위에 '중요' 를 달고 카드 왼쪽에 색 띠를 둔다.
+   띠가 있어야 화면을 빠르게 내릴 때도 눈에 걸린다. */
+.pc-imp {
+  display: inline-block;
+  margin: 0 0 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px; font-weight: 750;
+  letter-spacing: .03em;
+  color: #fff;
+  background: #e8590c;
+}
+.pcard.is-imp { box-shadow: inset 3px 0 0 #e8590c, var(--shadow-sm); }
+
+/* 제목 옆 꼬리표: 확정 · 예정 · 검토.
+   색은 text 와 섞어서 다크 모드에서도 읽히게 한다. */
+.pc-status {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border: 1px solid;
+  border-radius: 5px;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.5;
+  vertical-align: 3px;
+  white-space: nowrap;
+}
+.st-fix    { color: color-mix(in srgb, #2f9e44 80%, var(--text)); background: color-mix(in srgb, #2f9e44 12%, transparent); border-color: color-mix(in srgb, #2f9e44 40%, transparent); }
+.st-plan   { color: var(--accent); background: var(--accent-bg); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+.st-review { color: var(--text-3); background: transparent; border-color: var(--border); }
+.pc-leg { display: block; }
+.pc-leg + .pc-leg { margin-top: 4px; }
+.pc-foot .pc-status { margin: 0 4px 0 0; vertical-align: 1px; }
 .pc-head h2 {
   margin: 0 0 8px;
   font-size: 17px; font-weight: 750;
