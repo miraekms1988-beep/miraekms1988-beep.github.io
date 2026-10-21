@@ -142,10 +142,70 @@ body {
   min-height: 100dvh;
   display: grid;
   place-items: center;
+  align-content: center;
+  gap: 26px;
   padding: 24px;
   background:
     radial-gradient(1100px 520px at 50% -10%, var(--accent-bg), transparent 62%),
     var(--bg);
+}
+
+/* 구독 안내 카드 (잠금 화면 맨 위). 휴대폰은 옆으로 넘기고 다음 장이 살짝 보이게,
+   넓은 화면은 세 장을 나란히. 이미지는 .tmp/promo/render.ps1 로 굽는다. */
+.promo { width: 100%; max-width: 420px; }
+.promo-track {
+  position: relative;            /* 점 위치 계산(offsetLeft)의 기준 */
+  display: flex; gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding: 4px 2px 10px;
+}
+.promo-track::-webkit-scrollbar { display: none; }
+.promo-track img {
+  flex: 0 0 86%;
+  width: 86%; height: auto;
+  aspect-ratio: 1080 / 1350;
+  border-radius: 22px;
+  scroll-snap-align: center;
+  background: #000;
+  box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 18px 40px -20px rgba(0,0,0,.45);
+}
+.promo-dots { display: flex; justify-content: center; gap: 6px; margin: 8px 0 16px; }
+.promo-dots i {
+  width: 6px; height: 6px; border-radius: 3px;
+  background: var(--border);
+  transition: width .25s, background .25s;
+}
+.promo-dots i.on { width: 18px; background: var(--text); }
+.promo-cta {
+  display: block; width: 100%;
+  padding: 15px;
+  border: 0; border-radius: 14px;
+  font: inherit; font-size: 16px; font-weight: 700; letter-spacing: -.01em;
+  color: var(--bg); background: var(--text);
+  cursor: pointer;
+  transition: transform .1s;
+}
+.promo-cta:active { transform: scale(.985); }
+.promo-track a { display: contents; }
+/* 휴대폰: 카드 줄은 화면 끝까지 닿게 펼친다(잠금 화면 좌우 여백 24px 을 걷어냄).
+   여백 안에 가두면 카드 폭이 278px 로 줄어 카드 속 작은 글씨가 안 읽혔다. */
+@media (max-width: 899px) {
+  .promo { width: calc(100% + 48px); max-width: 468px; margin: 0 -24px; }
+  /* 좌우 여백은 첫·끝 카드에만 준다. 줄 전체에 padding 을 주면 그만큼 카드 폭(86%)이 다시 준다 */
+  .promo-track { padding: 4px 0 10px; scroll-padding: 0 24px; }
+  .promo-track a:first-child img { margin-left: 24px; }
+  .promo-track a:last-child img { margin-right: 24px; }
+  .promo-cta { width: calc(100% - 48px); margin: 0 24px; }
+}
+@media (min-width: 900px) {
+  .promo { max-width: 960px; }
+  .promo-track { overflow: visible; gap: 18px; }
+  .promo-track img { flex: 1 1 0; width: auto; min-width: 0; }
+  .promo-dots { display: none; }
+  .promo-cta { max-width: 372px; margin: 22px auto 0; }
 }
 
 .lock-card {

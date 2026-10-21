@@ -9,6 +9,16 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="채권동향">
 <title>주간 채권동향</title>
+<!-- 카톡·메신저에 링크를 붙였을 때 뜨는 미리보기. 작성자 정보는 넣지 않는다. -->
+<meta name="description" content="채권시장 흐름과 PF 유동화 조달 금리를 매주 한 번에 정리합니다. 시행사·시공사·금융사 실무자를 위한 주간 리포트">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="주간 채권동향">
+<meta property="og:title" content="주간 채권동향">
+<meta property="og:description" content="채권시장 흐름과 PF 유동화 조달 금리를 매주 한 번에 정리합니다. 시행사·시공사·금융사 실무자를 위한 주간 리포트">
+<meta property="og:url" content="https://miraekms1988-beep.github.io/">
+<meta property="og:image" content="https://miraekms1988-beep.github.io/promo/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
@@ -21,6 +31,23 @@
 
 <!-- 잠금 화면: 올바른 비밀번호 없이는 글 목록조차 복호화되지 않는다 -->
 <div id="lock" class="lock" hidden>
+  <!-- 구독 안내 카드. 링크를 받아 처음 들어온 사람이 비밀번호 칸보다 먼저 보도록
+       위에 둔다. 신청서를 열면 감춘다(showSignup). 작성자 정보가 없는 이미지다.
+       저장된 비밀번호로 바로 열리는 사람은 이 화면을 안 거치므로 lazy 면 받지도 않는다.
+       이미지는 .tmp/promo/render.ps1 로 다시 굽는다. -->
+  <section class="promo" id="promo" aria-label="주간 채권동향 미리보기">
+    <div class="promo-track" id="promo-track">
+      <a href="promo/card1.jpg" target="_blank" rel="noopener"><img src="promo/card1.jpg" width="1080" height="1350" loading="lazy" decoding="async"
+           alt="주간 채권동향 - 채권시장 흐름과 PF 유동화 조달 금리를 매주 한 번에 정리합니다"></a>
+      <a href="promo/card2.jpg" target="_blank" rel="noopener"><img src="promo/card2.jpg" width="1080" height="1350" loading="lazy" decoding="async"
+           alt="구독하면 볼 수 있는 것: 매주 월요일 채권시장 정리, 매일 갱신 지표, 금리 현황과 유동화 전단채 발행금리, 부동산 제도·규제 정리"></a>
+      <a href="promo/card3.jpg" target="_blank" rel="noopener"><img src="promo/card3.jpg" width="1080" height="1350" loading="lazy" decoding="async"
+           alt="구독 방법: 링크 접속, 구독 신청, 이메일로 비밀번호 수신"></a>
+    </div>
+    <div class="promo-dots" id="promo-dots" aria-hidden="true"><i class="on"></i><i></i><i></i></div>
+    <button type="button" class="promo-cta" id="promo-cta">구독 신청하기</button>
+  </section>
+
   <form class="lock-card" id="lock-form" autocomplete="off">
     <div class="lock-mark" aria-hidden="true">채</div>
     <h1 class="lock-title">주간 채권시장 동향</h1>

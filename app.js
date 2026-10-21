@@ -43,6 +43,8 @@ const els = {
   toast: document.getElementById('toast'),
   footId: document.getElementById('foot-id'),
   signupOpen: document.getElementById('signup-open'),
+  promo: document.getElementById('promo'),
+  promoCta: document.getElementById('promo-cta'),
   signupForm: document.getElementById('signup-form'),
   signupBtn: document.getElementById('signup-btn'),
   signupError: document.getElementById('signup-error'),
@@ -1444,6 +1446,29 @@ function route() {
   renderList();
 }
 
+/* ================= 구독 안내 카드 (잠금 화면) ================= */
+
+/* 옆으로 넘기는 카드 세 장. 지금 몇 번째인지 점으로 알린다. */
+(function mountPromo() {
+  const track = document.getElementById('promo-track');
+  const dots = document.querySelectorAll('#promo-dots i');
+  if (!track || !dots.length) return;
+  let t = null;
+  track.addEventListener('scroll', () => {
+    clearTimeout(t);
+    t = setTimeout(() => {
+      // 이미지마다 <a>(display: contents)로 감싸 두었다. 상자가 있는 건 img 뿐이다.
+      const cards = track.querySelectorAll('img');
+      const mid = track.scrollLeft + track.clientWidth / 2;
+      let idx = 0;
+      for (let i = 0; i < cards.length; i++) {
+        if (cards[i].offsetLeft <= mid) idx = i;
+      }
+      dots.forEach((d, i) => d.classList.toggle('on', i === idx));
+    }, 50);
+  }, { passive: true });
+})();
+
 /* ================= 움직임 (2026-10 개편) ================= */
 
 /* 화면에 들어오는 것을 차례로 띄운다. 모양은 styles.css 의 .reveal / .in.
@@ -1681,6 +1706,8 @@ function showSignup(on, done) {
   els.lockForm.hidden = !!on || !!done;
   els.signupForm.hidden = !on;
   els.signupDone.hidden = !done;
+  // 구독 안내 카드는 비밀번호 화면에서만. 신청서를 열면 신청서가 맨 위로 오게 감춘다.
+  if (els.promo) els.promo.hidden = !!on || !!done;
   if (!on) {
     els.signupError.hidden = true;
     els.signupBtn.disabled = false;
@@ -1879,11 +1906,15 @@ els.lockForm.addEventListener('submit', async (e) => {
 // 눌렀는데 아무 일도 안 일어나는 것보다 없는 편이 낫다.
 if (!SIGNUP_URL) {
   if (els.signupOpen) els.signupOpen.closest('.lock-alt').hidden = true;
+  if (els.promoCta) els.promoCta.hidden = true;
 } else {
-  els.signupOpen.addEventListener('click', () => {
+  const openSignup = () => {
     showSignup(true);
+    window.scrollTo(0, 0);
     document.getElementById('su-name').focus();
-  });
+  };
+  els.signupOpen.addEventListener('click', openSignup);
+  if (els.promoCta) els.promoCta.addEventListener('click', openSignup);
   els.signupCancel.addEventListener('click', () => showSignup(false));
   els.signupBack.addEventListener('click', () => showSignup(false));
 
