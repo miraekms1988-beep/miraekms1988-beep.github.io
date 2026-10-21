@@ -984,7 +984,8 @@ body {
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 10px); } }
 
 @media (prefers-reduced-motion: reduce) {
-  * { animation: none !important; transition: none !important; }
+  /* 배너는 빼 둔다 - 이 설정에서도 배너만은 한 번 떠오르고 숫자·선이 채워진다 (2026-10-21) */
+  *:not(.bn-item, .bn-item *) { animation: none !important; transition: none !important; }
 }
 
 /* ================= 반응형 ================= */
@@ -2183,9 +2184,8 @@ html:has(.view > article) .topbar {
 /* '동작 줄이기' 를 켠 기기에서는 처음부터 다 보이게 */
 @media (prefers-reduced-motion: reduce) {
   .hero .hero-kicker, .hero .hero-title, .hero .hero-author, .hero .hero-stats { opacity: 1; transform: none; animation: none; }
-  .reveal, .view > article .table-wrap.reveal tbody tr { opacity: 1 !important; transform: none !important; transition: none !important; }
-  .bn-spark .ln { stroke-dashoffset: 0; transition: none; }
-  .bn-spark .ar, .bn-dot { opacity: 1; transition: none; }
+  /* 배너(.bn-item)는 여기서도 움직인다. 끝점의 무한 깜빡임만 끈다 */
+  .reveal:not(.bn-item), .view > article .table-wrap.reveal tbody tr { opacity: 1 !important; transform: none !important; transition: none !important; }
   .bn-dot::after { display: none; }
   .new-badge::before, .view > article .digest::before, .pcard.is-imp::before { animation: none; }
   .view > article .chart .c-line { stroke-dashoffset: 0; animation: none !important; }

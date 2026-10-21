@@ -1461,9 +1461,17 @@ function mountMotion(root, calm) {
     if (el.classList.contains('bn-item')) el.style.transitionDelay = `${(n++ % 4) * 90}ms`;
   });
 
-  if ((REDUCE_MOTION && REDUCE_MOTION.matches) || !('IntersectionObserver' in window)) {
+  if (!('IntersectionObserver' in window)) {
     targets.forEach((el) => el.classList.add('in'));
     return;
+  }
+  // '동작 줄이기' 를 켠 기기에서도 배너만은 움직인다 (사용자 결정 2026-10-21).
+  // 한 번 떠오르고 숫자·선이 채워지는 짧은 움직임이라 무겁지 않다.
+  // 나머지(카드·문단·표)는 처음부터 다 보이게 둔다.
+  let observed = targets;
+  if (REDUCE_MOTION && REDUCE_MOTION.matches) {
+    observed = targets.filter((el) => el.classList.contains('bn-item'));
+    targets.forEach((el) => { if (!el.classList.contains('bn-item')) el.classList.add('in'); });
   }
 
   motionIO = new IntersectionObserver((entries) => {
@@ -1485,7 +1493,7 @@ function mountMotion(root, calm) {
       motionIO.unobserve(el);
     });
   }, { threshold: isPost ? 0.08 : 0.15, rootMargin: '0px 0px -5% 0px' });
-  targets.forEach((el) => motionIO.observe(el));
+  observed.forEach((el) => motionIO.observe(el));
 }
 
 /* 기관·시공사 이름을 한 줄로 두었더니(styles.css) 그날 이름에 따라 표가 넘칠 수
@@ -1522,7 +1530,6 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('pageshow', (e) => { if (e.persisted) replayBanner(); });
 
 function replayBanner() {
-  if (REDUCE_MOTION && REDUCE_MOTION.matches) return;
   if (!motionIO) return;
   const items = [...els.view.querySelectorAll('.bn-item.reveal')];
   if (!items.length) return;
@@ -1538,14 +1545,21 @@ function replayBanner() {
 function countUp(el) {
   const node = el.firstChild;                  // "2.79" (뒤에 <em>%</em>)
   if (!node || node.nodeType !== 3) return;
-  const text = node.nodeValue;
+  // 원래 글자는 처음 한 번만 떠 둔다. 세는 도중에 다시 돌리면(앱으로 돌아옴)
+  // 그때의 중간값을 목표로 삼아 2.72 같은 엉뚱한 숫자에서 멈췄다.
+  if (el.dataset.v === undefined) el.dataset.v = node.nodeValue;
+  const text = el.dataset.v;
   const target = parseFloat(text.replace(/,/g, ''));
   if (!isFinite(target)) return;
   const digits = (text.split('.')[1] || '').length;
+  // 앞서 돌던 세기는 멈춘다 - 둘이 번갈아 글자를 쓰면 숫자가 튄다
+  const token = (el._countToken = (el._countToken || 0) + 1);
   const start = performance.now();
   const dur = 1300;
   const tick = (now) => {
-    const t = Math.min(1, (now - start) / dur);
+    if (el._countToken !== token) return;
+    // 프레임 시각이 시작 시각보다 살짝 앞설 수 있다. 그대로 두면 첫 장에 '-0.06' 이 찍혔다.
+    const t = Math.min(1, Math.max(0, (now - start) / dur));
     const eased = 1 - Math.pow(1 - t, 4);
     node.nodeValue = t < 1 ? (target * eased).toFixed(digits) : text;
     if (t < 1) requestAnimationFrame(tick);
