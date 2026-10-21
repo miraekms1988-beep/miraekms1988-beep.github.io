@@ -1825,6 +1825,54 @@ body {
 .spc-table { min-width: 460px; }
 .spc-table td.num, .spc-table th.num { white-space: nowrap; }
 
+/* 휴대폰에서는 표를 버리고 한 건을 두 줄로 세운다. 최소 폭 460px 로 옆으로
+   흐르게 했더니 "한 화면에 안 들어오고 양옆으로 움직인다" 고 했다.
+     첫 줄: SPC 이름 ……… 금리(최저~최고)
+     둘째 줄: 금액·건수 · 잔존 · 발행~만기 · 거래 · 구분 (작은 회색)
+   칸 순서는 issuanceRowsHtml 그대로다. 글 화면 표 규칙(첫 칸 한 줄, 칸 여백 등)이
+   안쪽 표에도 걸리므로 몇 군데는 !important 로 되돌린다. */
+@media (max-width: 560px) {
+  .spc-detail { padding: 4px 12px 6px; overflow-x: visible; }
+  .spc-table { min-width: 0; }
+  .spc-table thead { display: none; }
+  .spc-table tbody tr {
+    display: grid;
+    grid-template-columns: auto auto auto auto 1fr;
+    column-gap: 10px;
+    row-gap: 3px;
+    align-items: baseline;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .spc-table tbody tr:last-child { border-bottom: 0; }
+  .spc-table td {
+    padding: 0 !important;
+    border: 0 !important;
+    min-width: 0 !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+    font-size: 11px;
+    color: var(--text-3);
+  }
+  .spc-table td:nth-child(1) {
+    grid-column: 1 / 5; grid-row: 1;
+    white-space: normal !important;
+    font-size: 12.5px; font-weight: 600 !important;
+    color: var(--text);
+  }
+  .spc-table td:nth-child(2) {
+    grid-column: 5; grid-row: 1;
+    justify-self: end;
+    text-align: right !important;
+    font-size: 12.5px; font-weight: 700;
+    color: var(--text);
+  }
+  .spc-table td:nth-child(n+3) { grid-row: 2; }
+  /* 금액 옆 건수는 아래로 내리지 않고 옆에 붙인다 */
+  .spc-table td:nth-child(3) i { display: inline; margin-left: 3px; font-size: 10px; }
+  .spc-table td:nth-child(2) i { font-size: 10px; font-weight: 500; }
+}
+
 /* =====================================================================
    2026-10 디자인 개편
    - 목록: 표지만 Apple 식 검정, 배너·글 목록에 등장 움직임 (모양·색은 그대로)
