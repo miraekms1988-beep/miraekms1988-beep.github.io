@@ -150,8 +150,29 @@ body {
     var(--bg);
 }
 
+/* 카톡 안 브라우저 안내 (app.js mountInApp). 잠금 화면 맨 위. */
+.inapp {
+  width: 100%; max-width: 420px;
+  background: #1d1d1f; color: #f5f5f7;
+  border-radius: 18px;
+  padding: 18px 18px 16px;
+  box-shadow: 0 12px 30px -16px rgba(0,0,0,.5);
+}
+.inapp-msg { margin: 0; font-size: 14px; line-height: 1.55; color: #c7c7cc; }
+.inapp-msg b { color: #fff; font-size: 15px; }
+.inapp-btn {
+  display: block; width: 100%;
+  margin-top: 12px; padding: 13px;
+  border: 0; border-radius: 12px;
+  font: inherit; font-size: 15.5px; font-weight: 700;
+  color: #000; background: linear-gradient(135deg, #f5c96a, #d9a441);
+  cursor: pointer;
+}
+.inapp-hint { margin: 10px 0 0; font-size: 12px; line-height: 1.5; color: #a1a1a6; }
+.inapp-hint b { color: #f5f5f7; font-weight: 600; }
+
 /* 구독 안내 카드 (잠금 화면 맨 위). 휴대폰은 옆으로 넘기고 다음 장이 살짝 보이게,
-   넓은 화면은 세 장을 나란히. 이미지는 .tmp/promo/render.ps1 로 굽는다. */
+   넓은 화면은 나란히. 이미지는 .tmp/promo/render.ps1 로 굽는다. */
 .promo { width: 100%; max-width: 420px; }
 .promo-track {
   position: relative;            /* 점 위치 계산(offsetLeft)의 기준 */

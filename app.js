@@ -1474,6 +1474,26 @@ function route() {
   links.forEach((a, i) => a.addEventListener('click', (e) => { e.preventDefault(); openPromoViewer(i); }));
 })();
 
+/* 카톡 안의 브라우저로 열렸을 때 안내.
+ *   카톡 브라우저에서는 '홈 화면에 추가' 가 없고, 여기서 저장한 비밀번호는 사파리·
+ *   크롬·홈 화면 아이콘과 따로 논다. 단톡방으로 링크를 돌리면 대부분 여기로 들어온다.
+ *   카톡이 받아 주는 openExternal 주소로 기본 브라우저를 연다. 안 되는 기기도 있어
+ *   메뉴 위치를 같이 적는다. 이미 비밀번호를 저장해 바로 열리는 사람은 잠금 화면을
+ *   안 거치므로 이 안내도 보지 않는다. */
+(function mountInApp() {
+  const box = document.getElementById('inapp');
+  if (!box || !/KAKAOTALK/i.test(navigator.userAgent)) return;
+  const ios = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+  box.hidden = false;
+  const btn = document.getElementById('inapp-open');
+  btn.textContent = ios ? 'Safari로 열기' : '크롬 등 기본 브라우저로 열기';
+  const menu = document.getElementById('inapp-menu');
+  if (menu) menu.textContent = ios ? "'Safari로 열기'" : "'다른 브라우저로 열기'";
+  btn.addEventListener('click', () => {
+    const url = location.href.split('#')[0];
+    location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(url);
+  });
+})();
 /* 구독 안내 카드 전체 화면 보기.
  *   이미지를 누르거나 옆으로 밀면 다음 장, 왼쪽 3분의 1 을 누르면 이전 장.
  *   위에 '1 / 3', 아래에 '구독 신청하기'. ✕·Esc·휴대폰 뒤로가기로 닫는다.

@@ -31,6 +31,15 @@
 
 <!-- 잠금 화면: 올바른 비밀번호 없이는 글 목록조차 복호화되지 않는다 -->
 <div id="lock" class="lock" hidden>
+  <!-- 카톡 안의 브라우저로 열렸을 때만 보인다(app.js). 카톡 브라우저에서는 홈 화면
+       추가가 안 되고, 저장한 비밀번호도 사파리·크롬과 따로 논다. -->
+  <div class="inapp" id="inapp" hidden>
+    <p class="inapp-msg"><b>카카오톡 안에서 열렸습니다.</b><br>
+      <span id="inapp-why">홈 화면에 추가하고 편하게 보시려면 기본 브라우저로 열어 주세요.</span></p>
+    <button type="button" class="inapp-btn" id="inapp-open">사파리 · 크롬으로 열기</button>
+    <p class="inapp-hint" id="inapp-hint">안 넘어가면 카톡 화면의 메뉴(⋯ 또는 ⋮)에서 <b id="inapp-menu">'다른 브라우저로 열기'</b>를 눌러 주세요.</p>
+  </div>
+
   <!-- 구독 안내 카드. 링크를 받아 처음 들어온 사람이 비밀번호 칸보다 먼저 보도록
        위에 둔다. 신청서를 열면 감춘다(showSignup). 작성자 정보가 없는 이미지다.
        저장된 비밀번호로 바로 열리는 사람은 이 화면을 안 거치므로 lazy 면 받지도 않는다.
@@ -43,8 +52,10 @@
            alt="구독하면 볼 수 있는 것: 매주 월요일 채권시장 정리, 매일 갱신 지표, 금리 현황과 유동화 전단채 발행금리, 부동산 제도·규제 정리"></a>
       <a href="promo/card3.jpg" target="_blank" rel="noopener"><img src="promo/card3.jpg" width="1080" height="1350" loading="lazy" decoding="async"
            alt="구독 방법: 링크 접속, 구독 신청, 이메일로 비밀번호 수신"></a>
+      <a href="promo/card4.jpg" target="_blank" rel="noopener"><img src="promo/card4.jpg" width="1080" height="1350" loading="lazy" decoding="async"
+           alt="홈 화면에 추가해서 앱처럼 쓰는 법: 카톡에서는 먼저 사파리·크롬으로 열고, 공유 또는 메뉴에서 홈 화면에 추가, 아이콘으로 열어 비밀번호 입력"></a>
     </div>
-    <div class="promo-dots" id="promo-dots" aria-hidden="true"><i class="on"></i><i></i><i></i></div>
+    <div class="promo-dots" id="promo-dots" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i></div>
     <button type="button" class="promo-cta" id="promo-cta">구독 신청하기</button>
   </section>
 
