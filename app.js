@@ -1467,7 +1467,82 @@ function route() {
       dots.forEach((d, i) => d.classList.toggle('on', i === idx));
     }, 50);
   }, { passive: true });
+
+  // 카드를 누르면 그 카드부터 전체 화면으로 넘겨 본다. 예전에는 카드마다 새 창으로
+  // 따로 열려서 하나 보고 돌아와 다음 것을 또 눌러야 했다.
+  const links = [...track.querySelectorAll('a')];
+  links.forEach((a, i) => a.addEventListener('click', (e) => { e.preventDefault(); openPromoViewer(i); }));
 })();
+
+/* 구독 안내 카드 전체 화면 보기.
+ *   이미지를 누르거나 옆으로 밀면 다음 장, 왼쪽 3분의 1 을 누르면 이전 장.
+ *   위에 '1 / 3', 아래에 '구독 신청하기'. ✕·Esc·휴대폰 뒤로가기로 닫는다.
+ *   뒤로가기는 history 에 한 칸을 넣어 받는다 - 안 그러면 사이트를 빠져나간다. */
+let promoViewer = null;
+function openPromoViewer(start) {
+  const srcs = [...document.querySelectorAll('#promo-track img')].map((img) => ({ src: img.currentSrc || img.src, alt: img.alt }));
+  if (!srcs.length) return;
+  if (!promoViewer) {
+    const v = document.createElement('div');
+    v.className = 'pv';
+    v.setAttribute('role', 'dialog');
+    v.setAttribute('aria-modal', 'true');
+    v.setAttribute('aria-label', '주간 채권동향 안내 카드');
+    v.innerHTML = `
+      <div class="pv-top"><span class="pv-count"></span>
+        <button type="button" class="pv-close" aria-label="닫기">✕</button></div>
+      <div class="pv-track">${srcs.map((s) => `<div class="pv-slide"><img src="${escapeHtml(s.src)}" alt="${escapeHtml(s.alt)}"></div>`).join('')}</div>
+      <div class="pv-bottom">
+        <div class="pv-dots">${srcs.map(() => '<i></i>').join('')}</div>
+        <button type="button" class="pv-cta">구독 신청하기</button>
+      </div>`;
+    document.body.appendChild(v);
+    const track = v.querySelector('.pv-track');
+    const count = v.querySelector('.pv-count');
+    const dots = [...v.querySelectorAll('.pv-dots i')];
+    const n = srcs.length;
+    const cur = () => Math.round(track.scrollLeft / (track.clientWidth || 1));
+    const mark = () => {
+      const i = Math.max(0, Math.min(n - 1, cur()));
+      count.textContent = `${i + 1} / ${n}`;
+      dots.forEach((d, k) => d.classList.toggle('on', k === i));
+    };
+    const go = (i) => track.scrollTo({ left: Math.max(0, Math.min(n - 1, i)) * track.clientWidth, behavior: 'smooth' });
+    track.addEventListener('scroll', () => requestAnimationFrame(mark), { passive: true });
+    track.addEventListener('click', (e) => {
+      const r = track.getBoundingClientRect();
+      if (e.clientX - r.left < r.width / 3) go(cur() - 1); else go(cur() + 1);
+    });
+    v.querySelector('.pv-close').addEventListener('click', () => closePromoViewer());
+    v.querySelector('.pv-cta').addEventListener('click', () => {
+      closePromoViewer();
+      const cta = document.getElementById('promo-cta');
+      if (cta && !cta.hidden) cta.click();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (v.hidden) return;
+      if (e.key === 'Escape') closePromoViewer();
+      else if (e.key === 'ArrowRight') go(cur() + 1);
+      else if (e.key === 'ArrowLeft') go(cur() - 1);
+    });
+    window.addEventListener('popstate', () => { if (!v.hidden) closePromoViewer(true); });
+    promoViewer = { v, track, mark };
+  }
+  const { v, track, mark } = promoViewer;
+  v.hidden = false;
+  document.documentElement.classList.add('pv-open');
+  history.pushState({ promoViewer: true }, '');
+  // 열자마자 누른 카드 자리로 (애니메이션 없이)
+  requestAnimationFrame(() => { track.scrollLeft = start * track.clientWidth; mark(); });
+}
+
+function closePromoViewer(fromPop) {
+  if (!promoViewer || promoViewer.v.hidden) return;
+  promoViewer.v.hidden = true;
+  document.documentElement.classList.remove('pv-open');
+  // ✕ 로 닫았으면 열 때 넣은 history 한 칸을 걷어낸다
+  if (!fromPop && history.state && history.state.promoViewer) history.back();
+}
 
 /* ================= 움직임 (2026-10 개편) ================= */
 
