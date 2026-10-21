@@ -211,14 +211,28 @@ function renderTable(rows) {
     return `<td class="num${s ? ' ' + s : ''}">${renderInline(t)}</td>`;
   };
 
+  // 기관·시공사 이름 칸(7·8열 표의 셋째 칸)은 한 줄로 둔다. 'IPARK현대산업개발'
+  // 처럼 영문 머리에 긴 한글이 붙은 이름만 둘로 나눈다 - 이것 하나 때문에 칸 전체
+  // 글자를 줄이지 않으려고. 표를 '최신'으로 갈아 끼워도 유지되도록 여기서 그린다.
+  const nameCol = head.length === 7 || head.length === 8 ? 2 : -1;
+  const renderName = (raw) => {
+    const t = raw.trim();
+    const m = t.match(/^([A-Za-z&]{2,})([가-힣][가-힣A-Za-z]{3,})$/);
+    if (m && t.length >= 9) return `<td class="two">${escapeHtml(m[1])}<br>${escapeHtml(m[2])}</td>`;
+    return renderCell(raw, false);
+  };
+
   // 열 개수를 남겨둔다. 좁은 화면에서 넓은 표만 골라 줄이려면 CSS 쪽에
   // 열이 몇 개인지 알려줄 방법이 있어야 한다.
   let html = `<div class="table-wrap" data-cols="${head.length}"><table><thead><tr>`;
   head.forEach((c, i) => { html += `<th${aligns[i] || ''}>${renderInline(c)}</th>`; });
   html += '</tr></thead><tbody>';
   for (let i = 2; i < rows.length; i++) {
-    html += '<tr>';
-    cells(rows[i]).forEach((c, j) => { html += renderCell(c, !!aligns[j]); });
+    // --i: 표가 화면에 들어올 때 행을 위에서부터 차례로 띄우는 순번 (styles.css)
+    html += `<tr style="--i:${i - 2}">`;
+    cells(rows[i]).forEach((c, j) => {
+      html += j === nameCol && !aligns[j] ? renderName(c) : renderCell(c, !!aligns[j]);
+    });
     html += '</tr>';
   }
   return html + '</tbody></table></div>';
@@ -373,12 +387,13 @@ function renderChart(box, chart) {
       d += `${pen ? 'L' : 'M'}${x(i).toFixed(1)} ${y(v).toFixed(1)} `;
       pen = true;
     });
-    if (d) paths += `<path d="${d.trim()}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    // pathLength=1: 화면에 들어올 때 선을 그리는 움직임을 길이와 상관없이 같은 값으로 건다
+    if (d) paths += `<path class="c-line" pathLength="1" d="${d.trim()}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
 
     // 마지막 값에 점 하나
     for (let i = s.data.length - 1; i >= 0; i--) {
       if (typeof s.data[i] === 'number') {
-        dots += `<circle cx="${x(i).toFixed(1)}" cy="${y(s.data[i]).toFixed(1)}" r="3.5" fill="${color}"/>`;
+        dots += `<circle class="c-dot" cx="${x(i).toFixed(1)}" cy="${y(s.data[i]).toFixed(1)}" r="3.5" fill="${color}"/>`;
         break;
       }
     }
@@ -716,11 +731,12 @@ function renderList(startTab) {
   const shown = Math.min(listShown, total);
   const rest = total - shown;
 
-  const cards = state.index.slice(0, shown).map((p) => `
+  const cards = state.index.slice(0, shown).map((p, i) => `
     <a class="card" href="#/p/${encodeURIComponent(p.slug)}">
       <div class="card-meta">
         <span class="chip">${escapeHtml(p.week || '')}</span>
         <span>${formatDate(p.date)}</span>
+        ${i === 0 && isFresh(p.date) ? '<span class="new-badge">NEW</span>' : ''}
       </div>
       <h3 class="card-title">${escapeHtml(p.title)}</h3>
       ${p.summary ? `<p class="card-summary">${escapeHtml(p.summary)}</p>` : ''}
@@ -776,11 +792,15 @@ function renderList(startTab) {
 
   mountDeck();
   els.view.querySelectorAll('.slide .page-body').forEach(groupIntoCards);
+  mountMotion(els.view, calmNext);
+  calmNext = false;
 
   const btn = document.getElementById('more-btn');
   if (btn) {
     btn.addEventListener('click', () => {
       listShown = total;
+      // 같은 화면을 다시 그리는 것이라 표지·카드 등장 움직임을 또 보여주지 않는다
+      calmNext = true;
       renderList();
       // 펼친 자리에서 이어 보도록 방금 드러난 첫 글로 옮긴다.
       const first = els.view.querySelectorAll('.card')[shown];
@@ -821,14 +841,28 @@ function renderBanner() {
       ? ''
       : `<span class="bn-delta ${cls}">${sign}${d.toFixed(dg)}${du}<i>${escapeHtml(b.deltaNote || '')}</i></span>`;
     const path = sparkPath(b.spark, 64, 20);
-    const spark = path
-      ? `<svg class="bn-spark" viewBox="0 0 64 20" preserveAspectRatio="none" aria-hidden="true">
-           <path d="${path}" fill="none" stroke="currentColor" stroke-width="1.6"
-                 stroke-linecap="round" stroke-linejoin="round"/>
-         </svg>`
-      : '';
+    // 선(.ln) + 아래 옅은 면(.ar) + 마지막 값 자리의 점(.bn-dot).
+    // 화면에 들어오면 선이 그려지고 면·점이 뒤따른다 (styles.css 2026-10 개편).
+    // 점은 SVG 안에 두면 preserveAspectRatio="none" 에 눌려 타원이 되므로 밖에 띄운다.
+    // 선은 위아래 여백(5px/3px) 안에 그려지므로 점의 세로 자리도 그만큼 맞춘다.
+    let spark = '';
+    if (path) {
+      const pts = path.match(/[\d.]+,[\d.]+/g);
+      const [lx, ly] = pts[pts.length - 1].split(',').map(Number);
+      const x0 = path.match(/^M([\d.]+)/)[1];
+      spark = `
+        <span class="bn-sparkwrap">
+          <svg class="bn-spark" viewBox="0 0 64 20" preserveAspectRatio="none" aria-hidden="true">
+            <path class="ar" d="${path} L64,20 L${x0},20 Z" fill="currentColor" fill-opacity=".12"/>
+            <path class="ln" pathLength="1" d="${path}" fill="none" stroke="currentColor" stroke-width="1.6"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <i class="bn-dot" aria-hidden="true"
+             style="left:${((lx / 64) * 100).toFixed(2)}%;top:calc(5px + ${(ly / 20).toFixed(3)} * (100% - 8px))"></i>
+        </span>`;
+    }
     return `
-      <div class="bn-item">
+      <div class="bn-item ${cls}">
         <span class="bn-label">${escapeHtml(b.label)}</span>
         <span class="bn-value">${escapeHtml(b.value)}<em>${escapeHtml(b.unit || '')}</em></span>
         ${delta}
@@ -1233,6 +1267,9 @@ function mountLatestSwap(root, meta) {
     // 원본을 여기에 매달아 둔다. 발행내역 상세가 글보다 늦게 도착해서
     // 건수 버튼을 나중에 다는데, 그때 원본을 다시 떠야 하기 때문이다.
     wrap._weekHtml = original;
+    // 열 수도 같이 들고 있는다. 최신 표는 1~2M 이 1M·2M 로 갈려 열이 하나 늘기도
+    // 하는데, 안쪽만 갈고 data-cols 를 그대로 두면 7열 규칙으로 8열을 그려 넘쳤다.
+    const weekCols = wrap.dataset.cols;
 
     const sw = document.createElement('div');
     sw.className = 'tswitch';
@@ -1253,10 +1290,13 @@ function mountLatestSwap(root, meta) {
       const toFresh = btn.dataset.v === 'new';
       for (const b of sw.querySelectorAll('button')) b.classList.toggle('on', b === btn);
       wrap.innerHTML = toFresh ? freshWrap.innerHTML : wrap._weekHtml;
+      wrap.dataset.cols = toFresh ? freshWrap.dataset.cols : weekCols;
       wrap.classList.toggle('is-fresh', toFresh);
       // innerHTML 을 갈면 버튼에 걸어 둔 것이 다 날아간다. 다시 단다.
       // 구간이 다르면 펼칠 목록도 다르므로 짝이 맞는 상세를 준다.
       mountSpcToggles(wrap, toFresh ? (L.issuance || null) : state.postIssuance);
+      // 최신 표는 이름·열 수가 달라 폭이 다르다 (1~2M 이 1M·2M 로 갈리기도 한다)
+      fitTables(root);
     });
   }
 }
@@ -1351,6 +1391,11 @@ async function renderPost(slug) {
   mountEventArticles(els.view, meta.week);
 
   mountLatestSwap(els.view, meta);
+  // 표 전환 스위치까지 붙은 뒤에 건다 - 스위치도 같이 떠오르도록
+  mountMotion(els.view);
+  fitTables(els.view);
+  // 웹폰트가 늦게 오면 글자 폭이 바뀐다. 그때 한 번 더 잰다.
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => fitTables(els.view));
 
   // 발행내역 상세는 이 글을 열 때만 따로 받아온다. 목록에 함께 실으면
   // 잠금해제 한 번에 글 수만큼의 상세가 통째로 딸려온다.
@@ -1386,6 +1431,128 @@ function route() {
   renderList();
 }
 
+/* ================= 움직임 (2026-10 개편) ================= */
+
+/* 화면에 들어오는 것을 차례로 띄운다. 모양은 styles.css 의 .reveal / .in.
+ *   목록: 배너 칸(숫자 올려 세기 + 추이선 그리기), 발행글 머리, 글 카드
+ *   글:   머리, 요약, 본문 문단·표·차트, 서명
+ * 다시 그릴 때마다 옛 관찰자를 끊는다. 안 끊으면 사라진 요소를 계속 붙들고 있다.
+ * '동작 줄이기' 를 켠 기기나 관찰자가 없는 옛 브라우저는 처음부터 다 보여 준다. */
+const REDUCE_MOTION = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+let motionIO = null;
+let calmNext = false;
+
+function mountMotion(root, calm) {
+  if (motionIO) { motionIO.disconnect(); motionIO = null; }
+  root.classList.toggle('calm', !!calm);
+
+  const isPost = !!root.querySelector(':scope > article');
+  const sel = isPost
+    ? 'article .post-head, article .digest, article .prose > *, article .signoff'
+    : '.bn-item, .list-head, .card, .more';
+  const targets = [...root.querySelectorAll(sel)];
+  // 같은 화면을 다시 그린 것이면 움직임 없이 그대로 둔다
+  if (calm) return;
+
+  let n = 0;
+  targets.forEach((el) => {
+    el.classList.add('reveal');
+    // 나란히 놓인 배너 네 칸은 조금씩 늦게
+    if (el.classList.contains('bn-item')) el.style.transitionDelay = `${(n++ % 4) * 90}ms`;
+  });
+
+  if ((REDUCE_MOTION && REDUCE_MOTION.matches) || !('IntersectionObserver' in window)) {
+    targets.forEach((el) => el.classList.add('in'));
+    return;
+  }
+
+  motionIO = new IntersectionObserver((entries) => {
+    let k = 0;
+    entries.forEach((e) => {
+      if (!e.isIntersecting) return;
+      const el = e.target;
+      // 한꺼번에 들어온 카드는 순서대로 조금씩 늦춘다. 다 뜨면 지연을 지워
+      // 손을 올렸을 때 반응이 굼뜨지 않게 한다.
+      if (!isPost && !el.classList.contains('bn-item')) {
+        el.style.transitionDelay = `${k++ * 80}ms`;
+        setTimeout(() => { el.style.transitionDelay = ''; }, 1200);
+      }
+      el.classList.add('in');
+      if (el.classList.contains('bn-item')) {
+        const v = el.querySelector('.bn-value');
+        if (v) countUp(v);
+      }
+      motionIO.unobserve(el);
+    });
+  }, { threshold: isPost ? 0.08 : 0.15, rootMargin: '0px 0px -5% 0px' });
+  targets.forEach((el) => motionIO.observe(el));
+}
+
+/* 기관·시공사 이름을 한 줄로 두었더니(styles.css) 그날 이름에 따라 표가 넘칠 수
+ * 있다. 칸 여백은 폭마다 재서 맞춰 두었지만 이름은 매일 바뀐다. 그래서 그려진
+ * 뒤에 재 보고, 넘치는 표만 단계적으로 물러선다.
+ *   fit1: 이름 칸 글자를 조금 줄이고 자간을 조인다
+ *   fit2: 그래도 넘치면 그 표만 예전처럼 이름 줄바꿈을 허용한다 */
+function fitTables(root) {
+  root.querySelectorAll('.table-wrap[data-cols="7"], .table-wrap[data-cols="8"]').forEach((w) => {
+    w.classList.remove('fit1', 'fit2');
+    if (w.scrollWidth - w.clientWidth <= 0) return;
+    w.classList.add('fit1');
+    if (w.scrollWidth - w.clientWidth > 0) w.classList.add('fit2');
+  });
+}
+let fitTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(fitTimer);
+  fitTimer = setTimeout(() => fitTables(els.view), 150);
+});
+
+/* 배너 숫자를 0 에서 올려 센다. 끝나면 원래 글자를 그대로 돌려놓는다 -
+ * 반올림으로 마지막 자리가 어긋나 보이는 일이 없게. */
+function countUp(el) {
+  const node = el.firstChild;                  // "2.79" (뒤에 <em>%</em>)
+  if (!node || node.nodeType !== 3) return;
+  const text = node.nodeValue;
+  const target = parseFloat(text.replace(/,/g, ''));
+  if (!isFinite(target)) return;
+  const digits = (text.split('.')[1] || '').length;
+  const start = performance.now();
+  const dur = 1300;
+  const tick = (now) => {
+    const t = Math.min(1, (now - start) / dur);
+    const eased = 1 - Math.pow(1 - t, 4);
+    node.nodeValue = t < 1 ? (target * eased).toFixed(digits) : text;
+    if (t < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+/* 최신 글 NEW 표시. 글 날짜는 예고하는 주의 월요일이라 일요일 발행 직후엔
+ * 하루 미래다. 그 주가 지나면(7일) 뗀다. */
+function isFresh(iso) {
+  const d = new Date(`${iso}T00:00:00`);
+  return !isNaN(d) && Date.now() - d.getTime() < 7 * 86400000;
+}
+
+/* 스크롤하면 표지가 살짝 작아지며 물러난다. 리스너는 한 번만 걸고,
+ * 그때그때 화면에 있는 표지들에만 적용한다 (목록은 화면마다 표지가 있다). */
+let heroTick = false;
+window.addEventListener('scroll', () => {
+  if (heroTick) return;
+  heroTick = true;
+  requestAnimationFrame(() => {
+    heroTick = false;
+    if (REDUCE_MOTION && REDUCE_MOTION.matches) return;
+    const heroes = els.view.querySelectorAll('.hero');
+    if (!heroes.length) return;
+    const y = window.scrollY || 0;
+    heroes.forEach((h) => {
+      const p = Math.min(1, Math.max(0, y / (h.offsetHeight || 1)));
+      h.style.transform = p ? `scale(${(1 - p * 0.05).toFixed(4)})` : '';
+      h.style.opacity = p ? String(+(1 - p * 0.35).toFixed(3)) : '';
+    });
+  });
+}, { passive: true });
 /* ================= 읽기 시간 ================= */
 
 /* 표·수식은 눈으로 훑고 넘어가므로 글자 수에서 뺀다.

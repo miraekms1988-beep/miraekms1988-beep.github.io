@@ -1825,3 +1825,283 @@ body {
    (.spc-detail 이 이미 overflow-x: auto 다) */
 .spc-table { min-width: 460px; }
 .spc-table td.num, .spc-table th.num { white-space: nowrap; }
+
+/* =====================================================================
+   2026-10 디자인 개편
+   - 목록: 표지만 Apple 식 검정, 배너·글 목록에 등장 움직임 (모양·색은 그대로)
+   - 글: Apple 식 요약·본문, 볼록한 표(차콜 머리글), 스크롤로 들어올 때 떠오르기
+   움직임은 app.js 의 mountMotion 이 .reveal / .in 을 붙여 건다.
+   시안·비교 과정은 .tmp/design (저장소 밖).
+   ===================================================================== */
+:root { --ease: cubic-bezier(.28,.11,.32,1); }
+
+/* ---------------- 목록: 표지 ---------------- */
+.hero {
+  background: #000;
+  box-shadow: 0 18px 40px -24px rgba(0,0,0,.6);
+  transform-origin: 50% 0;
+}
+/* 다크 모드에서는 바탕도 검어서 표지 경계가 사라진다. 얇은 선으로 잡는다 */
+:root[data-theme="dark"] .hero { box-shadow: inset 0 0 0 1px rgba(255,255,255,.09); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .hero { box-shadow: inset 0 0 0 1px rgba(255,255,255,.09); }
+}
+/* 위에서 아주 옅게 떨어지는 빛 - 검정이 납작해 보이지 않게 */
+.hero::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(110% 70% at 50% -25%, rgba(255,255,255,.11), transparent 60%);
+}
+.hero-kicker {
+  background: linear-gradient(90deg, #f5c96a, #d9a441);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.hero-title { letter-spacing: -.045em; }
+.hero-author { border-top-color: rgba(255,255,255,.14); }
+.hero-who span { color: #a1a1a6; }
+.hero-avatar, .hero-cert { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.16); }
+.hero-tel { color: #2997ff !important; }
+.hero-stats { color: #86868b; }
+
+/* 표지 글자가 한 줄씩 떠오른다. '이전 글 더 보기' 로 다시 그릴 때는 건너뛴다(.calm) */
+.hero .hero-kicker, .hero .hero-title, .hero .hero-author, .hero .hero-stats {
+  opacity: 0; transform: translateY(18px);
+  animation: hrise 1.1s var(--ease) forwards;
+}
+.hero .hero-title  { animation-delay: .1s; }
+.hero .hero-author { animation-delay: .26s; }
+.hero .hero-stats  { animation-delay: .38s; }
+.calm .hero .hero-kicker, .calm .hero .hero-title, .calm .hero .hero-author, .calm .hero .hero-stats {
+  animation: none; opacity: 1; transform: none;
+}
+@keyframes hrise { to { opacity: 1; transform: none; } }
+
+/* ---------------- 목록: 배너 ---------------- */
+/* 칸이 차례로 떠오르고, 숫자가 올라가고(app.js countUp), 추이선이 그려진 뒤
+   아래 면이 깔리고, 마지막 값 자리에 점이 숨 쉰다 */
+.bn-item.reveal { opacity: 0; transform: translateY(16px); transition: opacity .9s var(--ease), transform .9s var(--ease); }
+.bn-item.reveal.in { opacity: 1; transform: none; }
+
+.bn-sparkwrap { grid-area: spark; position: relative; display: block; }
+.bn-sparkwrap .bn-spark { margin: 5px 0 3px; }
+.bn-spark { opacity: .9; }
+.bn-spark .ln { stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 1.5s var(--ease) .25s; }
+.bn-spark .ar { opacity: 0; transition: opacity 1s ease 1.2s; }
+.bn-item.in .bn-spark .ln { stroke-dashoffset: 0; }
+.bn-item.in .bn-spark .ar { opacity: 1; }
+
+.bn-dot {
+  position: absolute; width: 6px; height: 6px; margin: -3px 0 0 -3px;
+  border-radius: 50%; background: var(--accent-2);
+  opacity: 0; transition: opacity .4s ease 1.6s;
+}
+.bn-dot::after {
+  content: ""; position: absolute; inset: -4px; border-radius: 50%;
+  background: var(--accent-2); opacity: 0;
+  animation: ping 2.4s ease-out 1.8s infinite;
+}
+.bn-item.in .bn-dot { opacity: 1; }
+.bn-item.up   .bn-dot, .bn-item.up   .bn-dot::after { background: var(--up); }
+.bn-item.down .bn-dot, .bn-item.down .bn-dot::after { background: var(--down); }
+@keyframes ping { 0% { transform: scale(.6); opacity: .45; } 80%, 100% { transform: scale(2.2); opacity: 0; } }
+
+/* ---------------- 목록: 글 카드 ---------------- */
+.list-head.reveal, .card.reveal, .more.reveal {
+  opacity: 0; transform: translateY(22px);
+  transition: opacity .9s var(--ease), transform .9s var(--ease), box-shadow .18s ease, border-color .18s;
+}
+.list-head.reveal.in, .card.reveal.in, .more.reveal.in { opacity: 1; transform: none; }
+.card.reveal.in:hover { transform: translateY(-2px); }
+/* 누를 때 살짝 눌리는 반응 (휴대폰에서 '눌렸다'가 손에 느껴지게) */
+.card.reveal.in:active { transform: scale(.985); transition-duration: .1s; }
+
+/* 최신 글 표시 (발행 7일 안). 새 색 없이 기존 금색 토큰만 쓴다 */
+.new-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-left: auto;
+  font-size: 11px; font-weight: 700; letter-spacing: .04em;
+  color: var(--gold);
+}
+.new-badge::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--gold);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--gold) 60%, transparent);
+  animation: newping 2s ease-out infinite;
+}
+@keyframes newping { 70%, 100% { box-shadow: 0 0 0 6px transparent; } }
+
+/* ---------------- 글: 색 ---------------- */
+/* 글을 열었을 때만 Apple 식으로 바뀐다. html:has(.view > article) 로 범위를 잡아
+   목록 화면에는 새지 않는다. 표 머리글은 차콜(Apple 검정 계열) - 네이비는 요약의
+   무채색과 따로 놀았다. */
+html:has(.view > article) {
+  --bg:          #ffffff;
+  --surface:     #ffffff;
+  --surface-2:   #f5f5f7;
+  --surface-3:   #e8e8ed;
+  --border:      #e3e3e8;
+  --border-soft: #efeff3;
+  --text:        #1d1d1f;
+  --text-2:      #424245;
+  --text-3:      #86868b;
+  --accent:      #0066cc;
+  --tb-h1: #3a3a3c; --tb-h2: #1d1d1f;
+  --tb-lift: 0 0 0 1px rgba(0,0,0,.07), 0 1px 1px rgba(0,0,0,.04), 0 4px 10px -4px rgba(0,0,0,.10), 0 18px 34px -16px rgba(0,0,0,.28), inset 0 -10px 14px -12px rgba(0,0,0,.08);
+}
+html[data-theme="dark"]:has(.view > article) {
+  --bg: #000; --surface: #111113; --surface-2: #1c1c1e; --surface-3: #2c2c2e;
+  --border: #2c2c2e; --border-soft: #232325;
+  --text: #f5f5f7; --text-2: #c7c7cc; --text-3: #8e8e93; --accent: #2997ff;
+  --tb-h1: #4a4a4d; --tb-h2: #2c2c2e;
+  --tb-lift: 0 0 0 1px rgba(255,255,255,.07), inset 0 1px 0 rgba(255,255,255,.05), 0 14px 30px -12px rgba(0,0,0,.85);
+}
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]):has(.view > article) {
+    --bg: #000; --surface: #111113; --surface-2: #1c1c1e; --surface-3: #2c2c2e;
+    --border: #2c2c2e; --border-soft: #232325;
+    --text: #f5f5f7; --text-2: #c7c7cc; --text-3: #8e8e93; --accent: #2997ff;
+    --tb-h1: #4a4a4d; --tb-h2: #2c2c2e;
+    --tb-lift: 0 0 0 1px rgba(255,255,255,.07), inset 0 1px 0 rgba(255,255,255,.05), 0 14px 30px -12px rgba(0,0,0,.85);
+  }
+}
+
+html:has(.view > article) .topbar {
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+
+/* ---------------- 글: 머리 ---------------- */
+.view > article .post-head { border-bottom: 0; padding-bottom: 6px; margin-bottom: 26px; }
+.view > article .post-head h1 { font-size: 38px; font-weight: 700; letter-spacing: -.05em; line-height: 1.12; }
+.view > article .chip { background: transparent; color: var(--gold); padding: 0; font-size: 12.5px; font-weight: 700; }
+.view > article .readtime { background: transparent; color: var(--text-3); padding: 0; }
+.view > article .byline b { color: var(--text); }
+
+/* ---------------- 글: 요약 (Apple Intelligence 식 무지개 테두리) ---------------- */
+@property --ai { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+@keyframes ai { to { --ai: 360deg; } }
+.view > article .digest {
+  position: relative; isolation: isolate;
+  background: var(--surface); border: 0;
+  border-radius: 28px; padding: 24px 24px 22px;
+}
+.view > article .digest::before {
+  content: ""; position: absolute; inset: -2px; z-index: -2; border-radius: 30px;
+  background: conic-gradient(from var(--ai), #ff9f43, #ff5e8a, #b26cff, #4f8cff, #36d1c4, #ff9f43);
+  animation: ai 5s linear infinite;
+}
+.view > article .digest::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; border-radius: 28px;
+  background: var(--surface);
+  box-shadow: 0 10px 40px -8px rgba(178,108,255,.35);
+}
+.view > article .digest-label {
+  background: linear-gradient(90deg, #ff7a45, #e64d8c, #8a5cff, #3d7bff);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  padding: 0; font-size: 13px; font-weight: 700; letter-spacing: 0;
+}
+.view > article .digest-lead { font-size: 19px; font-weight: 700; letter-spacing: -.035em; line-height: 1.5; }
+.view > article .digest-points { font-size: 15px; }
+.view > article .digest-points li::marker { color: var(--text-3); }
+.view > article .digest-ahead { border-top-color: var(--border); }
+
+/* ---------------- 글: 본문 ---------------- */
+.view > article .prose { font-size: 16.5px; line-height: 1.75; }
+.view > article .prose h2 {
+  font-size: 30px; font-weight: 700; letter-spacing: -.045em;
+  border-bottom: 0; padding-bottom: 0; margin-top: 60px;
+}
+.view > article .prose h3 { font-size: 19px; font-weight: 700; }
+.view > article .prose a { color: var(--accent); }
+.view > article .prose blockquote { border-left: 0; border-radius: 18px; background: var(--surface-2); }
+.view > article .signoff { border-top-color: var(--border); }
+.view > article .signoff-mark { background: var(--text); color: var(--bg); border-radius: 9px; }
+
+/* 금리 차트: 들어오면 선이 그려지고 끝점이 뒤따른다 */
+.view > article .chart .c-line { stroke-dasharray: 1; stroke-dashoffset: 1; }
+.view > article .in .chart .c-line { animation: cdraw 1.8s var(--ease) .15s forwards; }
+.view > article .chart .c-dot { opacity: 0; }
+.view > article .in .chart .c-dot { animation: cfade .5s ease 1.6s forwards; }
+@keyframes cdraw { to { stroke-dashoffset: 0; } }
+@keyframes cfade { to { opacity: 1; } }
+
+/* ---------------- 글: 표 ---------------- */
+/* 표 제목 줄 ("**채권시장 동향 (10-16 기준)** (단위: %)") 을 캡션처럼 */
+.view > article .prose > p:has(> strong:first-child):has(+ .table-wrap, + .tswitch) {
+  margin: 34px 2px 10px;
+  font-size: 13px; color: var(--text-3); text-align: left;
+}
+.view > article .prose > p:has(> strong:first-child):has(+ .table-wrap, + .tswitch) strong {
+  display: block; margin-bottom: 1px;
+  font-size: 16px; font-weight: 700; letter-spacing: -.03em; color: var(--text);
+}
+
+/* 볼록한 표 - 칸 내용은 그대로 두고 상자만 도톰하게.
+ *   상자: 바깥 얇은 선 + 세 겹의 부드러운 그림자 + 바닥 쪽 옅은 안쪽 그늘
+ *   머리글: 위가 조금 밝은 차콜 그라데이션 + 윗줄 빛 / 아랫줄 그늘 */
+.view > article .table-wrap {
+  border: 0;
+  border-radius: 14px;
+  background-color: var(--surface);
+  box-shadow: var(--tb-lift);
+}
+.view > article .prose thead th {
+  background: linear-gradient(180deg, var(--tb-h1) 0%, var(--tb-h2) 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.17), inset 0 -1px 0 rgba(0,0,0,.2);
+  color: #fff;
+  text-shadow: 0 1px 0 rgba(0,0,0,.18);
+}
+
+/* 지표 표(3열)의 구분 칸 - 13px 굵게라 숫자보다 커 보였다. 한 단계 낮춘다 */
+.view > article .table-wrap[data-cols="3"] tbody td:first-child { font-size: 12px; font-weight: 600; }
+
+/* 기관·시공사 이름은 한 줄로. 'IPARK현대산업개발' 처럼 영문 머리에 긴 한글이
+   붙은 이름만 renderTable 이 둘로 나눈다(td.two). 위 7열 규칙의 줄바꿈 허용을 되돌린다. */
+.view > article .table-wrap[data-cols="7"] tbody td:nth-child(3),
+.view > article .table-wrap[data-cols="8"] tbody td:nth-child(3) { white-space: nowrap; overflow-wrap: normal; }
+.view > article .prose tbody td.two { line-height: 1.3; }
+/* 그래도 넘치는 폭만 칸 여백으로 잡는다 (320~520px 을 재서 정한 값).
+ *   361~380px: 7열 14px 넘침 -> 여백 2px / ~340px: 7열 4px·8열 1px 넘침 -> 여백 1px·숫자 자간 */
+@media (min-width: 361px) and (max-width: 380px) {
+  .view > article .table-wrap[data-cols="7"] th,
+  .view > article .table-wrap[data-cols="7"] td { padding-left: 2px; padding-right: 2px; }
+}
+@media (max-width: 340px) {
+  .view > article .table-wrap[data-cols="7"] th,
+  .view > article .table-wrap[data-cols="7"] td { padding-left: 1px; padding-right: 1px; }
+  .view > article .table-wrap[data-cols="8"] td.num { letter-spacing: -.02em; }
+}
+/* 그날 이름이 길어 그래도 넘치면 app.js fitTables 가 그 표에만 붙인다 */
+.view > article .table-wrap.fit1 tbody td:nth-child(3) { font-size: .9em; letter-spacing: -.04em; }
+.view > article .table-wrap.fit2 tbody td:nth-child(3) { white-space: normal; word-break: keep-all; overflow-wrap: anywhere; }
+
+/* 증감은 한 단계 작고 가늘게 - 숫자 아래 '곁다리'로만 읽히게 */
+.view > article .prose td.num .d { font-size: 9.5px; font-weight: 500; margin-top: 1px; letter-spacing: -.01em; }
+.view > article .notes { border-left-color: var(--border); }
+
+/* ---------------- 글: 스크롤로 들어올 때 ---------------- */
+.view > article .reveal { opacity: 0; transform: translateY(36px); transition: opacity 1s var(--ease), transform 1s var(--ease); }
+.view > article .reveal.in { opacity: 1; transform: none; }
+/* 표는 상자가 먼저 오르고, 행이 위에서부터 차례로 들어온다 (--i 는 renderTable 이 단다) */
+.view > article .table-wrap.reveal tbody tr { opacity: 0; transform: translateY(8px); }
+.view > article .table-wrap.reveal.in tbody tr {
+  opacity: 1; transform: none;
+  transition: opacity .6s var(--ease), transform .6s var(--ease);
+  transition-delay: calc(180ms + var(--i, 0) * 45ms);
+}
+
+@media (max-width: 480px) {
+  .view > article .post-head h1 { font-size: 31px; }
+  .view > article .prose h2 { font-size: 26px; }
+}
+
+/* '동작 줄이기' 를 켠 기기에서는 처음부터 다 보이게 */
+@media (prefers-reduced-motion: reduce) {
+  .hero .hero-kicker, .hero .hero-title, .hero .hero-author, .hero .hero-stats { opacity: 1; transform: none; animation: none; }
+  .reveal, .view > article .table-wrap.reveal tbody tr { opacity: 1 !important; transform: none !important; transition: none !important; }
+  .bn-spark .ln { stroke-dashoffset: 0; transition: none; }
+  .bn-spark .ar, .bn-dot { opacity: 1; transition: none; }
+  .bn-dot::after { display: none; }
+  .new-badge::before, .view > article .digest::before { animation: none; }
+  .view > article .chart .c-line { stroke-dashoffset: 0; animation: none !important; }
+  .view > article .chart .c-dot { opacity: 1; animation: none !important; }
+}
