@@ -1449,7 +1449,7 @@ function mountMotion(root, calm) {
   const isPost = !!root.querySelector(':scope > article');
   const sel = isPost
     ? 'article .post-head, article .digest, article .prose > *, article .signoff'
-    : '.bn-item, .list-head, .card, .more';
+    : '.bn-item, .list-head, .card, .more, .slide:not([data-slug="posts"]) .pcard, .pc-foot';
   const targets = [...root.querySelectorAll(sel)];
   // 같은 화면을 다시 그린 것이면 움직임 없이 그대로 둔다
   if (calm) return;
@@ -1535,9 +1535,12 @@ function isFresh(iso) {
 }
 
 /* 스크롤하면 표지가 살짝 작아지며 물러난다. 리스너는 한 번만 걸고,
- * 그때그때 화면에 있는 표지들에만 적용한다 (목록은 화면마다 표지가 있다). */
+ * 그때그때 화면에 있는 표지들에만 적용한다 (목록은 화면마다 표지가 있다).
+ * 목록은 창이 아니라 화면(.slide)마다 세로로 스크롤한다. 그래서 창의 scroll
+ * 만 들으면 안 움직였다 - 캡처 단계로 안쪽 스크롤까지 받고, 표지가 든 화면의
+ * scrollTop 을 쓴다. */
 let heroTick = false;
-window.addEventListener('scroll', () => {
+document.addEventListener('scroll', () => {
   if (heroTick) return;
   heroTick = true;
   requestAnimationFrame(() => {
@@ -1545,14 +1548,15 @@ window.addEventListener('scroll', () => {
     if (REDUCE_MOTION && REDUCE_MOTION.matches) return;
     const heroes = els.view.querySelectorAll('.hero');
     if (!heroes.length) return;
-    const y = window.scrollY || 0;
     heroes.forEach((h) => {
+      const sc = h.closest('.slide');
+      const y = sc && sc.scrollHeight > sc.clientHeight ? sc.scrollTop : (window.scrollY || 0);
       const p = Math.min(1, Math.max(0, y / (h.offsetHeight || 1)));
       h.style.transform = p ? `scale(${(1 - p * 0.05).toFixed(4)})` : '';
       h.style.opacity = p ? String(+(1 - p * 0.35).toFixed(3)) : '';
     });
   });
-}, { passive: true });
+}, { passive: true, capture: true });
 /* ================= 읽기 시간 ================= */
 
 /* 표·수식은 눈으로 훑고 넘어가므로 글자 수에서 뺀다.

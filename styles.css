@@ -2094,6 +2094,90 @@ html:has(.view > article) .topbar {
   .view > article .prose h2 { font-size: 26px; }
 }
 
+/* 표의 구분·라벨 칸은 두 줄로 꺾지 않는다 ('CP 91일' 이 'CP / 91일' 로 접히는 것 방지).
+   위쪽 기본 규칙은 첫 칸 줄바꿈을 허용해 두었다. 이름 칸은 fitTables 가 따로 다룬다. */
+.view > article .prose tbody td:first-child { white-space: nowrap; }
+
+/* ---------------- 상시 페이지 (부동산 제도 규제 · 용어 노트) ---------------- */
+/* 글 화면과 같은 Apple 결로 맞춘다. 표지·배너는 목록과 같다.
+   카드는 테두리 대신 옅은 그림자로 띄우고, 요약 상자는 회색 판 + 무지개 '요약' 글씨.
+   꼬리표(중요·확정·예정·검토)는 그대로 금색 하나. */
+.slide:not([data-slug="posts"]) .page-body {
+  --text: #1d1d1f; --text-2: #424245; --text-3: #86868b;
+  --surface: #ffffff; --surface-2: #f5f5f7;
+  --border: #e3e3e8; --border-soft: #efeff3;
+  --accent: #0066cc;
+  --pc-lift: 0 0 0 1px rgba(0,0,0,.05), 0 1px 2px rgba(0,0,0,.04), 0 12px 30px -16px rgba(0,0,0,.2);
+}
+:root[data-theme="dark"] .slide:not([data-slug="posts"]) .page-body {
+  --text: #f5f5f7; --text-2: #c7c7cc; --text-3: #8e8e93;
+  --surface: #1c1c1e; --surface-2: #2c2c2e;
+  --border: #38383a; --border-soft: #2c2c2e;
+  --accent: #2997ff;
+  --pc-lift: 0 0 0 1px rgba(255,255,255,.06), 0 14px 30px -14px rgba(0,0,0,.8);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .slide:not([data-slug="posts"]) .page-body {
+    --text: #f5f5f7; --text-2: #c7c7cc; --text-3: #8e8e93;
+    --surface: #1c1c1e; --surface-2: #2c2c2e;
+    --border: #38383a; --border-soft: #2c2c2e;
+    --accent: #2997ff;
+    --pc-lift: 0 0 0 1px rgba(255,255,255,.06), 0 14px 30px -14px rgba(0,0,0,.8);
+  }
+}
+
+.slide:not([data-slug="posts"]) .pcard {
+  border: 0;
+  border-radius: 22px;
+  box-shadow: var(--pc-lift);
+  padding: 22px 20px 18px;
+}
+/* '중요' 카드의 왼쪽 띠. 금색이었는데 요약의 무지개 글씨와 강조색이 둘로 갈려
+   채권동향 요약과 같은 무지개로 맞췄다. 색이 위아래로 천천히 흐른다. */
+.slide:not([data-slug="posts"]) .pcard.is-imp { position: relative; overflow: hidden; }
+.slide:not([data-slug="posts"]) .pcard.is-imp::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  background: linear-gradient(180deg, #ff9f43, #ff5e8a, #b26cff, #4f8cff, #36d1c4, #ff9f43);
+  background-size: 100% 300%;
+  animation: impflow 7s ease-in-out infinite alternate;
+}
+@keyframes impflow { from { background-position: 0 0; } to { background-position: 0 100%; } }
+
+.slide[data-slug="policy"] .pc-head h2 { font-size: 19px; font-weight: 700; letter-spacing: -.045em; line-height: 1.35; }
+.slide[data-slug="policy"] .pc-meta .chip { background: var(--surface-2); color: var(--text-2); border-radius: 999px; padding: 3px 10px; }
+
+.slide[data-slug="policy"] .pc-digest {
+  background: var(--surface-2);
+  border: 0;
+  border-radius: 16px;
+  padding: 16px 17px 14px;
+}
+.slide[data-slug="policy"] .pc-digest .digest-label {
+  background: linear-gradient(90deg, #ff7a45, #e64d8c, #8a5cff, #3d7bff);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  padding: 0; margin-bottom: 8px; font-size: 12.5px; font-weight: 700; letter-spacing: 0;
+}
+.slide[data-slug="policy"] .pc-digest .pc-changes { border-top-color: var(--border); }
+.slide[data-slug="policy"] .pc-digest .pc-row::before { background: var(--text-3); }
+/* 바뀐 값은 파랑이 아니라 진한 차콜로. 파랑은 사이트 전체에서 링크 색이라
+   요약 안의 값이 눌러야 하는 것처럼 읽혔다. 글 화면도 강조는 검정, 파랑은 링크만. */
+.slide[data-slug="policy"] .pc-to { color: var(--text); font-weight: 700; }
+.slide:not([data-slug="posts"]) .pfold > summary:hover,
+.slide:not([data-slug="posts"]) .pfold[open] > summary { color: var(--text); }
+.slide:not([data-slug="posts"]) .pfold[open] > summary::after { border-color: var(--text); }
+.slide[data-slug="policy"] .pc-arts > summary { color: var(--text-2); }
+
+/* 용어 노트: 묶음 제목은 파란 막대 대신 크고 진한 글씨 */
+.slide[data-slug="glossary"] .pcard > h2 { color: var(--text); font-size: 19px; font-weight: 700; letter-spacing: -.045em; padding-left: 0; }
+.slide[data-slug="glossary"] .pcard > h2::before { display: none; }
+
+/* 카드는 화면에 들어올 때 떠오른다 (app.js mountMotion) */
+.pcard.reveal, .pc-foot.reveal {
+  opacity: 0; transform: translateY(26px);
+  transition: opacity .9s var(--ease), transform .9s var(--ease);
+}
+.pcard.reveal.in, .pc-foot.reveal.in { opacity: 1; transform: none; }
+
 /* '동작 줄이기' 를 켠 기기에서는 처음부터 다 보이게 */
 @media (prefers-reduced-motion: reduce) {
   .hero .hero-kicker, .hero .hero-title, .hero .hero-author, .hero .hero-stats { opacity: 1; transform: none; animation: none; }
@@ -2101,7 +2185,7 @@ html:has(.view > article) .topbar {
   .bn-spark .ln { stroke-dashoffset: 0; transition: none; }
   .bn-spark .ar, .bn-dot { opacity: 1; transition: none; }
   .bn-dot::after { display: none; }
-  .new-badge::before, .view > article .digest::before { animation: none; }
+  .new-badge::before, .view > article .digest::before, .pcard.is-imp::before { animation: none; }
   .view > article .chart .c-line { stroke-dashoffset: 0; animation: none !important; }
   .view > article .chart .c-dot { opacity: 1; animation: none !important; }
 }
