@@ -1824,6 +1824,14 @@ body {
    (.spc-detail 이 이미 overflow-x: auto 다) */
 .spc-table { min-width: 460px; }
 .spc-table td.num, .spc-table th.num { white-space: nowrap; }
+/* 목록 위 한 줄 설명 (대표 금리 기준·정렬). 표 안의 숫자보다 조용하게 */
+.spc-note {
+  margin: 2px 0 6px;
+  font-size: 10.5px; line-height: 1.5;
+  color: var(--text-3);
+  white-space: normal;
+  text-align: left;
+}
 
 /* 휴대폰에서는 표를 버리고 한 건을 두 줄로 세운다. 최소 폭 460px 로 옆으로
    흐르게 했더니 "한 화면에 안 들어오고 양옆으로 움직인다" 고 했다.
@@ -1868,6 +1876,10 @@ body {
     color: var(--text);
   }
   .spc-table td:nth-child(n+3) { grid-row: 2; }
+  /* 목록이 최신 발행일 순이라 날짜가 먼저 눈에 들어와야 한다. 발행~만기를
+     둘째 줄 맨 앞으로 당기고 한 톤 진하게 */
+  .spc-table td:nth-child(5) { order: -1; color: var(--text-2); font-weight: 600; }
+  .spc-note { margin: 4px 0 2px; }
   /* 금액 옆 건수는 아래로 내리지 않고 옆에 붙인다 */
   .spc-table td:nth-child(3) i { display: inline; margin-left: 3px; font-size: 10px; }
   .spc-table td:nth-child(2) i { font-size: 10px; font-weight: 500; }

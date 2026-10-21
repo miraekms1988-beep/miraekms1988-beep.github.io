@@ -541,10 +541,13 @@ function issuanceRowsHtml(list) {
       <td>${escapeHtml(d.trade)}</td>
       <td>${escapeHtml(d.kind || '')}</td>
     </tr>`).join('');
+  // 대표 금리는 100억 이상 물량 중 최고 금리다(quotes-lib Get-IssuanceDetail).
+  // 휴대폰에서는 머리글을 숨기므로 무엇을 보는지 한 줄로 적어 둔다.
   return `
     <div class="spc-detail">
+      <p class="spc-note">금리 = 100억 이상 물량 중 최고 · 작은 글씨는 전체 최저~최고 · 최신 발행순</p>
       <table class="spc-table">
-        <thead><tr><th>SPC</th><th class="num">금리</th><th class="num">금액</th><th class="num">잔존</th><th>발행~만기</th><th>거래</th><th>구분</th></tr></thead>
+        <thead><tr><th>SPC</th><th class="num">상단 금리</th><th class="num">금액</th><th class="num">잔존</th><th>발행~만기</th><th>거래</th><th>구분</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>`;
