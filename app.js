@@ -1507,6 +1507,32 @@ window.addEventListener('resize', () => {
   fitTimer = setTimeout(() => fitTables(els.view), 150);
 });
 
+/* 휴대폰에서 홈 화면 앱을 다시 열거나 브라우저로 돌아오면 페이지를 새로 그리지
+ * 않고 하던 화면을 그대로 이어 보여 준다. 그래서 배너 움직임이 처음 연 순간
+ * 한 번뿐이었다 - 저장된 비밀번호로 바로 열리면 그 한 번도 스플래시 뒤에서
+ * 지나간다. 1분 넘게 떠나 있다가 돌아오면 배너를 처음부터 다시 돌린다.
+ * 잠깐 다른 앱을 보고 온 것까지 매번 다시 돌리면 오히려 거슬린다. */
+const REPLAY_AFTER_MS = 60000;
+let hiddenAt = 0;
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') { hiddenAt = Date.now(); return; }
+  if (hiddenAt && Date.now() - hiddenAt > REPLAY_AFTER_MS) replayBanner();
+});
+// 뒤로가기 캐시에서 되살아난 페이지도 그리지 않고 그대로 나온다
+window.addEventListener('pageshow', (e) => { if (e.persisted) replayBanner(); });
+
+function replayBanner() {
+  if (REDUCE_MOTION && REDUCE_MOTION.matches) return;
+  if (!motionIO) return;
+  const items = [...els.view.querySelectorAll('.bn-item.reveal')];
+  if (!items.length) return;
+  // 숨긴 상태로 '순간이동' 시킨 뒤 다시 관찰한다. 전환을 끈 채 되돌리지 않으면
+  // 사라지는 쪽으로 0.9초를 거꾸로 돌다가 다시 떠서 어수선하다.
+  items.forEach((el) => { el.classList.add('bn-reset'); el.classList.remove('in'); });
+  void els.view.offsetWidth;
+  items.forEach((el) => { el.classList.remove('bn-reset'); motionIO.observe(el); });
+}
+
 /* 배너 숫자를 0 에서 올려 센다. 끝나면 원래 글자를 그대로 돌려놓는다 -
  * 반올림으로 마지막 자리가 어긋나 보이는 일이 없게. */
 function countUp(el) {
