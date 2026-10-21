@@ -344,7 +344,13 @@ const CHART_COLORS = ['#1d4ed8', '#d1343f', '#0f9d58', '#a855f7', '#f59e0b'];
 
 // 의존성 없이 인라인 SVG 로 그린다. 값이 없는 날(null)은 선을 끊는다.
 function renderChart(box, chart) {
-  const W = 720, H = 300;
+  // 그릴 자리의 폭에 맞춰 그린다. 720 폭으로 그려 휴대폰에서 줄이면 글자가 깨알
+  // 같아져서 옆으로 스크롤하게 해 두었는데, 그러면 왼쪽 세로축과 오른쪽 최근 구간을
+  // 한 화면에 볼 수 없었다. 폭을 맞추면 글자 크기가 그대로이고 스크롤이 없다.
+  // (.chart 의 좌우 여백 18px 씩을 뺀다. 자리를 아직 못 쟀으면 예전 크기로.)
+  const avail = box.clientWidth ? box.clientWidth - 36 : 720;
+  const W = Math.max(260, Math.min(720, Math.round(avail)));
+  const H = Math.round(Math.min(300, Math.max(190, W * 0.62)));
   const pad = { t: 16, r: 12, b: 30, l: 46 };
   const iw = W - pad.l - pad.r;
   const ih = H - pad.t - pad.b;
