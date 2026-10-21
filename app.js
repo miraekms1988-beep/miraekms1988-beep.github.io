@@ -1443,8 +1443,9 @@ function route() {
  *   목록: 배너 칸(숫자 올려 세기 + 추이선 그리기), 발행글 머리, 글 카드
  *   글:   머리, 요약, 본문 문단·표·차트, 서명
  * 다시 그릴 때마다 옛 관찰자를 끊는다. 안 끊으면 사라진 요소를 계속 붙들고 있다.
- * '동작 줄이기' 를 켠 기기나 관찰자가 없는 옛 브라우저는 처음부터 다 보여 준다. */
-const REDUCE_MOTION = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+ * 휴대폰 '동작 줄이기·애니메이션 제거' 설정과 상관없이 모두 돈다 (사용자 결정
+ * 2026-10-21 - 그 설정을 따르는 것은 CSS 의 배너 끝점 깜빡임 하나뿐).
+ * 관찰자가 없는 옛 브라우저만 처음부터 다 보여 준다. */
 let motionIO = null;
 let calmNext = false;
 
@@ -1471,14 +1472,6 @@ function mountMotion(root, calm) {
     targets.forEach((el) => el.classList.add('in'));
     return;
   }
-  // '동작 줄이기' 를 켠 기기에서도 배너만은 움직인다 (사용자 결정 2026-10-21).
-  // 한 번 떠오르고 숫자·선이 채워지는 짧은 움직임이라 무겁지 않다.
-  // 나머지(카드·문단·표)는 처음부터 다 보이게 둔다.
-  let observed = targets;
-  if (REDUCE_MOTION && REDUCE_MOTION.matches) {
-    observed = targets.filter((el) => el.classList.contains('bn-item'));
-    targets.forEach((el) => { if (!el.classList.contains('bn-item')) el.classList.add('in'); });
-  }
 
   motionIO = new IntersectionObserver((entries) => {
     let k = 0;
@@ -1499,7 +1492,7 @@ function mountMotion(root, calm) {
       motionIO.unobserve(el);
     });
   }, { threshold: isPost ? 0.08 : 0.15, rootMargin: '0px 0px -5% 0px' });
-  observed.forEach((el) => motionIO.observe(el));
+  targets.forEach((el) => motionIO.observe(el));
 }
 
 /* 기관·시공사 이름을 한 줄로 두었더니(styles.css) 그날 이름에 따라 표가 넘칠 수
@@ -1591,7 +1584,6 @@ document.addEventListener('scroll', () => {
   heroTick = true;
   requestAnimationFrame(() => {
     heroTick = false;
-    if (REDUCE_MOTION && REDUCE_MOTION.matches) return;
     const heroes = els.view.querySelectorAll('.hero');
     if (!heroes.length) return;
     heroes.forEach((h) => {
