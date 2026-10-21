@@ -497,6 +497,14 @@ body {
 .signoff b { font-size: 14.5px; font-weight: 650; }
 .signoff span { font-size: 12.5px; color: var(--text-3); }
 .signoff-tel { font-weight: 600; color: var(--text-2) !important; font-variant-numeric: tabular-nums; }
+/* 전화번호 밑의 이메일. 누르면 메일 앱이 열린다. 색은 소속 줄과 같은 회색 */
+.signoff-mail {
+  font-size: 12.5px; font-weight: 400;
+  color: var(--text-3);
+  text-decoration: none;
+  word-break: break-all;
+}
+.signoff-mail:hover { text-decoration: underline; }
 
 @media (max-width: 480px) {
   .hero { padding: 26px 20px 22px; }
@@ -1851,6 +1859,15 @@ body {
 .hero-who span { color: #a1a1a6; }
 .hero-avatar, .hero-cert { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.16); }
 .hero-tel { color: #2997ff !important; }
+/* 전화번호 밑 이메일. 파랑은 어울리지 않아(사용자) 소속 줄과 같은 회색·굵기로 둔다 */
+.hero-mail {
+  font-size: 12.5px; font-weight: 400;
+  color: #a1a1a6;
+  text-decoration: none;
+  letter-spacing: 0;
+  word-break: break-all;
+}
+.hero-mail:hover { text-decoration: underline; }
 .hero-stats { color: #86868b; }
 
 /* 표지 글자가 한 줄씩 떠오른다. '이전 글 더 보기' 로 다시 그릴 때는 건너뛴다(.calm) */

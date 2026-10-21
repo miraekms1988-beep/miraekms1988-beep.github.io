@@ -24,7 +24,7 @@ const SIGNUP_URL = 'https://script.google.com/macros/s/AKfycbxWgN0pXVPbzgxkER8CJ
 // 여기 적으면 정적 호스팅에서 소스 보기만으로 누구나 읽을 수 있다.
 // 실제 값은 posts/author.enc.json 에 암호문으로 있고, 잠금해제 때 채워진다.
 // 내용을 바꾸려면 data/author.json 을 고치고 다시 발행하면 된다.
-let AUTHOR = { name: '', title: '', org: '', team: '', cert: '', tel: '' };
+let AUTHOR = { name: '', title: '', org: '', team: '', cert: '', tel: '', email: '' };
 
 const els = {
   lock: document.getElementById('lock'),
@@ -59,6 +59,7 @@ function renderFoot() {
     `<strong>${escapeHtml(AUTHOR.name)}</strong> ${escapeHtml(AUTHOR.title)}`
     + (AUTHOR.cert ? ` · ${escapeHtml(AUTHOR.cert)}` : '')
     + `<br>${escapeHtml(AUTHOR.org)} ${escapeHtml(AUTHOR.team)}`
+    + (AUTHOR.email ? `<br>${escapeHtml(AUTHOR.email)}` : '')
     + (AUTHOR.tel ? `<br>${escapeHtml(AUTHOR.tel)}` : '');
 }
 
@@ -698,6 +699,7 @@ function renderList(startTab) {
           <span class="hero-who">
             <b>${escapeHtml(AUTHOR.name)} ${escapeHtml(AUTHOR.title)}</b>
             <span>${escapeHtml(AUTHOR.org)} ${escapeHtml(AUTHOR.team)}</span>
+            ${AUTHOR.email ? `<a class="hero-mail" href="mailto:${escapeHtml(AUTHOR.email)}">${escapeHtml(AUTHOR.email)}</a>` : ''}
             <a class="hero-tel" href="tel:${escapeHtml(AUTHOR.tel.replace(/-/g, ''))}">${escapeHtml(AUTHOR.tel)}</a>
           </span>
           <span class="hero-cert">${escapeHtml(AUTHOR.cert)}</span>
@@ -718,6 +720,7 @@ function renderList(startTab) {
       <span class="hero-who">
         <b>${escapeHtml(AUTHOR.name)} ${escapeHtml(AUTHOR.title)}</b>
         <span>${escapeHtml(AUTHOR.org)} ${escapeHtml(AUTHOR.team)}</span>
+        ${AUTHOR.email ? `<a class="hero-mail" href="mailto:${escapeHtml(AUTHOR.email)}">${escapeHtml(AUTHOR.email)}</a>` : ''}
         <a class="hero-tel" href="tel:${escapeHtml((AUTHOR.tel || '').replace(/-/g, ''))}">${escapeHtml(AUTHOR.tel)}</a>
       </span>
       <span class="hero-cert">${escapeHtml(AUTHOR.cert)}</span>
@@ -1386,6 +1389,7 @@ async function renderPost(slug) {
         <div>
           <b>${escapeHtml(AUTHOR.name)} ${escapeHtml(AUTHOR.title)}</b>
           <span>${escapeHtml(AUTHOR.org)} ${escapeHtml(AUTHOR.team)} · ${escapeHtml(AUTHOR.cert)}</span>
+          ${AUTHOR.email ? `<a class="signoff-mail" href="mailto:${escapeHtml(AUTHOR.email)}">${escapeHtml(AUTHOR.email)}</a>` : ''}
           <span class="signoff-tel">${escapeHtml(AUTHOR.tel)}</span>
         </div>
       </footer>
@@ -1816,7 +1820,7 @@ function lockUp() {
   state.cache.clear();
   state.issCache.clear();
   // 잠그면 화면에 남은 개인정보도 함께 지운다.
-  AUTHOR = { name: '', title: '', org: '', team: '', cert: '', tel: '' };
+  AUTHOR = { name: '', title: '', org: '', team: '', cert: '', tel: '', email: '' };
   renderFoot();
   location.hash = '#/';
   showLock('');
