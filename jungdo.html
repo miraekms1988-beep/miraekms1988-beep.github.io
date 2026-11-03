@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>중도금 주선 리스트</title>
+<style>
+/* 개인 영업용 - 사이트 메뉴에 연결하지 않는다. 데이터는 posts/jungdo.enc.json 암호문뿐이고
+   비밀번호(secrets\jungdo-pass.txt)가 있어야 열린다. 사이트 구독자 비밀번호로는 안 열린다. */
+:root {
+  --bg: #f4f5f7; --surface: #fff; --surface-2: #eef0f4; --border: #dfe3ea;
+  --text: #151a24; --text-2: #4a5464; --text-3: #7d8798;
+  --navy: #1b3a63; --accent: #1d4e89; --accent-bg: #e8eff8;
+  --gold: #b4832a; --gold-bg: #fbf3e0; --warn: #b4540a; --warn-bg: #fdf0e4;
+  --ok: #1f7a4d; --ok-bg: #e5f4ec; --up: #c02b3a;
+  --font: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+          "Segoe UI", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1218; --surface: #171b23; --surface-2: #1e232d; --border: #2a313d;
+    --text: #e9ecf1; --text-2: #a8b2c1; --text-3: #737e8f;
+    --navy: #2a4d7d; --accent: #7fb0e8; --accent-bg: #172740;
+    --gold: #d6a94e; --gold-bg: #2c2413; --warn: #f0a55e; --warn-bg: #33220f;
+    --ok: #6fcf9b; --ok-bg: #12291d; --up: #ff8a90;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1218; --surface: #171b23; --surface-2: #1e232d; --border: #2a313d;
+  --text: #e9ecf1; --text-2: #a8b2c1; --text-3: #737e8f;
+  --navy: #2a4d7d; --accent: #7fb0e8; --accent-bg: #172740;
+  --gold: #d6a94e; --gold-bg: #2c2413; --warn: #f0a55e; --warn-bg: #33220f;
+  --ok: #6fcf9b; --ok-bg: #12291d; --up: #ff8a90;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font);
+       font-size: 14px; line-height: 1.5; font-variant-numeric: tabular-nums; }
+.wrap { max-width: 760px; margin: 0 auto; padding: 16px 16px 48px; }
+h1 { font-size: 19px; margin: 6px 0 2px; letter-spacing: -.01em; }
+.sub { color: var(--text-3); font-size: 12.5px; }
+button, input, select { font: inherit; color: inherit; }
+
+/* 잠금 */
+.lock { max-width: 360px; margin: 18vh auto 0; padding: 0 16px; }
+.lock h1 { text-align: center; }
+.lock form { margin-top: 18px; display: grid; gap: 10px; }
+.lock input[type=password] { width: 100%; padding: 12px 14px; border: 1px solid var(--border);
+  border-radius: 10px; background: var(--surface); font-size: 16px; }
+.lock label { color: var(--text-2); font-size: 13px; display: flex; gap: 6px; align-items: center; }
+.btn { padding: 11px 14px; border-radius: 10px; border: 0; background: var(--navy); color: #fff;
+       font-weight: 600; cursor: pointer; }
+.err { color: var(--up); font-size: 13px; min-height: 1.2em; }
+
+/* 요약 */
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 14px 0 12px; }
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; }
+.stat b { display: block; font-size: 19px; letter-spacing: -.01em; }
+.stat span { color: var(--text-3); font-size: 11.5px; }
+@media (max-width: 520px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+
+/* 거르기 */
+.bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 10px; }
+.chip { border: 1px solid var(--border); background: var(--surface); border-radius: 999px;
+        padding: 6px 11px; font-size: 13px; cursor: pointer; white-space: nowrap; }
+.chip[aria-pressed="true"] { background: var(--navy); border-color: var(--navy); color: #fff; }
+.bar input[type=search] { flex: 1 1 160px; min-width: 0; padding: 7px 11px; border: 1px solid var(--border);
+        border-radius: 999px; background: var(--surface); font-size: 14px; }
+.bar select { padding: 6px 8px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); font-size: 13px; }
+.count { color: var(--text-3); font-size: 12.5px; margin: 2px 2px 8px; }
+
+/* 카드 */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+        padding: 12px 14px; margin-bottom: 8px; }
+.card.has-pf { border-left: 3px solid var(--warn); }
+.top { display: flex; gap: 10px; align-items: flex-start; justify-content: space-between; }
+.name { font-weight: 700; font-size: 15px; line-height: 1.35; word-break: keep-all; }
+.name a { color: inherit; text-decoration: none; }
+.name a:after { content: " ↗"; color: var(--text-3); font-weight: 400; font-size: 12px; }
+.where { color: var(--text-3); font-size: 12.5px; margin-top: 1px; }
+.dday { flex: none; text-align: right; }
+.dday b { display: block; font-size: 15px; }
+.dday span { color: var(--text-3); font-size: 11.5px; }
+.dday.soon b { color: var(--up); }
+.tags { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0 6px; }
+.tag { font-size: 11.5px; padding: 2px 7px; border-radius: 6px; background: var(--surface-2); color: var(--text-2); }
+.tag.new { background: var(--gold-bg); color: var(--gold); font-weight: 700; }
+.tag.pf { background: var(--warn-bg); color: var(--warn); font-weight: 600; }
+.tag.free { background: var(--ok-bg); color: var(--ok); }
+.tag.short { color: var(--up); }
+.grid { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font-size: 13px; }
+.grid dt { color: var(--text-3); }
+.grid dd { margin: 0; color: var(--text); word-break: keep-all; overflow-wrap: anywhere; }
+.amt { font-weight: 700; }
+.est { color: var(--text-3); font-weight: 400; font-size: 11.5px; }
+.pfline { margin-top: 6px; font-size: 12.5px; color: var(--warn); }
+.pfline small { color: var(--text-3); display: block; }
+.foot { color: var(--text-3); font-size: 11.5px; margin-top: 18px; line-height: 1.6; }
+.foot a { color: var(--text-3); }
+.empty { padding: 30px 0; text-align: center; color: var(--text-3); }
+</style>
+</head>
+<body>
+<div id="lock" class="lock" hidden>
+  <h1>중도금 주선 리스트</h1>
+  <p class="sub" style="text-align:center">개인 자료입니다. 비밀번호로 엽니다.</p>
+  <form id="lockForm" autocomplete="on">
+    <input id="pass" type="password" autocomplete="current-password" placeholder="비밀번호" required>
+    <label><input id="keep" type="checkbox" checked> 이 기기에서 기억</label>
+    <button class="btn" type="submit">열기</button>
+    <div id="err" class="err"></div>
+  </form>
+</div>
+
+<div id="app" class="wrap" hidden>
+  <h1>중도금 주선 리스트</h1>
+  <div class="sub" id="updated"></div>
+  <div class="stats" id="stats"></div>
+  <div class="bar" id="filters">
+    <button class="chip" data-f="all" aria-pressed="true">전체</button>
+    <button class="chip" data-f="new" aria-pressed="false">이번 주 신규</button>
+    <button class="chip" data-f="soon" aria-pressed="false">1회차 90일 내</button>
+    <button class="chip" data-f="nopf" aria-pressed="false">증권사 PF 없음</button>
+  </div>
+  <div class="bar">
+    <input id="q" type="search" placeholder="시공사·지역·사업명 검색">
+    <select id="sort" aria-label="정렬">
+      <option value="first">1회차 빠른 순</option>
+      <option value="notice">공고 최신 순</option>
+      <option value="amt">중도금 큰 순</option>
+    </select>
+  </div>
+  <div class="count" id="count"></div>
+  <div id="list"></div>
+  <div class="foot">
+    · 중도금 규모 = 청약홈 주택형 분양가 × 공급세대 × 중도금 비율. 비율을 공고문에서 못 읽은 곳은 60%로 둔 추정치(추정 표시).<br>
+    · 1회차 = 모집공고문 공급금액 표의 회차 날짜 중 공고일 60일 뒤 첫 날짜. 대출기관은 그 전에 정해진다.<br>
+    · 증권사 PF = 같은 시공사·같은 동의 PF 유동화 SPC 에 신용공여(매입확약 등) 중인 증권사. 주선권을 이미 가졌을 수 있다. 같은 사업장이 아닐 수도 있어 표시만 한다.<br>
+    · 출처: 청약홈 입주자모집공고·청약 결과, 신평사 공개 평가의견서, 금융투자협회 발행 내역.<br>
+    <a href="#" id="logout">이 기기에서 잠그기</a>
+  </div>
+</div>
+
+<script>
+'use strict';
+const DATA_URL = 'posts/jungdo.enc.json';
+const PASS_KEY = 'jungdo-pass';
+const enc = new TextEncoder(), dec = new TextDecoder();
+const $ = (id) => document.getElementById(id);
+
+function b64(s) { const b = atob(s); const u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+async function openBox(pass, box) {
+  const base = await crypto.subtle.importKey('raw', enc.encode(pass), 'PBKDF2', false, ['deriveBits']);
+  const bits = new Uint8Array(await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt: b64(box.salt), iterations: box.iterations, hash: 'SHA-256' }, base, 512));
+  const aes = await crypto.subtle.importKey('raw', bits.slice(0, 32), { name: 'AES-CBC' }, false, ['decrypt']);
+  const mac = await crypto.subtle.importKey('raw', bits.slice(32, 64), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']);
+  const iv = b64(box.iv), ct = b64(box.ct);
+  const signed = new Uint8Array(iv.length + ct.length); signed.set(iv, 0); signed.set(ct, iv.length);
+  if (!await crypto.subtle.verify('HMAC', mac, b64(box.mac), signed)) throw new Error('AUTH');
+  return JSON.parse(dec.decode(await crypto.subtle.decrypt({ name: 'AES-CBC', iv }, aes, ct)));
+}
+
+async function load(pass, keep) {
+  const res = await fetch(DATA_URL + '?t=' + Date.now(), { cache: 'no-store' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  const data = await openBox(pass, await res.json());
+  try { (keep ? localStorage : sessionStorage).setItem(PASS_KEY, pass); } catch (e) { /* 저장 못 해도 연다 */ }
+  return data;
+}
+
+const state = { data: null, f: 'all', q: '', sort: 'first' };
+const today = () => { const d = new Date(Date.now() + 9 * 3600e3); return d.toISOString().slice(0, 10); };
+function daysTo(s) { return Math.round((Date.parse(s) - Date.parse(today())) / 86400e3); }
+function eok(v) { return v == null || v === '' ? '-' : Number(v).toLocaleString('ko-KR') + '억'; }
+function md(s) { return s ? s.slice(2).replace('-', '.') : ''; }
+
+function isNew(r) { return r.firstSeen && daysTo(r.firstSeen) >= -7; }
+function rowsFiltered() {
+  const t = today(), q = state.q.trim().toLowerCase();
+  let rows = state.data.rows.filter((r) => {
+    if (state.f === 'new' && !isNew(r)) return false;
+    if (state.f === 'soon' && !(r.firstInterim && r.firstInterim >= t && daysTo(r.firstInterim) <= 90)) return false;
+    if (state.f === 'nopf' && (r.pfSecurities || []).length) return false;
+    if (q) {
+      const hay = [r.name, r.area, r.address, r.developer, r.trust, (r.builders || []).join(' '), (r.pfSecurities || []).join(' ')].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+  const by = {
+    first: (a, b) => {
+      // 지난 1회차는 뒤로, 날짜 모르는 곳은 맨 뒤로
+      const k = (r) => !r.firstInterim ? '3' : (r.firstInterim < t ? '2' + r.firstInterim : '1' + r.firstInterim);
+      return k(a) < k(b) ? -1 : k(a) > k(b) ? 1 : 0;
+    },
+    notice: (a, b) => (b.notice || '').localeCompare(a.notice || ''),
+    amt: (a, b) => (b.interimTotal || 0) - (a.interimTotal || 0),
+  };
+  return rows.sort(by[state.sort]);
+}
+
+function card(r) {
+  const t = today();
+  const pf = (r.pfSecurities || []).length > 0;
+  let dd = '<div class="dday"><b>-</b><span>1회차 미확인</span></div>';
+  if (r.firstInterim) {
+    const n = daysTo(r.firstInterim);
+    const lbl = r.firstInterim < t ? '지남' : 'D-' + n;
+    dd = `<div class="dday${r.firstInterim >= t && n <= 60 ? ' soon' : ''}"><b>${lbl}</b><span>1회차 ${esc(r.firstInterim.replace(/-/g, '.'))}</span></div>`;
+  }
+  const tags = [];
+  if (isNew(r)) tags.push('<span class="tag new">신규</span>');
+  if (pf) tags.push('<span class="tag pf">증권사 PF</span>');
+  if (r.interest) tags.push(`<span class="tag${r.interest === '무이자' ? ' free' : ''}">${esc(r.interest)}</span>`);
+  if (r.result === '미달') tags.push(`<span class="tag short">미달 ${esc(r.short)}세대</span>`);
+  else if (r.rate1) tags.push(`<span class="tag">${Number(r.rate1).toFixed(1)}:1</span>`);
+  const ratio = r.ratio ? Math.round(r.ratio * 100) + '%' : '';
+  const amt = r.interimTotal ? `<span class="amt">${eok(r.interimTotal)}</span> <span class="est">(${ratio}${r.ratioEst ? ' 추정' : ''})</span>` : '-';
+  const sales = r.salesTotal ? eok(r.salesTotal) : '-';
+  const builder = (r.builders || []).join(' · ') || '-';
+  const dev = [r.developer, r.trust && r.trust !== r.developer ? '신탁 ' + r.trust : ''].filter(Boolean).join(' / ') || '-';
+  const pfl = pf ? `<div class="pfline">증권사 PF 신용공여: ${esc(r.pfSecurities.join(', '))}<small>${esc((r.pfSpcs || []).join(', '))}</small></div>` : '';
+  const name = r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">${esc(r.name)}</a>` : esc(r.name);
+  return `<div class="card${pf ? ' has-pf' : ''}">
+    <div class="top"><div><div class="name">${name}</div>
+      <div class="where">${esc(r.area || '')} · 공고 ${esc((r.notice || '').replace(/-/g, '.'))}${r.households ? ' · ' + Number(r.households).toLocaleString('ko-KR') + '세대' : ''}</div></div>${dd}</div>
+    <div class="tags">${tags.join('')}</div>
+    <dl class="grid">
+      <dt>중도금</dt><dd>${amt}</dd>
+      <dt>분양대금</dt><dd>${sales}</dd>
+      <dt>시공</dt><dd>${esc(builder)}</dd>
+      <dt>시행</dt><dd>${esc(dev)}</dd>
+      ${r.lender ? `<dt>대출기관</dt><dd>${esc(r.lender)}</dd>` : ''}
+      ${r.moveIn ? `<dt>입주</dt><dd>${esc(String(r.moveIn).replace(/^(\d{4})(\d{2})$/, '$1.$2'))}</dd>` : ''}
+    </dl>${pfl}</div>`;
+}
+
+function render() {
+  const d = state.data, t = today();
+  const all = d.rows;
+  const soon = all.filter((r) => r.firstInterim && r.firstInterim >= t && daysTo(r.firstInterim) <= 90);
+  const nopf = all.filter((r) => !(r.pfSecurities || []).length);
+  const sum = soon.reduce((a, r) => a + (r.interimTotal || 0), 0);
+  $('updated').textContent = `갱신 ${d.updated} · 최근 ${d.days}일 공고 · 민영 아파트`;
+  $('stats').innerHTML = [
+    [all.length + '곳', '전체 사업장'],
+    [all.filter(isNew).length + '곳', '이번 주 신규'],
+    [soon.length + '곳', '1회차 90일 내'],
+    [sum ? Math.round(sum).toLocaleString('ko-KR') + '억' : '-', '그 중도금 합계'],
+  ].map(([b, s]) => `<div class="stat"><b>${b}</b><span>${s}</span></div>`).join('');
+  const rows = rowsFiltered();
+  $('count').textContent = `${rows.length}곳 표시 · 증권사 PF 없는 곳 ${nopf.length}곳`;
+  $('list').innerHTML = rows.length ? rows.map(card).join('') : '<div class="empty">조건에 맞는 사업장이 없습니다.</div>';
+}
+
+function showApp(data) {
+  state.data = data;
+  $('lock').hidden = true; $('app').hidden = false;
+  render();
+}
+
+$('filters').addEventListener('click', (e) => {
+  const b = e.target.closest('.chip'); if (!b) return;
+  state.f = b.dataset.f;
+  document.querySelectorAll('#filters .chip').forEach((c) => c.setAttribute('aria-pressed', c === b ? 'true' : 'false'));
+  render();
+});
+$('q').addEventListener('input', (e) => { state.q = e.target.value; render(); });
+$('sort').addEventListener('change', (e) => { state.sort = e.target.value; render(); });
+$('logout').addEventListener('click', (e) => {
+  e.preventDefault();
+  try { localStorage.removeItem(PASS_KEY); sessionStorage.removeItem(PASS_KEY); } catch (x) { /* 없음 */ }
+  location.reload();
+});
+$('lockForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  $('err').textContent = '여는 중…';
+  try { showApp(await load($('pass').value.trim(), $('keep').checked)); }
+  catch (x) { $('err').textContent = x.message === 'AUTH' ? '비밀번호가 맞지 않습니다.' : '불러오지 못했습니다 (' + x.message + ')'; }
+});
+
+(async () => {
+  let saved = null;
+  try { saved = sessionStorage.getItem(PASS_KEY) || localStorage.getItem(PASS_KEY); } catch (e) { /* 없음 */ }
+  if (saved) {
+    try { showApp(await load(saved, (() => { try { return !!localStorage.getItem(PASS_KEY); } catch (e) { return false; } })())); return; }
+    catch (x) { if (x.message === 'AUTH') { try { localStorage.removeItem(PASS_KEY); sessionStorage.removeItem(PASS_KEY); } catch (y) { /* 없음 */ } } }
+  }
+  $('lock').hidden = false;
+  $('pass').focus();
+})();
+</script>
+</body>
+</html>
