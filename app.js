@@ -1310,9 +1310,9 @@ function renderRadarSlide(r) {
       ? `<dl class="rd-kv">${a.table.map((x) => `<dt>${escapeHtml(x[0])}</dt><dd>${escapeHtml(x[1])}</dd>`).join('')}</dl>` : '';
     const chips = chipsOf(a);
     return `
-      <details class="rd-art dk ${k[1]}"${a.id ? ` data-id="${escapeHtml(a.id)}"` : ''}>
+      <details class="rd-art ${k[1]}"${a.id ? ` data-id="${escapeHtml(a.id)}"` : ''}>
         <summary>
-          <span class="rd-a-top"><span class="rd-a-kick">${k[0]} · ${mdKo(a.date)}</span></span>
+          <span class="rd-a-top"><span class="rd-kind ${k[1]}">${k[0]}</span><span class="rd-date">${mdKo(a.date)}</span></span>
           <span class="rd-a-hl">${escapeHtml(a.headline)}</span>
           ${chips.length ? `<span class="rd-a-chips">${chips.map((c) => `<span>${escapeHtml(c)}</span>`).join('')}</span>` : ''}
         </summary>
@@ -1326,6 +1326,14 @@ function renderRadarSlide(r) {
   let newsSec = '';
   if (news.length) {
     const lists = { new: news.filter((a) => a.kind !== 'extend'), extend: news.filter((a) => a.kind === 'extend') };
+    const amtOf = (a) => { const m = String(a.headline || '').match(/PF ([\d,]+)억/); return m ? Number(m[1].replace(/,/g, '')) : 0; };
+    const subjOf = (a) => String(a.headline || '').split(',')[0];
+    const sumNew = lists.new.reduce((s, a) => s + amtOf(a), 0);
+    const big = [...lists.new].sort((x, y) => amtOf(y) - amtOf(x))[0];
+    const topNew = big && amtOf(big) ? `${subjOf(big)} ${n(amtOf(big))}억` : '';
+    const exM = lists.extend.map((a) => { const m = String(a.headline || '').match(/(\d+)개월 연장/); return m ? Number(m[1]) : 0; }).filter(Boolean);
+    const avgExt = exM.length ? exM.reduce((s, x) => s + x, 0) / exM.length : 0;
+    const lastExt = lists.extend[0] ? subjOf(lists.extend[0]) : '';
     const pane = (key) => {
       const items = lists[key];
       if (!items.length) return `<div class="rd-kpane" data-kind="${key}"${key === 'new' ? '' : ' hidden'}><p class="rd-empty">최근 45일에 해당 기사가 없습니다.</p></div>`;
@@ -1339,9 +1347,19 @@ function renderRadarSlide(r) {
       <section class="rd-sec">
         <h2>부동산 PF 업계 동향</h2>
         <p class="rd-lead">신용평가사 공개 평가의견서와 금융투자협회 발행 내역을 바탕으로 기사 형식으로 작성한 내용입니다.</p>
-        <div class="um-modes rd-kinds">
-          <button type="button" class="um-mode on" data-kind="new">신규 ${lists.new.length}</button>
-          <button type="button" class="um-mode" data-kind="extend">만기연장 ${lists.extend.length}</button>
+        <div class="rd-kinds">
+          <button type="button" class="rd-kcard on" data-kind="new">
+            <span class="rd-kc-kick">NEW DEALS</span>
+            <span class="rd-kc-t">신규 <b>${lists.new.length}</b>건</span>
+            <span class="rd-kc-s">${sumNew ? `대출 약정 합계 ${n(sumNew)}억원` : ''}</span>
+            ${topNew ? `<span class="rd-kc-s2">최대 ${escapeHtml(topNew)}</span>` : ''}
+          </button>
+          <button type="button" class="rd-kcard ext" data-kind="extend">
+            <span class="rd-kc-kick">MATURITY EXTENSION</span>
+            <span class="rd-kc-t">만기연장 <b>${lists.extend.length}</b>건</span>
+            <span class="rd-kc-s">${avgExt ? `평균 ${avgExt.toFixed(1)}개월 연장` : ''}</span>
+            ${lastExt ? `<span class="rd-kc-s2">최근 ${escapeHtml(lastExt)}</span>` : ''}
+          </button>
         </div>
         ${pane('new')}${pane('extend')}
       </section>`;
@@ -1434,10 +1452,10 @@ function mountRadar(root) {
   const sheet = root.querySelector('.rd-sheet');
   if (!sheet) return;
   sheet.addEventListener('click', (e) => {
-    const kb = e.target.closest('.rd-kinds .um-mode');
+    const kb = e.target.closest('.rd-kinds .rd-kcard');
     if (kb) {
       const sec = kb.closest('.rd-sec');
-      sec.querySelectorAll('.rd-kinds .um-mode').forEach((x) => x.classList.toggle('on', x === kb));
+      sec.querySelectorAll('.rd-kinds .rd-kcard').forEach((x) => x.classList.toggle('on', x === kb));
       sec.querySelectorAll('.rd-kpane').forEach((x) => { x.hidden = x.dataset.kind !== kb.dataset.kind; });
       return;
     }
@@ -1615,7 +1633,7 @@ function openRadarArticle(id) {
   const pnl = el.closest('.rd-panel');
   if (pnl) { pnl.hidden = false; const sec = pnl.closest('.rd-sec'); const btn = sec && sec.querySelector(`.rd-tool[data-panel="${pnl.dataset.panel}"]`); if (btn) btn.classList.add('on'); }
   const kp = el.closest('.rd-kpane');
-  if (kp && kp.hidden) { const kb = kp.closest('.rd-sec').querySelector(`.rd-kinds .um-mode[data-kind="${kp.dataset.kind}"]`); if (kb) kb.click(); }
+  if (kp && kp.hidden) { const kb = kp.closest('.rd-sec').querySelector(`.rd-kinds .rd-kcard[data-kind="${kp.dataset.kind}"]`); if (kb) kb.click(); }
   el.open = true;
   el.classList.add('rd-hit');
   setTimeout(() => el.scrollIntoView({ block: 'start', behavior: 'smooth' }), 120);
