@@ -2804,3 +2804,11 @@ html:has(.view > article) .topbar {
 .rd-week-s { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 12.5px; line-height: 1.6; color: var(--text-2); margin-top: 4px; }
 .rd-week-m { display: block; font-size: 12px; font-weight: 700; color: var(--text); margin-top: 6px; }
 @media (prefers-reduced-motion: reduce) { .rd-today i { animation: none; } }
+
+/* 업계 동향 '더 보기' - 목록 아래 가운데 넓은 단추 */
+.rd-more-bar { justify-content: center; margin-top: 12px; }
+.rd-more-bar .rd-tool { width: 100%; justify-content: center; padding: 10px 14px; font-size: 13px; background: var(--surface-2); border-color: transparent; color: var(--text); }
+.rd-more-bar .rd-tool i::after { content: '▾'; font-size: 11px; transform: none; }
+.rd-more-bar .rd-tool.on { background: var(--surface-2); color: var(--text-2); border-color: transparent; }
+.rd-more-bar .rd-tool.on i::after { content: '▴'; transform: none; }
+.rd-kpane .rd-panel { margin-top: 7px; }

@@ -1381,10 +1381,11 @@ function renderRadarSlide(r) {
     const pane = (key) => {
       const items = lists[key];
       if (!items.length) return `<div class="rd-kpane" data-kind="${key}"${key === 'new' ? '' : ' hidden'}><p class="rd-empty">최근 45일에 해당 기사가 없습니다.</p></div>`;
-      const head = items.slice(0, 10), tail = items.slice(10);
+      // 처음 5건만. 나머지는 '더 보기' 를 누르면 카드가 차례로 떠오른다(mountMotion 이 숨은 카드도 지켜본다).
+      const head = items.slice(0, 5), tail = items.slice(5);
       return `<div class="rd-kpane" data-kind="${key}"${key === 'new' ? '' : ' hidden'}>
         <div class="rd-arts">${head.map(art).join('')}</div>
-        ${tail.length ? `<div class="rd-tools">${tool(`news-more-${key}`, `기사 ${tail.length}건 더 보기`)}</div>${panel(`news-more-${key}`, `<div class="rd-arts">${tail.map(art).join('')}</div>`)}` : ''}
+        ${tail.length ? `${panel(`news-more-${key}`, `<div class="rd-arts">${tail.map(art).join('')}</div>`)}<div class="rd-tools rd-more-bar">${tool(`news-more-${key}`, `기사 ${tail.length}건 더 보기`)}</div>` : ''}
       </div>`;
     };
     newsSec = `
@@ -1500,7 +1501,7 @@ function renderRadarSlide(r) {
       ${wk.summary ? `<span class="rd-week-s">${escapeHtml(wk.summary)}</span>` : ''}
       <span class="rd-week-m">읽기 ›</span>
     </a>` : '';
-  return `<div class="rd-sheet">${todayLine}${weekCard}${newsSec}${mapSec}${psSec}${bldSec}
+  return `<div class="rd-sheet">${todayLine}${newsSec}${mapSec}${psSec}${bldSec}
     <p class="rd-foot">신용평가사(NICE·한국신용평가·한국기업평가) 공개 평가의견서, 금융투자협회 단기사채 발행정보, DART, 청약홈을 자동으로 읽어 매일 갱신합니다. 해석이 틀릴 수 있으니 중요한 판단은 원문을 확인하세요.</p></div>`;
 }
 
@@ -1543,6 +1544,12 @@ function mountRadar(root) {
       sec.querySelectorAll('.rd-tool').forEach((x) => x.classList.remove('on'));
       p.hidden = !open;
       t.classList.toggle('on', open);
+      // 기사 '더 보기' 는 펼치면 '접기' 로 바뀌고, 접으면 목록 머리로 돌아간다 (길게 내려간 자리에 남지 않게)
+      if (t.closest('.rd-more-bar')) {
+        if (!t.dataset.label) t.dataset.label = t.firstChild.textContent;
+        t.firstChild.textContent = open ? '접기' : t.dataset.label;
+        if (!open) (t.closest('.rd-kpane') || sec).scrollIntoView({ block: 'start', behavior: 'smooth' });
+      }
       return;
     }
     const res = e.target.closest('td.rd-res.can');
