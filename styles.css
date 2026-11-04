@@ -2499,3 +2499,51 @@ html:has(.view > article) .topbar {
 .rd-kv dd { color: var(--text); word-break: keep-all; overflow-wrap: anywhere; }
 .rd-src { font-size: 11.5px !important; color: var(--text-3) !important; margin-top: 4px !important; }
 .rd-more .rd-art:first-child { border-top: 1px solid var(--border-soft); }
+
+/* ===== PF 레이더 2차 (2026-11-04): 채권동향 글 화면처럼 하얀 바탕 한 장 ===== */
+.slide[data-slug="radar"] .page-body { padding-top: 4px; }
+.rd-sheet { background: var(--surface); border-radius: 22px; padding: 26px 20px 20px;
+  box-shadow: var(--pc-lift, 0 0 0 1px rgba(0,0,0,.05), 0 12px 30px -16px rgba(0,0,0,.2)); }
+.rd-sec + .rd-sec { margin-top: 38px; }
+.rd-sec > h2 { font-size: 24px; font-weight: 700; letter-spacing: -.045em; line-height: 1.3; color: var(--text); margin: 0 0 6px; }
+.rd-lead { font-size: 13.5px; line-height: 1.65; color: var(--text-3); margin: 0 0 14px; word-break: keep-all; }
+.rd-cap { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin: 16px 2px 8px; }
+.rd-cap b { font-size: 15px; font-weight: 700; letter-spacing: -.02em; color: var(--text); }
+.rd-cap span { font-size: 11.5px; color: var(--text-3); white-space: nowrap; }
+.rd-legend { list-style: none; margin: 0 0 4px; padding: 12px 14px; background: var(--surface-2); border-radius: 14px; }
+.rd-legend li { font-size: 12.5px; line-height: 1.6; color: var(--text-2); padding: 2px 0; word-break: keep-all; }
+.rd-legend b { display: inline-block; min-width: 4.6em; color: var(--text); font-weight: 700; }
+
+/* 기사: 제목 한 줄, 넘치면 … */
+.rd-sheet .rd-arts { margin: 0; border-top: 1px solid var(--border-soft); }
+.rd-sheet .rd-art { border-top: 0; border-bottom: 1px solid var(--border-soft); }
+.rd-sheet .rd-art > summary { display: flex; align-items: center; gap: 8px; padding: 12px 2px; grid-template-columns: none; }
+.rd-sheet .rd-art > summary .rd-hl { flex: 1 1 auto; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  font-size: 14.5px; font-weight: 600; letter-spacing: -.025em; color: var(--text); }
+.rd-sheet .rd-art > summary .rd-date { flex: none; font-size: 12px; color: var(--text-3); }
+.rd-sheet .rd-art[open] > summary .rd-hl { color: var(--text-3); }
+.rd-sheet .rd-art-body h3 { font-size: 17px; font-weight: 700; letter-spacing: -.035em; line-height: 1.45; color: var(--text); margin: 2px 0 12px; word-break: keep-all; }
+.rd-sheet .rd-art.rd-hit > summary { background: color-mix(in srgb, var(--gold) 10%, transparent); border-radius: 10px; }
+.rd-sheet .rd-kind { flex: none; }
+
+/* 접기 */
+.rd-sheet details.rd-more { margin-top: 10px; border: 0; background: none; }
+.rd-sheet details.rd-more > summary { list-style: none; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-2);
+  padding: 10px 2px; }
+.rd-sheet details.rd-more > summary::-webkit-details-marker { display: none; }
+.rd-sheet details.rd-more > summary::after { content: " ›"; }
+.rd-sheet details.rd-more[open] > summary::after { content: " ‹"; }
+
+/* 표: 글 화면과 같은 차콜 머리글·볼록 상자, 모두 가운데 */
+.rd-sheet .rd-table { margin-top: 0; }
+.rd-sheet .rd-table th, .rd-sheet .rd-table td { text-align: center; }
+.rd-sheet .rd-table td small { display: block; font-size: 10.5px; line-height: 1.25; color: var(--text-3); font-weight: 500; }
+.rd-sheet .rd-table td.up small { color: inherit; opacity: .85; }
+.rd-sheet .rd-ps tbody td:nth-child(2) { text-align: left; }
+.rd-foot { font-size: 11.5px; line-height: 1.6; color: var(--text-3); margin: 28px 2px 0; word-break: keep-all; }
+@media (max-width: 420px) {
+  .rd-sheet { padding: 22px 14px 16px; border-radius: 18px; }
+  .rd-sec > h2 { font-size: 22px; }
+}
+/* 분양 표 시공사 이름은 한 줄로 (글자 중간에서 끊기면 '시티건/설' 처럼 읽힌다) */
+.rd-sheet .rd-ps tbody td:nth-child(3) { white-space: nowrap; overflow-wrap: normal; word-break: keep-all; font-size: 11.5px; letter-spacing: -.03em; }

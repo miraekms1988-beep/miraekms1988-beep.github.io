@@ -813,7 +813,7 @@ function renderList(startTab) {
 
   els.view.innerHTML = `
     ${renderTabs()}
-    <div class="deck">${postsSlide}${policySlide}${radarSlide}${pageSlides}</div>
+    <div class="deck">${postsSlide}${radarSlide}${policySlide}${pageSlides}</div>
     ${renderNext()}`;
 
   mountDeck();
@@ -971,8 +971,9 @@ function nextRefreshAt() {
  * 세 화면이 같은 틀을 쓰므로 탭 줄을 각 화면이 똑같이 그린다. */
 function tabList() {
   const list = [{ slug: 'posts', title: '주간 채권동향' }];
-  if (state.policy.length) list.push({ slug: 'policy', title: '부동산 제도 규제' });
+  // PF 레이더를 채권동향 바로 다음에 둔다 (사용자 요청 2026-11-04).
   if (state.radar) list.push({ slug: 'radar', title: 'PF 레이더' });
+  if (state.policy.length) list.push({ slug: 'policy', title: '부동산 제도 규제' });
   return list.concat(state.pages.map((p) => ({ slug: p.slug, title: p.title })));
 }
 
@@ -1104,161 +1105,108 @@ function renderPolicySlide() {
 
 /* ================= PF 레이더 ================= */
 
-/* SPC 하나가 한 줄이다. 좁은 화면에서 칸 많은 표는 옆으로 넘쳐서,
- * 신규 딜·변동은 제도 카드처럼 줄 단위로 세우고 숫자 비교가 핵심인
- * 시공사·청약만 표로 둔다. 처음 몇 줄만 보이고 나머지는 접는다. */
+/* 채권동향 글 화면과 같은 결로 그린다 (사용자 피드백 2026-11-04):
+ * 카드 상자 대신 하얀 바탕 한 장, 큰 굵은 소제목, 표 제목 옆 오른쪽에 작은 단위,
+ * 차콜 머리글 표. 기사는 제목 한 줄(넘치면 …)만 보이고 누르면 펼쳐진다.
+ * 등급·만기 변동 목록과 '한눈에'는 뺐다 - SPC 이름만으로는 뜻이 없고, 만기연장은
+ * PF 딜 뉴스에 기사로 올라간다. */
 function renderRadarSlide(r) {
   const n = (v, d = 0) => (v == null || v === '' ? '-' : Number(v).toLocaleString('ko-KR', { maximumFractionDigits: d, minimumFractionDigits: d }));
-  const eok = (v) => (v == null || v === '' ? '-' : n(v) + '억');
-  const jo = (v) => (v >= 10000 ? (v / 10000).toFixed(1) + '조' : n(v) + '억');
   const md = (s) => (s ? s.slice(5).replace('-', '/') : '');
-  const join = (a) => (a || []).filter(Boolean).join('·');
-  const fold = (rows, first, label) => rows.length <= first
-    ? rows.join('')
-    : rows.slice(0, first).join('') +
-      `<details class="pfold rd-more"><summary>${label} ${rows.length - first}건 더 보기</summary>${rows.slice(first).join('')}</details>`;
+  const arr = (x) => (Array.isArray(x) ? x : []);
+  const cap = (title, unit) => `<div class="rd-cap"><b>${title}</b>${unit ? `<span>(단위: ${unit})</span>` : ''}</div>`;
 
-  const s = r.summary || {};
-  const digest = `
-    <aside class="digest pc-digest">
-      <div class="digest-label">한눈에 (${escapeHtml(r.asOf || '')} 기준)</div>
-      <ul class="rd-stats">
-        <li><b>${n(s.spcs)}</b><span>PF 유동화 SPC</span></li>
-        <li><b>${jo(s.outstanding || 0)}</b><span>전단채 발행 잔액</span></li>
-        <li><b>${n(s.new30)}</b><span>최근 30일 첫 발행</span></li>
-        <li><b>${n(s.down60)} / ${n(s.ext60)}</b><span>60일 등급하향 / 만기연장 언급</span></li>
-      </ul>
-    </aside>`;
-
-  // 신규 딜
-  const dealRows = (Array.isArray(r.deals) ? r.deals : []).map((d) => {
-    const who = [
-      d.builders && d.builders.length ? `시공 ${escapeHtml(join(d.builders))}` : '',
-      d.credit && d.credit.length ? `보강 ${escapeHtml(join(d.credit))}` : '',
-      d.liquidity && d.liquidity.length ? `확약 ${escapeHtml(join(d.liquidity))}` : '',
-    ].filter(Boolean).join(' · ');
-    const nums = [
-      d.loan ? `대출 ${eok(d.loan)}` : '',
-      d.rate ? `${n(d.rate, 2)}%${d.days ? ` (${d.days}일)` : ''}` : '',
-      d.grade ? escapeHtml(d.grade) : '',
-    ].filter(Boolean).join(' · ');
-    return `
-      <li class="rd-row">
-        <div class="rd-top"><b>${escapeHtml(d.spc)}</b><span class="rd-date">${md(d.first)}</span></div>
-        ${d.project || d.region ? `<div class="rd-sub">${escapeHtml(d.project || '')}${d.region ? ` <span>${escapeHtml(d.region)}</span>` : ''}</div>` : ''}
-        ${who ? `<div class="rd-who">${who}</div>` : ''}
-        ${nums ? `<div class="rd-num">${nums}</div>` : ''}
-      </li>`;
-  });
-  const deals = `
-    <article class="pcard rd-card">
-      <header class="pc-head"><h2>신규 PF 딜 <span class="rd-count">${dealRows.length}곳</span></h2>
-        <div class="pc-meta"><span class="pc-effect">최근 45일 안에 전단채를 처음 발행한 SPC</span></div></header>
-      ${dealRows.length ? `<ul class="rd-list">${fold(dealRows, 8, '신규 딜')}</ul>` : '<p class="rd-empty">최근 45일 첫 발행이 없습니다.</p>'}
-    </article>`;
-
-  // PF 딜 뉴스 (build-deal-news.ps1). 기사가 있으면 위의 한 줄 목록 대신 이걸 보여 준다.
-  // 제목만 늘어놓고 누르면 본문·요약 표가 펼쳐진다. 기사 한 편이 길어 다 펴 두면 화면이 넘친다.
+  // ---- PF 딜 뉴스 ----
   const KIND = { new: ['신규', 'new'], extend: ['만기연장', 'ext'] };
-  const artRows = (Array.isArray(r.news) ? r.news : []).map((a) => {
+  const news = arr(r.news);
+  const art = (a) => {
     const k = KIND[a.kind] || ['PF', 'new'];
-    const tbl = (a.table || []).length ? `
-      <dl class="rd-kv">${a.table.map((row) => `<dt>${escapeHtml(row[0])}</dt><dd>${escapeHtml(row[1])}</dd>`).join('')}</dl>` : '';
+    const tbl = arr(a.table).length
+      ? `<dl class="rd-kv">${a.table.map((row) => `<dt>${escapeHtml(row[0])}</dt><dd>${escapeHtml(row[1])}</dd>`).join('')}</dl>` : '';
     return `
-      <details class="rd-art">
-        <summary>
-          <span class="rd-kind ${k[1]}">${k[0]}</span>
-          <b>${escapeHtml(a.headline)}</b>
-          <span class="rd-date">${md(a.date)}</span>
-        </summary>
+      <details class="rd-art"${a.id ? ` data-id="${escapeHtml(a.id)}"` : ''}>
+        <summary><span class="rd-kind ${k[1]}">${k[0]}</span><span class="rd-hl">${escapeHtml(a.headline)}</span><span class="rd-date">${md(a.date)}</span></summary>
         <div class="rd-art-body">
-          ${(a.body || []).map((t) => `<p>${escapeHtml(t)}</p>`).join('')}
+          <h3>${escapeHtml(a.headline)}</h3>
+          ${arr(a.body).map((t) => `<p>${escapeHtml(t)}</p>`).join('')}
           ${tbl}
-          ${(a.sources || []).length ? `<p class="rd-src">자료: ${escapeHtml(a.sources.join(', '))}</p>` : ''}
+          ${arr(a.sources).length ? `<p class="rd-src">자료: ${escapeHtml(a.sources.join(', '))}</p>` : ''}
         </div>
       </details>`;
-  });
-  const nNew = (Array.isArray(r.news) ? r.news : []).filter((a) => a.kind === 'new').length;
-  const nExt = (Array.isArray(r.news) ? r.news : []).filter((a) => a.kind === 'extend').length;
-  const newsCard = artRows.length ? `
-    <article class="pcard rd-card">
-      <header class="pc-head"><h2>PF 딜 뉴스 <span class="rd-count">${artRows.length}건</span></h2>
-        <div class="pc-meta"><span class="pc-effect">신규 ${nNew} · 만기연장 ${nExt} — 신평사 공개 평가의견서·금융투자협회 발행 내역으로 자동 작성</span></div></header>
-      <div class="rd-arts">${artRows.slice(0, 8).join('')}</div>
-      ${artRows.length > 8 ? `<details class="pfold rd-more"><summary>기사 ${artRows.length - 8}건 더 보기</summary><div class="rd-arts">${artRows.slice(8).join('')}</div></details>` : ''}
-    </article>` : '';
+  };
+  const nNew = news.filter((a) => a.kind === 'new').length;
+  const nExt = news.filter((a) => a.kind === 'extend').length;
+  const newsSec = news.length ? `
+    <section class="rd-sec">
+      <h2>PF 딜 뉴스</h2>
+      <p class="rd-lead">최근 45일 신규 ${nNew}건 · 만기연장 ${nExt}건. 신용평가사 공개 평가의견서와 금융투자협회 발행 내역으로 작성했습니다.</p>
+      <div class="rd-arts">${news.slice(0, 10).map(art).join('')}</div>
+      ${news.length > 10 ? `<details class="rd-more"><summary>기사 ${news.length - 10}건 더 보기</summary><div class="rd-arts">${news.slice(10).map(art).join('')}</div></details>` : ''}
+    </section>` : '';
 
-  // 시공사 온도계
-  const bRowsAll =(Array.isArray(r.builders) ? r.builders : []).map((b, i) => `
-    <tr style="--i:${i}">
+  // ---- 시공사 신용 온도계 ----
+  const bRows = arr(r.builders).map((b) => `
+    <tr>
       <td>${escapeHtml(b.name)}</td>
       <td class="num">${n(b.spcs)}</td>
       <td class="num">${n(b.outstanding)}</td>
       <td class="num">${b.rate ? n(b.rate, 2) : '-'}</td>
-      <td class="num${b.triggers ? ' up' : ''}">${b.triggers ? `${b.triggers}${b.triggerExposure ? `<small> ${n(b.triggerExposure)}억</small>` : ''}` : '-'}</td>
+      <td class="num${b.triggers ? ' up' : ''}">${b.triggers ? `${b.triggers}${b.triggerExposure ? `<small>${n(b.triggerExposure)}</small>` : ''}` : '-'}</td>
       <td class="num${b.extended || b.downgraded ? ' up' : ''}">${b.extended || b.downgraded ? `${b.extended || 0}/${b.downgraded || 0}` : '-'}</td>
     </tr>`);
-  // 30곳을 다 펴 두면 화면 몇 장이 표로만 찬다. 잔액 큰 12곳만 보이고 나머지는 접는다.
-  const bHead = `<thead><tr><th>시공사</th><th class="num">SPC</th><th class="num">잔액</th><th class="num">금리</th><th class="num">트리거</th><th class="num">연장/강등</th></tr></thead>`;
-  const bTable = (rows) => `<div class="table-wrap rd-table rd-bld" data-cols="6"><table>${bHead}<tbody>${rows.join('')}</tbody></table></div>`;
-  const trig = (Array.isArray(r.builders) ? r.builders : []).filter((b) => b.triggers && b.triggerText).map((b) => `
-    <li><b>${escapeHtml(b.name)}</b> <span>${b.triggers}곳${b.triggerExposure ? ` · 잔액 ${eok(b.triggerExposure)}` : ''}</span><p>${escapeHtml(b.triggerText)}</p></li>`).join('');
-  const dartRows = (Array.isArray(r.dart) ? r.dart : []).map((d, i) => `
-    <tr style="--i:${i}"><td>${escapeHtml(d.name)}</td><td class="num">${n(d.total)}</td>
+  const bHead = '<thead><tr><th>시공사</th><th>SPC</th><th>잔액</th><th>금리</th><th>트리거</th><th>연장/강등</th></tr></thead>';
+  const bTable = (rows) => `<div class="table-wrap rd-table rd-bld"><table>${bHead}<tbody>${rows.join('')}</tbody></table></div>`;
+  const trig = arr(r.builders).filter((b) => b.triggers && b.triggerText).map((b) => `
+    <li><b>${escapeHtml(b.name)}</b> <span>${b.triggers}곳${b.triggerExposure ? ` · 잔액 ${n(b.triggerExposure)}억원` : ''}</span><p>${escapeHtml(b.triggerText)}</p></li>`).join('');
+  const dartRows = arr(r.dart).map((d) => `
+    <tr><td>${escapeHtml(d.name)}</td><td class="num">${n(d.total)}</td>
       <td class="num">${d.pfLimit ? n(d.pfLimit) : '-'}</td><td class="num">${d.pfUnused != null && d.pfLimit ? n(d.pfUnused) : '-'}</td>
       <td class="num">${md(d.date)}</td></tr>`).join('');
-  const builders = `
-    <article class="pcard rd-card">
-      <header class="pc-head"><h2>시공사 신용 온도계</h2>
-        <div class="pc-meta"><span class="pc-effect">시공사가 시공·신용보강으로 걸린 PF 유동화 (잔액 큰 순)</span></div></header>
-      ${bTable(bRowsAll.slice(0, 12))}
-      ${bRowsAll.length > 12 ? `<details class="pfold rd-more"><summary>시공사 ${bRowsAll.length - 12}곳 더 보기</summary>${bTable(bRowsAll.slice(12))}</details>` : ''}
-      <p class="rd-note">잔액은 전단채 발행 잔액(억원), 금리는 최근 60일 발행분의 잔액 가중 평균(%). 트리거는 그 시공사 등급 하락이 조기상환·보강 사유로 걸린 SPC 수와 그 잔액. 연장/강등은 대출만기 연장·등급 하향이 언급된 SPC 수.</p>
-      ${trig ? `<details class="pfold"><summary>등급 트리거 문구 보기</summary><ul class="rd-trig">${trig}</ul></details>` : ''}
-      ${dartRows ? `<details class="pfold"><summary>DART 채무보증 총잔액·PF 보증한도</summary>
-        <div class="table-wrap rd-table" data-cols="5"><table><thead><tr>
-          <th>시공사</th><th class="num">보증</th><th class="num">PF한도</th><th class="num">미사용</th><th class="num">공시</th>
-        </tr></thead><tbody>${dartRows}</tbody></table></div>
-        <p class="rd-note">단위 억원. 시공사 채무보증 공시의 가장 최근 값.</p></details>` : ''}
-    </article>`;
+  const bldSec = bRows.length ? `
+    <section class="rd-sec">
+      <h2>시공사 신용 온도계</h2>
+      <ul class="rd-legend">
+        <li><b>잔액</b> 시공사가 시공하거나 신용보강한 PF 유동화 SPC의 전자단기사채 발행 잔액</li>
+        <li><b>금리</b> 최근 60일 발행분의 잔액 가중 평균</li>
+        <li><b>트리거</b> 시공사 신용등급이 떨어지면 조기상환·추가 보강 의무가 생기는 SPC 수 (아래 작은 숫자는 그 잔액)</li>
+        <li><b>연장/강등</b> 최근 평가의견서에서 대출 만기 연장이 확인된 SPC 수 / 등급이 내려간 SPC 수</li>
+      </ul>
+      ${cap('시공사별 PF 유동화 현황', '억원, %')}
+      ${bTable(bRows.slice(0, 12))}
+      ${bRows.length > 12 ? `<details class="rd-more"><summary>시공사 ${bRows.length - 12}곳 더 보기</summary>${bTable(bRows.slice(12))}</details>` : ''}
+      ${trig ? `<details class="rd-more"><summary>등급 트리거 문구 보기</summary><ul class="rd-trig">${trig}</ul></details>` : ''}
+      ${dartRows ? `<details class="rd-more"><summary>DART 채무보증 총잔액 · PF 보증한도</summary>
+        ${cap('시공사 채무보증 (최근 공시)', '억원')}
+        <div class="table-wrap rd-table"><table><thead><tr><th>시공사</th><th>보증잔액</th><th>PF한도</th><th>미사용</th><th>공시</th></tr></thead><tbody>${dartRows}</tbody></table></div></details>` : ''}
+    </section>` : '';
 
-  // 분양 성과
+  // ---- 분양 성과 레이더 ----
   const ps = r.presaleStat || { total: 0, short: 0 };
-  const pRows = (Array.isArray(r.presale) ? r.presale : []).map((p, i) => {
-    const res = p.result === '미달'
-      ? `<td class="num up">미달 ${n(p.short)}</td>`
-      : `<td class="num">${p.rate1 ? n(p.rate1, 1) + ':1' : '마감'}</td>`;
-    return `<tr style="--i:${i}"><td class="num">${md(p.notice)}</td><td>${escapeHtml(p.name)}<small> ${escapeHtml(p.area || '')}</small></td>
+  const pRows = arr(r.presale).map((p) => {
+    let res;
+    if (p.result === '미달') {
+      const pct = p.supply ? (p.short / p.supply * 100) : null;
+      res = `<td class="num up">${pct != null ? `${n(pct, 1)}%` : '미달'}<small>(${n(p.short)}세대)</small></td>`;
+    } else {
+      res = `<td class="num">${p.rate1 ? `${n(p.rate1, 1)} : 1` : '마감'}</td>`;
+    }
+    return `<tr><td class="num">${md(p.notice)}</td><td>${escapeHtml(p.name)}<small>${escapeHtml(p.area || '')}</small></td>
       <td>${escapeHtml(p.builder || '-')}</td><td class="num">${n(p.supply)}</td>${res}</tr>`;
   });
-  const presale = `
-    <article class="pcard rd-card">
-      <header class="pc-head"><h2>분양 성과 레이더</h2>
-        <div class="pc-meta"><span class="pc-effect">최근 60일 민영 아파트 ${n(ps.total)}곳 중 1·2순위에서 세대가 남은 곳 ${n(ps.short)}곳${ps.total ? ` (${Math.round(ps.short / ps.total * 100)}%)` : ''}</span></div></header>
-      ${pRows.length ? `<div class="table-wrap rd-table rd-ps" data-cols="5"><table><thead><tr>
-        <th class="num">공고</th><th>단지</th><th>시공사</th><th class="num">공급</th><th class="num">결과</th>
-      </tr></thead><tbody>${pRows.slice(0, 12).join('')}</tbody></table></div>
-      ${pRows.length > 12 ? `<details class="pfold rd-more"><summary>${pRows.length - 12}곳 더 보기</summary>
-        <div class="table-wrap rd-table rd-ps" data-cols="5"><table><tbody>${pRows.slice(12).join('')}</tbody></table></div></details>` : ''}` : ''}
-      <p class="rd-note">미달 = 1·2순위 마감 후 남은 세대 (청약홈 경쟁률, 주택형별 최종 결과 합계).</p>
-    </article>`;
+  const pHead = '<thead><tr><th>공고</th><th>단지</th><th>시공사</th><th>공급</th><th>미달률 · 경쟁률</th></tr></thead>';
+  const pTable = (rows) => `<div class="table-wrap rd-table rd-ps"><table>${pHead}<tbody>${rows.join('')}</tbody></table></div>`;
+  const psSec = pRows.length ? `
+    <section class="rd-sec">
+      <h2>분양 성과 레이더</h2>
+      <p class="rd-lead">최근 60일 민영 아파트 ${n(ps.total)}곳 중 1·2순위에서 세대가 남은 곳 ${n(ps.short)}곳${ps.total ? ` (${Math.round(ps.short / ps.total * 100)}%)` : ''}.
+        미달률은 공급 세대 대비 1·2순위 마감 후 남은 세대 비율입니다.</p>
+      ${cap('민영 아파트 청약 결과', '세대')}
+      ${pTable(pRows.slice(0, 12))}
+      ${pRows.length > 12 ? `<details class="rd-more"><summary>${pRows.length - 12}곳 더 보기</summary>${pTable(pRows.slice(12))}</details>` : ''}
+    </section>` : '';
 
-  // 변동
-  const eRows = (Array.isArray(r.events) ? r.events : []).map((e) => `
-    <li class="rd-row">
-      <div class="rd-top"><b>${escapeHtml(e.spc)}</b><span class="rd-date">${md(e.date)}</span></div>
-      <div class="rd-sub"><span class="rd-tag${e.kind === '하향' ? ' down' : ''}">${e.kind === '하향' ? '등급하향' : '만기연장 언급'}</span> ${escapeHtml(e.text)}</div>
-      ${e.project || (e.builders || []).length ? `<div class="rd-who">${escapeHtml(e.project || '')}${(e.builders || []).length ? ` · 시공 ${escapeHtml(join(e.builders))}` : ''}</div>` : ''}
-    </li>`);
-  const events = eRows.length ? `
-    <article class="pcard rd-card">
-      <header class="pc-head"><h2>최근 등급·만기 변동</h2>
-        <div class="pc-meta"><span class="pc-effect">최근 60일 평가의견서 기준</span></div></header>
-      <ul class="rd-list">${fold(eRows, 6, '변동')}</ul>
-    </article>` : '';
-
-  return `${digest}${newsCard || deals}${builders}${presale}${events}
-    <p class="pc-foot"><span class="pc-leg">신평사(NICE·한국신용평가·한국기업평가) 공개 평가의견서를 자동으로 읽은 값입니다. 두 곳 이상 평가한 SPC 는 서로 대조했지만 해석이 틀릴 수 있으니 중요한 판단은 원문을 확인하세요.</span></p>`;
+  return `<div class="rd-sheet">${newsSec}${bldSec}${psSec}
+    <p class="rd-foot">신용평가사(NICE·한국신용평가·한국기업평가) 공개 평가의견서, 금융투자협회 단기사채 발행정보, DART, 청약홈을 자동으로 읽어 매일 갱신합니다. 해석이 틀릴 수 있으니 중요한 판단은 원문을 확인하세요.</p></div>`;
 }
 
 /* 상시 페이지 본문을 카드로 나눈다.
@@ -1395,10 +1343,25 @@ function markTab(slug) {
 /* 주소로 바로 들어온 경우(#/x/glossary)는 그 칸에서 시작하도록
  * 목록 전체를 그리고 자리만 옮긴다. 별도 화면으로 그리지 않는다 -
  * 그러면 옆으로 넘길 이웃이 없어진다. */
-function renderPage(slug) {
+function renderPage(slug, item) {
   // 제도·레이더처럼 state.pages 밖에서 오는 칸도 주소로 바로 열 수 있어야 한다.
   if (!tabList().some((t) => t.slug === slug)) { location.hash = '#/'; return; }
   renderList(slug);
+  if (item) openRadarArticle(item);
+}
+
+/* 레이더의 기사 하나를 펼치고 그 자리로 옮긴다. '더 보기' 안에 접혀 있으면 그것도 연다.
+ * 덱이 칸을 옮긴 뒤에 재야 위치가 맞아서 한 박자 늦게 움직인다. */
+function openRadarArticle(id) {
+  const el = [...els.view.querySelectorAll('.rd-art[data-id]')].find((d) => d.dataset.id === id);
+  if (!el) return;
+  const fold = el.closest('details.rd-more');
+  if (fold) fold.open = true;
+  el.open = true;
+  el.classList.add('rd-hit');
+  setTimeout(() => el.scrollIntoView({ block: 'start', behavior: 'smooth' }), 120);
+  // 펼친 뒤에는 주소를 칸 주소로 돌려 둔다. 그대로 두면 새로 고칠 때마다 같은 기사로 다시 끌려간다.
+  setTimeout(() => history.replaceState(null, '', '#/x/radar'), 600);
 }
 
 /* 전단채 두 표만 그 자리에서 최신 것으로 바꿔 준다.
@@ -1614,8 +1577,10 @@ function route() {
   const hash = location.hash || '#/';
   const post = hash.match(/^#\/p\/(.+)$/);
   if (post) { renderPost(decodeURIComponent(post[1])); return; }
-  const page = hash.match(/^#\/x\/(.+)$/);
-  if (page) { renderPage(decodeURIComponent(page[1])); return; }
+  // #/x/radar/<기사 id> : 메일에서 기사 제목을 누르면 그 기사가 펼쳐진 채로 열린다.
+  // 비밀번호를 아직 안 넣은 사람은 잠금 화면을 거친 뒤 unlock() -> route() 로 같은 주소에 온다.
+  const page = hash.match(/^#\/x\/([^/]+)(?:\/(.+))?$/);
+  if (page) { renderPage(decodeURIComponent(page[1]), page[2] ? decodeURIComponent(page[2]) : ''); return; }
   renderList();
 }
 
