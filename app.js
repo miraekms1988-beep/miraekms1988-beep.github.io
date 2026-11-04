@@ -798,7 +798,7 @@ function renderList(startTab) {
       ${pageHero({
         kicker: 'PF RADAR',
         title: 'PF 레이더',
-        sub: '신평사 공개 평가의견서·금융투자협회 발행·DART 공시·청약홈을 SPC 기준으로 이어 매일 갱신합니다',
+        sub: '신평사 평가의견서·금융투자협회 발행·DART 공시·청약홈을 SPC 기준으로 매일 업데이트합니다.',
       })}
       ${banner}
       <div class="page-body">${renderRadarSlide(state.radar)}</div>
@@ -1243,7 +1243,7 @@ function renderRadarSlide(r) {
       ${pRows.length > 12 ? `<div class="rd-tools">${tool('ps-more', `${pRows.length - 12}곳 더 보기`)}</div>${panel('ps-more', pTable(pRows.slice(12)))}` : ''}
     </section>` : '';
 
-  return `<div class="rd-sheet">${newsSec}${bldSec}${psSec}
+  return `<div class="rd-sheet">${newsSec}${typeof mapSec === 'string' ? mapSec : ''}${psSec}${bldSec}
     <p class="rd-foot">신용평가사(NICE·한국신용평가·한국기업평가) 공개 평가의견서, 금융투자협회 단기사채 발행정보, DART, 청약홈을 자동으로 읽어 매일 갱신합니다. 해석이 틀릴 수 있으니 중요한 판단은 원문을 확인하세요.</p></div>`;
 }
 

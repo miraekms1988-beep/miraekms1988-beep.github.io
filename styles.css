@@ -2627,6 +2627,17 @@ html:has(.view > article) .topbar {
 .rd-sheet .rd-ps .rd-typetbl { width: auto; margin: 0 auto; font-size: 11px; }
 .rd-sheet .rd-ps .rd-typetbl th, .rd-sheet .rd-ps .rd-typetbl td { padding: 3px 9px; font-size: 11px; line-height: 1.4; }
 .rd-sheet .rd-ps .rd-typetbl thead th { font-size: 10.5px; }
-/* 주택형 펼침 표: 바깥 분양 표의 2·3번째 칸 규칙(단지명 폭·줄바꿈, 시공사 글씨)이 안쪽 표에 새지 않게 막는다 */
-.rd-sheet .rd-ps .rd-typetbl tbody td, .rd-sheet .rd-ps .rd-typetbl thead th { text-align: center !important; min-width: 0 !important; white-space: nowrap !important; font-size: 11px !important; letter-spacing: 0 !important; font-weight: inherit; }
-.rd-sheet .rd-ps .rd-typetbl tr.sh td { font-weight: 600; }
+/* 주택형 펼침 표의 '공급' 숫자만 가운데로 (바깥 분양 표의 2번째 칸 규칙 - 단지명 폭·정렬 - 이 새어 들어와 있었다). 나머지 모양은 그대로 둔다. */
+.rd-sheet .rd-ps .rd-typetbl tbody td:nth-child(2) { text-align: center !important; min-width: 0 !important; }
+
+/* 기사 카드 슬림하게 (2026-11-04 피드백): 여백·제목·알약을 한 단계씩 줄인다 */
+.rd-sheet .rd-arts { gap: 7px; }
+.rd-sheet .rd-art { border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 6px 16px -14px rgba(0,0,0,.3); }
+.rd-sheet .rd-art::before { width: 2.5px; }
+.rd-sheet .rd-art > summary { padding: 10px 14px 10px 16px; }
+.rd-a-top .rd-date { font-size: 11px; }
+.rd-sheet .rd-kind { font-size: 10px; padding: 0 6px; line-height: 16px; }
+.rd-a-hl { margin-top: 4px; font-size: 13.5px; font-weight: 650; line-height: 1.4; }
+.rd-a-chips { gap: 4px; margin-top: 6px; }
+.rd-a-chips span { font-size: 10.5px; padding: 1px 7px; }
+.rd-sheet .rd-art .rd-art-body { padding: 2px 14px 12px 16px; }
