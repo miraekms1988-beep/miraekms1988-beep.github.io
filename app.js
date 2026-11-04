@@ -1145,16 +1145,18 @@ function renderRadarSlide(r) {
     </section>` : '';
 
   // ---- 시공사 신용 온도계 ----
+  // 금리(시공사별 평균 발행금리)는 full 전용 - lite 묶음에는 값이 없어 칸째 뺀다.
+  const showRate = arr(r.builders).some((b) => b.rate != null);
   const bRows = arr(r.builders).map((b) => `
     <tr>
       <td>${escapeHtml(b.name)}</td>
       <td class="num">${n(b.spcs)}</td>
       <td class="num">${n(b.outstanding)}</td>
-      <td class="num">${b.rate ? n(b.rate, 2) : '-'}</td>
+      ${showRate ? `<td class="num">${b.rate ? n(b.rate, 2) : '-'}</td>` : ''}
       <td class="num${b.triggers ? ' up' : ''}">${b.triggers ? `${b.triggers}${b.triggerExposure ? `<small>${n(b.triggerExposure)}</small>` : ''}` : '-'}</td>
       <td class="num${b.extended || b.downgraded ? ' up' : ''}">${b.extended || b.downgraded ? `${b.extended || 0}/${b.downgraded || 0}` : '-'}</td>
     </tr>`);
-  const bHead = '<thead><tr><th>시공사</th><th>SPC</th><th>잔액</th><th>금리</th><th>트리거</th><th>연장/강등</th></tr></thead>';
+  const bHead = `<thead><tr><th>시공사</th><th>SPC</th><th>잔액</th>${showRate ? '<th>금리</th>' : ''}<th>트리거</th><th>연장/강등</th></tr></thead>`;
   const bTable = (rows) => `<div class="table-wrap rd-table rd-bld"><table>${bHead}<tbody>${rows.join('')}</tbody></table></div>`;
   const trig = arr(r.builders).filter((b) => b.triggers && b.triggerText).map((b) => `
     <li><b>${escapeHtml(b.name)}</b> <span>${b.triggers}곳${b.triggerExposure ? ` · 잔액 ${n(b.triggerExposure)}억원` : ''}</span><p>${escapeHtml(b.triggerText)}</p></li>`).join('');
@@ -1167,11 +1169,11 @@ function renderRadarSlide(r) {
       <h2>시공사 신용 온도계</h2>
       <ul class="rd-legend">
         <li><b>잔액</b> 시공사가 시공하거나 신용보강한 PF 유동화 SPC의 전자단기사채 발행 잔액</li>
-        <li><b>금리</b> 최근 60일 발행분의 잔액 가중 평균</li>
+        ${showRate ? '<li><b>금리</b> 최근 60일 발행분의 잔액 가중 평균</li>' : ''}
         <li><b>트리거</b> 시공사 신용등급이 떨어지면 조기상환·추가 보강 의무가 생기는 SPC 수 (아래 작은 숫자는 그 잔액)</li>
         <li><b>연장/강등</b> 최근 평가의견서에서 대출 만기 연장이 확인된 SPC 수 / 등급이 내려간 SPC 수</li>
       </ul>
-      ${cap('시공사별 PF 유동화 현황', '억원, %')}
+      ${cap('시공사별 PF 유동화 현황', showRate ? '억원, %' : '억원')}
       ${bTable(bRows.slice(0, 12))}
       ${bRows.length > 12 ? `<details class="rd-more"><summary>시공사 ${bRows.length - 12}곳 더 보기</summary>${bTable(bRows.slice(12))}</details>` : ''}
       ${trig ? `<details class="rd-more"><summary>등급 트리거 문구 보기</summary><ul class="rd-trig">${trig}</ul></details>` : ''}
