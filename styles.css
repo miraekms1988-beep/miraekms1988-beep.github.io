@@ -2644,3 +2644,8 @@ html:has(.view > article) .topbar {
 
 /* 표지 제목 옆 갱신 주기 표시 (PF 레이더 DAILY / 채권동향 WEEKLY) */
 .hero-badge { display: inline-block; vertical-align: middle; margin-left: 8px; position: relative; top: -2px; font-size: 10.5px; font-weight: 700; letter-spacing: .1em; line-height: 1; color: var(--gold); border: 1px solid color-mix(in srgb, var(--gold) 70%, transparent); border-radius: 999px; padding: 4px 8px 3px; }
+/* 펼친 기사 본문은 양쪽 정렬 (신문 기사처럼). 한글은 낱말 단위로 끊어 띄어쓰기가 크게 벌어지지 않게 */
+.rd-sheet .rd-art .rd-art-body p { text-align: justify; text-justify: inter-word; word-break: normal; overflow-wrap: anywhere; }
+.rd-sheet .rd-art .rd-art-body p.rd-src { text-align: left; }
+/* 카드 제목은 줄이지 않고 전부 보인다 (… 없이) */
+.rd-sheet .rd-a-hl { display: block; -webkit-line-clamp: unset; overflow: visible; }
