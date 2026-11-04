@@ -698,7 +698,7 @@ function renderList(startTab) {
     <header class="hero">
       <div class="hero-body">
         <p class="hero-kicker">WEEKLY BOND MARKET REVIEW</p>
-        <h1 class="hero-title">주간 채권시장 동향</h1>
+        <h1 class="hero-title">주간 채권시장 동향<span class="hero-badge">WEEKLY</span></h1>
         <div class="hero-author">
           <span class="hero-avatar" aria-hidden="true">${escapeHtml(AUTHOR.name[0])}</span>
           <span class="hero-who">
@@ -735,7 +735,7 @@ function renderList(startTab) {
     <header class="hero">
       <div class="hero-body">
         <p class="hero-kicker">${escapeHtml(p.kicker || 'REFERENCE')}</p>
-        <h1 class="hero-title">${escapeHtml(p.title)}</h1>
+        <h1 class="hero-title">${escapeHtml(p.title)}${p.badge ? `<span class="hero-badge">${escapeHtml(p.badge)}</span>` : ''}</h1>
         ${author}
         ${p.sub ? `<div class="hero-stats"><span>${escapeHtml(p.sub)}</span></div>` : ''}
       </div>
@@ -798,6 +798,7 @@ function renderList(startTab) {
       ${pageHero({
         kicker: 'PF RADAR',
         title: 'PF 레이더',
+        badge: 'DAILY',
         sub: '신평사 평가의견서·금융투자협회 발행·DART 공시·청약홈을 SPC 기준으로 매일 업데이트합니다.',
       })}
       ${banner}
