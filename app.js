@@ -1178,7 +1178,22 @@ function renderUnsoldBoxes(u, mode) {
   const regs = (Array.isArray(u.regions) ? u.regions : []).filter((r) => (m.val(r) || 0) > 0);
   const bySido = new Map();
   regs.forEach((r) => { if (!bySido.has(r.s)) bySido.set(r.s, []); bySido.get(r.s).push(r); });
-  const groups = [...bySido.entries()].map(([s, rs]) => ({ s, rs: rs.sort((a, b) => m.val(b) - m.val(a)), val: rs.reduce((a, r) => a + m.val(r), 0) }))
+  // 휴대폰에서 이름표를 못 다는 작은 상자가 너무 많다. 전국 합계의 0.65% 안 되는 지역은 시도별로 '그 외 N곳' 하나로 묶는다.
+  const allTot = regs.reduce((a, r) => a + m.val(r), 0);
+  const cut = allTot * 0.0065;
+  const groups = [...bySido.entries()].map(([s, rs0]) => {
+    const sorted = rs0.sort((a, b) => m.val(b) - m.val(a));
+    const big = sorted.filter((r) => m.val(r) >= cut), small = sorted.filter((r) => m.val(r) < cut);
+    let rs = big;
+    if (small.length === 1) rs = sorted;
+    else if (small.length > 1) {
+      const sv = small.reduce((a, r) => a + m.val(r), 0), sp = small.reduce((a, r) => a + (m.prev(r) || 0), 0);
+      const o = { s, n: `그 외 ${small.length}곳`, rest: small, v: 0, p: 0, d: 0, dp: 0, ps: 0 };
+      if (mode === 'all') { o.v = sv; o.p = sp; } else if (mode === 'done') { o.d = sv; o.dp = sp; } else { o.ps = sv; }
+      rs = [...big, o];
+    }
+    return { s, rs, val: sorted.reduce((a, r) => a + m.val(r), 0) };
+  })
     .sort((a, b) => b.val - a.val);
   const total = groups.reduce((a, g) => a + g.val, 0);
   const gl = umSquarify(groups.map((g) => ({ ...g })), 0, 0, UM_W, UM_H);
@@ -1188,11 +1203,11 @@ function renderUnsoldBoxes(u, mode) {
     inner.forEach((b) => {
       const r = b.it.r;
       // 휴대폰 폭(약 315px)에서 1% 는 3px 남짓. 글자가 상자를 넘지 않을 때만 이름표를 단다.
-      const fs = Math.max(9, Math.min(16, Math.min(b.w * 0.75, b.h * 1.5)));
+      const fs = Math.max(8.5, Math.min(16, Math.min(b.w * 0.75, b.h * 1.5)));
       const v = m.val(r), p = m.prev(r);
       let label = '';
       if (b.w >= 17 && b.h >= 10) label = `<b style="font-size:${fs.toFixed(1)}px">${escapeHtml(r.n)}</b><span>${Number(v).toLocaleString('ko-KR')}${mode === 'ps' ? '세대' : '호'}${p ? ` · ${umPct(v, p)}` : ''}</span>`;
-      else if (b.w >= 10 && b.h >= 5.5) label = `<b style="font-size:${fs.toFixed(1)}px">${escapeHtml(r.n)}</b>`;
+      else if (b.w >= 8 && b.h >= 4.5) label = `<b style="font-size:${fs.toFixed(1)}px">${escapeHtml(r.n)}</b>`;
       html += `<button type="button" class="um-box" data-k="${escapeHtml(r.s + '|' + r.n)}"
         style="left:${(b.x / UM_W * 100).toFixed(3)}%;top:${(b.y / UM_H * 100).toFixed(3)}%;width:${(b.w / UM_W * 100).toFixed(3)}%;height:${(b.h / UM_H * 100).toFixed(3)}%;background:${umColor(mode, r)}"
         aria-label="${escapeHtml(`${r.s} ${r.n} ${v}`)}">${label}</button>`;
@@ -1204,7 +1219,17 @@ function renderUnsoldBoxes(u, mode) {
   return { html, total };
 }
 
-function renderUnsoldDetail(u, key) {
+function renderUnsoldDetail(u, key, mode) {
+  if (key.includes('|그 외 ')) {
+    const sido = key.split('|')[0];
+    const m = UM_MODES[mode || 'all'];
+    const all = (u.regions || []).filter((x) => x.s === sido && (m.val(x) || 0) > 0);
+    const tot = all.reduce((a, r) => a + m.val(r), 0);
+    const cut = (u.regions || []).reduce((a, r) => a + (m.val(r) || 0), 0) * 0.0065;
+    const rest = all.filter((r) => m.val(r) < cut).sort((a, b) => m.val(b) - m.val(a));
+    return `<div class="um-det"><div class="um-det-h"><b>${escapeHtml(sido)} 그 외 ${rest.length}곳</b><span>${escapeHtml(m.label)}</span></div>
+      <ul class="um-list">${rest.map((r) => `<li><b>${escapeHtml(r.n)}</b><span>${Number(m.val(r)).toLocaleString('ko-KR')}${mode === 'ps' ? '세대' : '호'}${m.prev(r) ? ` · ${umPct(m.val(r), m.prev(r))}` : ''}</span></li>`).join('')}</ul></div>`;
+  }
   const r = (u.regions || []).find((x) => `${x.s}|${x.n}` === key);
   if (!r) return '';
   const n = (v) => Number(v || 0).toLocaleString('ko-KR');
@@ -1267,7 +1292,7 @@ function mountUnsold(root) {
       sec.querySelectorAll('.um-box.on').forEach((x) => x.classList.remove('on'));
       bx.classList.add('on');
       const det = sec.querySelector('.um-detail');
-      det.innerHTML = renderUnsoldDetail(u, bx.dataset.k);
+      det.innerHTML = renderUnsoldDetail(u, bx.dataset.k, mode);
       det.hidden = false;
       det.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
@@ -1426,7 +1451,7 @@ function renderRadarSlide(r) {
         ${types.map((t) => `<tr${t.short ? ' class="sh"' : ''}><td>${escapeHtml(typeLabel(t.type))}</td><td>${n(t.supply)}</td><td>${n(t.req1)}</td>
           <td>${t.short ? `미달 ${n(t.short)}세대` : (t.rate1 ? `${n(t.rate1, 2)} : 1` : '마감')}</td></tr>`).join('')}
         </tbody></table></td></tr>` : '';
-    return `<tr><td class="num">${md(p.notice)}</td><td>${escapeHtml(p.name)}<small>${escapeHtml(p.area || '')}</small></td>
+    return `<tr><td class="num">${md(p.notice)}</td><td>${p.area ? `(${escapeHtml(p.area)}) ` : ''}${escapeHtml(p.name)}</td>
       <td>${escapeHtml(p.builder || '-')}</td><td class="num">${n(p.supply)}</td>
       <td class="num rd-res${p.result === '미달' ? ' up' : ''}${types.length ? ' can' : ''}">${res}</td></tr>${detail}`;
   });
