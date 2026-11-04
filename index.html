@@ -90,6 +90,12 @@
       <button type="button" id="signup-open">구독 신청</button></p>
   </form>
 
+  <!-- 홈 화면에 앱으로 추가 (app.js mountA2HS). 휴대폰 브라우저에서만, 이미 앱으로 열었으면 안 보인다. -->
+  <button type="button" class="a2hs-lock" id="a2hs-lock" hidden>
+    <img src="icons/icon-192.png?v=20261104c" width="22" height="22" alt="" aria-hidden="true">
+    홈 화면에 앱으로 추가하기
+  </button>
+
   <!-- 구독 신청. 비밀번호를 모르는 사람이 보는 유일한 화면이므로
        여기에도 작성자 이름·소속·연락처는 적지 않는다. 받기만 한다. -->
   <form class="lock-card signup-card" id="signup-form" autocomplete="off" hidden>
@@ -171,6 +177,9 @@
       <span class="brand-text">PF 레이더 · 주간 채권동향</span>
     </div>
     <div class="topbar-actions">
+      <button class="icon-btn" id="a2hs-btn" hidden aria-label="앱으로 추가">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 8v7M8.8 11.8L12 15l3.2-3.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
       <button class="icon-btn" id="theme-btn" aria-label="화면 모드 전환">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M20 13a8 8 0 11-9-9 7 7 0 009 9z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
       </button>
@@ -179,6 +188,14 @@
       </button>
     </div>
   </header>
+
+  <!-- 로그인 뒤 맨 위 한 줄 권유. ✕ 로 닫으면 이 기기에서는 다시 안 뜬다(오른쪽 위 단추는 남는다). -->
+  <div class="a2hs-bar" id="a2hs-bar" hidden>
+    <img src="icons/icon-192.png?v=20261104c" width="34" height="34" alt="" aria-hidden="true">
+    <p><b>앱으로 추가</b><span>아이콘 하나로 매일 바로 열립니다</span></p>
+    <button type="button" class="a2hs-go" id="a2hs-go">추가</button>
+    <button type="button" class="a2hs-x" id="a2hs-x" aria-label="닫기">✕</button>
+  </div>
 
   <main id="view" class="view" tabindex="-1"></main>
 

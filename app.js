@@ -1989,6 +1989,123 @@ function route() {
     location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(url);
   });
 })();
+
+/* 홈 화면에 앱으로 추가 (잠금 화면 단추 · 로그인 뒤 한 줄 권유 · 오른쪽 위 단추).
+ *   갤럭시 크롬·삼성 인터넷: 브라우저가 주는 설치 창(beforeinstallprompt)을 바로 띄운다.
+ *   아이폰: 애플이 웹에서 자동 추가를 막아 두었다 - 공유 단추를 가리키는 안내를 겹쳐 띄운다.
+ *   카톡 안: 홈 화면 추가가 안 되므로 기본 브라우저로 넘기면서 ?a2hs=1 을 붙여,
+ *   넘어간 쪽에서 설치 창이나 안내가 이어서 뜨게 한다.
+ *   이미 앱(홈 화면 아이콘)으로 열었으면 아무것도 보이지 않는다. */
+(function mountA2HS() {
+  const ua = navigator.userAgent;
+  const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  if (standalone()) return;
+  const ios = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const android = /Android/i.test(ua);
+  const kakao = /KAKAOTALK/i.test(ua);
+  const samsung = /SamsungBrowser/i.test(ua);
+  const iosOther = ios && /CriOS|FxiOS|EdgiOS|NAVER|Whale/i.test(ua);
+  const lockBtn = document.getElementById('a2hs-lock');
+  const hdrBtn = document.getElementById('a2hs-btn');
+  const bar = document.getElementById('a2hs-bar');
+  let deferred = null;
+  let barOff = false;
+  try { barOff = localStorage.getItem('a2hs-bar-off') === '1'; } catch (_) { /* 저장 불가 */ }
+
+  function show(on) {
+    if (lockBtn) lockBtn.hidden = !on;
+    if (hdrBtn) hdrBtn.hidden = !on;
+    if (bar) bar.hidden = !on || barOff;
+  }
+  // 휴대폰이면 처음부터 보인다. PC 는 브라우저가 설치를 지원할 때(설치 창 이벤트가 오면)만.
+  show(ios || android);
+
+  window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferred = e; show(true); });
+  window.addEventListener('appinstalled', () => { deferred = null; show(false); closeGuide(); toast('홈 화면에 추가했습니다'); });
+
+  async function install() {
+    if (!deferred) return false;
+    const ev = deferred;
+    deferred = null;
+    ev.prompt();
+    try { const r = await ev.userChoice; if (r && r.outcome === 'accepted') show(false); } catch (_) { /* 무시 */ }
+    return true;
+  }
+
+  async function run() {
+    if (kakao) {
+      const base = location.href.split('#')[0].replace(/[?&]a2hs=1/, '');
+      const url = base + (base.includes('?') ? '&' : '?') + 'a2hs=1';
+      location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(url);
+      return;
+    }
+    if (await install()) return;
+    openGuide(false);
+  }
+
+  const shareIco = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 3v12M7.5 7.5L12 3l4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 10H6.5A1.5 1.5 0 005 11.5v8A1.5 1.5 0 006.5 21h11a1.5 1.5 0 001.5-1.5v-8a1.5 1.5 0 00-1.5-1.5H16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  let sheet = null;
+  function closeGuide() { if (sheet) { sheet.remove(); sheet = null; } }
+  // canInstall: 카톡에서 넘어온 갤럭시처럼 설치 창은 준비됐는데 손가락 한 번이 필요한 경우
+  function openGuide(canInstall) {
+    closeGuide();
+    let steps;
+    let where = 'bottom';
+    if (canInstall) {
+      steps = null;
+    } else if (ios && !iosOther) {
+      steps = [`화면 아래 <b>공유</b> 버튼 <i class="a2g-ico">${shareIco}</i> 을 누르세요<small>안 보이면 오른쪽 아래 <b>⋯</b> 를 누른 뒤 공유</small>`,
+               '목록을 아래로 내려 <b>홈 화면에 추가</b>',
+               '오른쪽 위 <b>추가</b>를 누르면 끝'];
+    } else if (ios) {
+      where = 'top';
+      steps = [`주소창 오른쪽 <b>공유</b> 버튼 <i class="a2g-ico">${shareIco}</i> 을 누르세요`,
+               '<b>홈 화면에 추가</b>를 누르세요<small>목록에 없으면 Safari로 열어 주세요</small>',
+               '<b>추가</b>를 누르면 끝'];
+    } else if (samsung) {
+      steps = ['화면 아래 <b>메뉴(≡)</b>를 누르세요', '<b>현재 페이지 추가</b> → <b>홈 화면</b>', '<b>추가</b>를 누르면 끝'];
+    } else {
+      where = 'top';
+      steps = ['오른쪽 위 <b>메뉴(⋮)</b>를 누르세요', '<b>홈 화면에 추가</b> 또는 <b>앱 설치</b>', '<b>설치</b>(또는 추가)를 누르면 끝'];
+    }
+    sheet = document.createElement('div');
+    sheet.className = `a2g a2g-${where}`;
+    sheet.setAttribute('role', 'dialog');
+    sheet.setAttribute('aria-modal', 'true');
+    sheet.setAttribute('aria-label', '홈 화면에 앱으로 추가');
+    sheet.innerHTML = `
+      <div class="a2g-card">
+        <button type="button" class="a2g-x" aria-label="닫기">✕</button>
+        <img src="icons/icon-192.png?v=20261104c" width="56" height="56" alt="">
+        <h3>홈 화면에 앱으로 추가</h3>
+        <p class="a2g-sub">아이콘 하나로 매일 바로 열립니다</p>
+        ${steps
+          ? `<ol>${steps.map((s, i) => `<li><span>${i + 1}</span><div>${s}</div></li>`).join('')}</ol>
+             <p class="a2g-tip">비밀번호를 넣을 때 <b>'이 기기에서 기억'</b>을 체크하면 다음부터 바로 열립니다.</p>`
+          : '<button type="button" class="a2g-install">설치하기</button>'}
+      </div>
+      ${steps ? `<div class="a2g-arrow" aria-hidden="true">${where === 'top' ? '↑' : '↓'}</div>` : ''}`;
+    document.body.appendChild(sheet);
+    sheet.addEventListener('click', async (e) => {
+      if (e.target === sheet || e.target.closest('.a2g-x')) { closeGuide(); return; }
+      if (e.target.closest('.a2g-install')) { closeGuide(); if (!(await install())) openGuide(false); }
+    });
+  }
+
+  [lockBtn, hdrBtn, document.getElementById('a2hs-go')].forEach((b) => b && b.addEventListener('click', run));
+  const x = document.getElementById('a2hs-x');
+  if (x) x.addEventListener('click', () => {
+    barOff = true;
+    try { localStorage.setItem('a2hs-bar-off', '1'); } catch (_) { /* 무시 */ }
+    if (bar) bar.hidden = true;
+  });
+
+  // 카톡에서 '앱으로 추가'를 눌러 넘어온 경우: 주소의 표시를 지우고 이어서 진행한다.
+  if (/[?&]a2hs=1/.test(location.search)) {
+    history.replaceState(null, '', location.pathname + location.search.replace(/[?&]a2hs=1/, '').replace(/^&/, '?') + location.hash);
+    setTimeout(() => openGuide(!!deferred), 900);
+  }
+})();
 /* 구독 안내 카드 전체 화면 보기.
  *   이미지를 누르거나 옆으로 밀면 다음 장, 왼쪽 3분의 1 을 누르면 이전 장.
  *   위에 '1 / 3', 아래에 '구독 신청하기'. ✕·Esc·휴대폰 뒤로가기로 닫는다.

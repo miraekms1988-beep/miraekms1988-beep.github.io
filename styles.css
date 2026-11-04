@@ -2837,3 +2837,78 @@ html:has(.view > article) .topbar {
 .rd-more-bar .rd-tool.on { background: var(--surface-2); color: var(--text-2); border-color: transparent; }
 .rd-more-bar .rd-tool.on i::after { content: '▴'; transform: none; }
 .rd-kpane .rd-panel { margin-top: 7px; }
+
+/* ===== 홈 화면에 앱으로 추가 (app.js mountA2HS) ===== */
+.a2hs-lock {
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  width: 100%; max-width: 372px; padding: 12px 16px;
+  font: inherit; font-size: 14.5px; font-weight: 650; letter-spacing: -.02em;
+  color: var(--text); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 14px;
+  box-shadow: var(--shadow-sm); cursor: pointer;
+  transition: transform .1s, box-shadow .2s;
+}
+.a2hs-lock[hidden] { display: none; }
+.a2hs-lock img { border-radius: 6px; }
+.a2hs-lock:active { transform: scale(.985); }
+
+.a2hs-bar {
+  display: flex; align-items: center; gap: 11px;
+  width: calc(100% - 32px); max-width: 640px; margin: 10px auto 0;
+  padding: 10px 10px 10px 12px;
+  background: #111113; color: #fff; border-radius: 16px;
+  box-shadow: 0 10px 24px -16px rgba(0,0,0,.6);
+  animation: rdUp .5s cubic-bezier(.2,.8,.2,1) both;
+}
+.a2hs-bar[hidden] { display: none; }
+.a2hs-bar img { border-radius: 8px; flex: none; }
+.a2hs-bar p { margin: 0; flex: 1; min-width: 0; line-height: 1.35; }
+.a2hs-bar p b { display: block; font-size: 14px; font-weight: 700; letter-spacing: -.02em; }
+.a2hs-bar p span { display: block; font-size: 11.5px; color: #a1a1a6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.a2hs-go {
+  flex: none; padding: 8px 15px; border: 0; border-radius: 999px; cursor: pointer;
+  font: inherit; font-size: 13px; font-weight: 700; color: #111113; background: #d6a94e;
+}
+.a2hs-x { flex: none; width: 28px; height: 28px; border: 0; background: none; color: #8e8e93; font-size: 14px; cursor: pointer; }
+
+/* 안내 시트 */
+.a2g {
+  position: fixed; inset: 0; z-index: 120;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  padding: 16px 16px max(18px, env(safe-area-inset-bottom));
+  background: rgba(0,0,0,.55);
+  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+  animation: a2gFade .2s ease both;
+}
+.a2g-top { justify-content: flex-end; padding-top: max(16px, env(safe-area-inset-top)); flex-direction: column-reverse; }
+@keyframes a2gFade { from { opacity: 0; } }
+.a2g-card {
+  position: relative; width: 100%; max-width: 400px;
+  background: var(--surface); color: var(--text);
+  border-radius: 22px; padding: 24px 22px 18px; text-align: center;
+  box-shadow: 0 20px 50px -20px rgba(0,0,0,.6);
+  animation: rdUp .4s cubic-bezier(.2,.8,.2,1) both;
+}
+.a2g-card img { border-radius: 13px; }
+.a2g-card h3 { margin: 12px 0 3px; font-size: 18px; font-weight: 750; letter-spacing: -.03em; }
+.a2g-sub { margin: 0 0 14px; font-size: 13px; color: var(--text-3); }
+.a2g-x { position: absolute; top: 10px; right: 10px; width: 32px; height: 32px; border: 0; border-radius: 50%; background: var(--surface-2); color: var(--text-2); font-size: 13px; cursor: pointer; }
+.a2g ol { list-style: none; margin: 0; padding: 0; text-align: left; }
+.a2g li { display: flex; gap: 11px; align-items: flex-start; padding: 10px 0; border-top: 1px solid var(--border-soft); font-size: 14px; line-height: 1.5; }
+.a2g li > span {
+  flex: none; width: 22px; height: 22px; border-radius: 50%; margin-top: 1px;
+  display: grid; place-items: center; font-size: 12px; font-weight: 800;
+  color: #111113; background: linear-gradient(180deg, #e7bd62, #c9973a);
+}
+.a2g li small { display: block; font-size: 12px; color: var(--text-3); margin-top: 1px; }
+.a2g-ico { display: inline-grid; place-items: center; vertical-align: -4px; width: 26px; height: 26px; border-radius: 7px; background: var(--surface-2); color: #0a84ff; font-style: normal; }
+.a2g-tip { margin: 10px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); font-size: 12px; line-height: 1.55; color: var(--text-2); text-align: left; }
+.a2g-install {
+  width: 100%; margin-top: 4px; padding: 14px; border: 0; border-radius: 14px; cursor: pointer;
+  font: inherit; font-size: 15.5px; font-weight: 700; color: var(--bg); background: var(--text);
+}
+.a2g-arrow { color: #fff; font-size: 34px; font-weight: 300; line-height: 1; margin: 10px 0 0; animation: a2gBob 1.1s ease-in-out infinite; }
+.a2g-top .a2g-arrow { margin: 0 0 10px; align-self: flex-end; padding-right: 18px; }
+@keyframes a2gBob { 50% { transform: translateY(7px); } }
+.a2g-top .a2g-arrow { animation-name: a2gBobUp; }
+@keyframes a2gBobUp { 50% { transform: translateY(-7px); } }
