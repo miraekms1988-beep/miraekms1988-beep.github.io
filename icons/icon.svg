@@ -1,18 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="PF 레이더">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="PF RADAR">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1f1f23"/><stop offset="1" stop-color="#0b0b0d"/></linearGradient>
   </defs>
   <rect width="512" height="512" rx="112" fill="url(#bg)"/>
   <g transform="translate(0,0)">
-    <!-- 레이더 점과 고리 (금색) -->
-    <circle cx="430" cy="98" r="44" fill="none" stroke="#d6a94e" stroke-width="6" opacity=".28"/>
-    <circle cx="430" cy="98" r="27" fill="none" stroke="#d6a94e" stroke-width="6" opacity=".55"/>
-    <circle cx="430" cy="98" r="12" fill="#e7bd62"/>
-    <!-- P -->
-    <rect x="109" y="150" width="56" height="212" rx="6" fill="#ffffff"/>
-    <path d="M137 178 H214 A40 40 0 0 1 214 258 H137" fill="none" stroke="#ffffff" stroke-width="56"/>
-    <!-- F -->
-    <rect x="285" y="150" width="56" height="212" rx="6" fill="#ffffff"/>
-    <rect x="285" y="150" width="124" height="52" rx="6" fill="#ffffff"/>
-    <rect x="285" y="236" width="100" height="48" rx="6" fill="#ffffff"/>
-  </g></svg>
+    <circle cx="446" cy="80" r="40" fill="none" stroke="#d6a94e" stroke-width="5" opacity=".28"/>
+    <circle cx="446" cy="80" r="24" fill="none" stroke="#d6a94e" stroke-width="5" opacity=".55"/>
+    <circle cx="446" cy="80" r="11" fill="#e7bd62"/>
+    <rect x="98" y="122" width="44" height="180" fill="#ffffff"/>
+    <path d="M120 144 H174 A38 38 0 0 1 174 220 H120" fill="none" stroke="#ffffff" stroke-width="44"/>
+    <rect x="278" y="122" width="44" height="180" fill="#ffffff"/>
+    <rect x="278" y="122" width="136" height="44" fill="#ffffff"/>
+    <rect x="278" y="196" width="112" height="42" fill="#ffffff"/>
+    <text x="263" y="392" text-anchor="middle" font-family="'Segoe UI','Helvetica Neue',Arial,sans-serif" font-weight="800" font-size="66" letter-spacing="14" fill="#d6a94e">RADAR</text>  </g></svg>
