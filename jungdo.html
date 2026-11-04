@@ -290,7 +290,7 @@ async function load(pass, keep) {
  * 저장소 = 구글 Apps Script 웹 앱 (docs/jungdo-notes-apps-script.gs). 사업장 id 마다 암호문 한 줄.
  * 기록 = { c: 컨택 목록 여부, st: 단계, next: 다음 할 일 날짜, log: [{t, by, txt}], by, at }
  * 편집 키 E 로 AES-GCM 암호화해 보내고, 요청마다 E 에서 뽑은 표(tok)를 붙인다. 서버는 E 를 모른다. */
-const NOTES_URL = '';   // Apps Script 웹 앱 주소(…/exec). 비어 있으면 체크·메모를 숨긴다.
+const NOTES_URL = 'https://script.google.com/macros/s/AKfycbwI2XVwyki6SJlsSm2Ku1bthVeZKVbaQlAZ83QnmUwHe8XoqCaTpFIGIQ3n5WvRxGMLaQ/exec';   // Apps Script 웹 앱 주소(…/exec). 비어 있으면 체크·메모를 숨긴다.
 const STAGES = ['컨택 예정', '연락함', '제안서 전달', '협의 중', '수임', '보류', '불발'];
 const ed = { key: null, tok: '', who: '', notes: new Map(), open: null, timer: null, ready: false };
 async function setupEditor(eB64, who) {
