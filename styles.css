@@ -1463,19 +1463,18 @@ img.brand-mark { display: block; width: 28px; height: 28px; flex: none; border-r
   transition: background .2s, color .2s, box-shadow .2s;
 }
 .dtab:hover { color: var(--text); }
-/* 선택 칸은 흰 알약 + 금색 밑줄 (iOS 분할 단추 결).
-   검은 칸이면 바로 아래 검은 표지와 겹쳐 '검검'해 보였다(사용자). */
+/* 선택 칸은 검은 칸 + 금색 밑줄 (사용자 결정 2026-11-04, 흰 알약 판은 뺐다) */
 .dtab.on {
-  color: var(--text);
+  color: #fff;
   font-weight: 700;
-  background: #ffffff;
-  box-shadow: 0 1px 3px rgba(0,0,0,.10), 0 0 0 .5px rgba(0,0,0,.05);
+  background: var(--navy);
+  box-shadow: var(--shadow-sm);
 }
 .dtab::after {
   content: '';
   position: absolute; left: 50%; bottom: 4px;
   width: 0; height: 2px; border-radius: 2px;
-  background: #b4832a;
+  background: #d6a94e;
   transform: translateX(-50%);
   transition: width .28s cubic-bezier(.2,.8,.2,1);
 }
