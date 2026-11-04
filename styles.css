@@ -2547,3 +2547,46 @@ html:has(.view > article) .topbar {
 }
 /* 분양 표 시공사 이름은 한 줄로 (글자 중간에서 끊기면 '시티건/설' 처럼 읽힌다) */
 .rd-sheet .rd-ps tbody td:nth-child(3) { white-space: nowrap; overflow-wrap: normal; word-break: keep-all; font-size: 11.5px; letter-spacing: -.03em; }
+
+/* ===== PF 레이더 3차: 머리 기사 · 날짜 묶음 · 알약 단추 · 주택형 펼침 ===== */
+/* 머리 기사 - 이번 주 최대 딜. 검은 표지 결로 무게를 준다 */
+.rd-sheet a.rd-top { display: block; text-decoration: none; background: #111113; color: #fff; border-radius: 18px; padding: 18px 18px 16px; margin: 4px 0 18px;
+  box-shadow: 0 14px 30px -18px rgba(0,0,0,.55); }
+.rd-top-kick { display: block; font-size: 11px; font-weight: 700; letter-spacing: .08em; color: #d6a94e; }
+.rd-top-hl { display: block; font-size: 17px; font-weight: 700; line-height: 1.45; letter-spacing: -.035em; color: #fff; margin-top: 6px; word-break: keep-all; }
+.rd-top-p { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-size: 13px; line-height: 1.65; color: #c7c7cc; margin-top: 8px; }
+.rd-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.rd-chips span { font-size: 11.5px; font-weight: 600; color: #f5f5f7; background: rgba(255,255,255,.1); border-radius: 999px; padding: 3px 9px; white-space: nowrap; }
+.rd-top-more { display: block; margin-top: 12px; font-size: 12.5px; font-weight: 700; color: #d6a94e; }
+
+/* 날짜 묶음 + 작은 제목 */
+.rd-sheet .rd-arts { border-top: 0; }
+.rd-day { font-size: 11.5px; font-weight: 700; color: var(--text-3); letter-spacing: .02em; padding: 14px 2px 4px; border-bottom: 1px solid var(--border-soft); }
+.rd-sheet .rd-art > summary { padding: 10px 2px; }
+.rd-sheet .rd-art > summary .rd-hl { font-size: 13.5px; font-weight: 500; letter-spacing: -.02em; }
+.rd-sheet .rd-kind { font-size: 10.5px; padding: 1px 6px; }
+.rd-hidden-lead[hidden] { display: none !important; }
+
+/* 알약 단추 한 줄 */
+.rd-tools { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; }
+.rd-tool { appearance: none; border: 1px solid var(--border); background: var(--surface); color: var(--text-2); font: inherit; font-size: 12.5px; font-weight: 600;
+  border-radius: 999px; padding: 6px 12px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+.rd-tool i::after { content: "›"; display: inline-block; transition: transform .15s; }
+.rd-tool.on { background: var(--text); color: var(--surface); border-color: var(--text); }
+.rd-tool.on i::after { transform: rotate(90deg); }
+.rd-panel { margin-top: 10px; }
+.rd-panel[hidden] { display: none; }
+.rd-sheet .rd-panel .rd-arts { border-top: 0; }
+
+/* 분양 결과 칸 - 누르면 주택형별 */
+.rd-sheet .rd-ps td.rd-res.can { cursor: pointer; }
+.rd-sheet .rd-ps td.rd-res.can i::after { content: "▾"; font-size: 9px; color: var(--text-3); margin-left: 2px; }
+.rd-sheet .rd-ps td.rd-res.can.on i::after { content: "▴"; }
+.rd-sheet .rd-ps tr.rd-types > td { background: var(--surface-2); padding: 8px 8px 10px; }
+.rd-typetbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+.rd-typetbl th { font-weight: 600; color: var(--text-3); padding: 4px 4px 6px; border-bottom: 1px solid var(--border); background: none !important; box-shadow: none !important; text-shadow: none !important; }
+.rd-typetbl td { padding: 5px 4px; border-bottom: 1px solid var(--border-soft); color: var(--text-2); text-align: center; white-space: nowrap; }
+.rd-typetbl tr:last-child td { border-bottom: 0; }
+.rd-typetbl tr.sh td { color: var(--up); font-weight: 600; }
+.rd-sheet .rd-ps .rd-typetbl thead th { color: var(--text-3) !important; font-size: 11px; }
+.rd-sheet .rd-ps td.rd-res.can i::after { vertical-align: 1px; }

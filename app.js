@@ -817,6 +817,7 @@ function renderList(startTab) {
     ${renderNext()}`;
 
   mountDeck();
+  mountRadar(els.view);
   els.view.querySelectorAll('.slide .page-body').forEach(groupIntoCards);
   mountMotion(els.view, calmNext);
   calmNext = false;
@@ -1106,26 +1107,32 @@ function renderPolicySlide() {
 /* ================= PF 레이더 ================= */
 
 /* 채권동향 글 화면과 같은 결로 그린다 (사용자 피드백 2026-11-04):
- * 카드 상자 대신 하얀 바탕 한 장, 큰 굵은 소제목, 표 제목 옆 오른쪽에 작은 단위,
- * 차콜 머리글 표. 기사는 제목 한 줄(넘치면 …)만 보이고 누르면 펼쳐진다.
- * 등급·만기 변동 목록과 '한눈에'는 뺐다 - SPC 이름만으로는 뜻이 없고, 만기연장은
- * PF 딜 뉴스에 기사로 올라간다. */
+ * 카드 상자 대신 하얀 바탕 한 장, 큰 굵은 소제목, 표 제목 옆 오른쪽에 작은 단위, 차콜 머리글 표.
+ * '부동산 PF 업계 동향'은 이번 주 가장 큰 딜을 머리 기사로 크게 세우고, 나머지는 날짜별로 묶은
+ * 작은 제목 목록으로 둔다 - 다 같은 크기로 늘어놓으면 눈에 걸리는 게 없다.
+ * 펼침 단추는 표 아래 한 줄에 작은 알약으로 모은다 (줄마다 넓게 띄우면 산만하다).
+ * 분양 표는 미달률·경쟁률 칸을 누르면 주택형별 결과가 그 아래 펼쳐진다. */
 function renderRadarSlide(r) {
   const n = (v, d = 0) => (v == null || v === '' ? '-' : Number(v).toLocaleString('ko-KR', { maximumFractionDigits: d, minimumFractionDigits: d }));
   const md = (s) => (s ? s.slice(5).replace('-', '/') : '');
+  const mdKo = (s) => (s ? `${Number(s.slice(5, 7))}월 ${Number(s.slice(8, 10))}일` : '');
   const arr = (x) => (Array.isArray(x) ? x : []);
   const cap = (title, unit) => `<div class="rd-cap"><b>${title}</b>${unit ? `<span>(단위: ${unit})</span>` : ''}</div>`;
+  const tool = (key, label) => `<button type="button" class="rd-tool" data-panel="${key}">${label}<i aria-hidden="true"></i></button>`;
+  const panel = (key, html) => `<div class="rd-panel" data-panel="${key}" hidden>${html}</div>`;
 
-  // ---- PF 딜 뉴스 ----
+  // ---- 부동산 PF 업계 동향 ----
   const KIND = { new: ['신규', 'new'], extend: ['만기연장', 'ext'] };
   const news = arr(r.news);
-  const art = (a) => {
+  const amt = (a) => { const m = String(a.headline || '').match(/PF ([\d,]+)억/); return m ? Number(m[1].replace(/,/g, '')) : 0; };
+  const row = (a, k) => (arr(a.table).find((x) => x[0] === k) || [])[1] || '';
+  const art = (a, withDate) => {
     const k = KIND[a.kind] || ['PF', 'new'];
     const tbl = arr(a.table).length
-      ? `<dl class="rd-kv">${a.table.map((row) => `<dt>${escapeHtml(row[0])}</dt><dd>${escapeHtml(row[1])}</dd>`).join('')}</dl>` : '';
+      ? `<dl class="rd-kv">${a.table.map((x) => `<dt>${escapeHtml(x[0])}</dt><dd>${escapeHtml(x[1])}</dd>`).join('')}</dl>` : '';
     return `
       <details class="rd-art"${a.id ? ` data-id="${escapeHtml(a.id)}"` : ''}>
-        <summary><span class="rd-kind ${k[1]}">${k[0]}</span><span class="rd-hl">${escapeHtml(a.headline)}</span><span class="rd-date">${md(a.date)}</span></summary>
+        <summary><span class="rd-kind ${k[1]}">${k[0]}</span><span class="rd-hl">${escapeHtml(a.headline)}</span>${withDate ? `<span class="rd-date">${md(a.date)}</span>` : ''}</summary>
         <div class="rd-art-body">
           <h3>${escapeHtml(a.headline)}</h3>
           ${arr(a.body).map((t) => `<p>${escapeHtml(t)}</p>`).join('')}
@@ -1134,15 +1141,51 @@ function renderRadarSlide(r) {
         </div>
       </details>`;
   };
-  const nNew = news.filter((a) => a.kind === 'new').length;
-  const nExt = news.filter((a) => a.kind === 'extend').length;
-  const newsSec = news.length ? `
-    <section class="rd-sec">
-      <h2>PF 딜 뉴스</h2>
-      <p class="rd-lead">최근 45일 신규 ${nNew}건 · 만기연장 ${nExt}건. 신용평가사 공개 평가의견서와 금융투자협회 발행 내역으로 작성했습니다.</p>
-      <div class="rd-arts">${news.slice(0, 10).map(art).join('')}</div>
-      ${news.length > 10 ? `<details class="rd-more"><summary>기사 ${news.length - 10}건 더 보기</summary><div class="rd-arts">${news.slice(10).map(art).join('')}</div></details>` : ''}
-    </section>` : '';
+  let newsSec = '';
+  if (news.length) {
+    // 머리 기사: 가장 최근 7일(기사 날짜 기준) 신규 딜 중 대출 규모가 가장 큰 것
+    const latest = news[0].date;
+    const wk = new Date(Date.parse(latest) - 7 * 864e5).toISOString().slice(0, 10);
+    const lead = news.filter((a) => a.kind === 'new' && a.date >= wk).sort((x, y) => amt(y) - amt(x))[0];
+    const rest = news.filter((a) => a !== lead);
+    const chips = lead ? [
+      row(lead, '대출 약정액') && `대출 ${row(lead, '대출 약정액')}`,
+      row(lead, '신용등급') && row(lead, '신용등급').replace(/\s*\(.*\)$/, ''),
+      (row(lead, '첫 발행').match(/연 [\d.]+%/) || [])[0],
+      row(lead, '시공사') && `시공 ${row(lead, '시공사')}`,
+    ].filter(Boolean) : [];
+    const leadHtml = lead ? `
+      <a class="rd-top" href="#/x/radar/${encodeURIComponent(lead.id || '')}" data-open="${escapeHtml(lead.id || '')}">
+        <span class="rd-top-kick">이번 주 최대 딜 · ${mdKo(lead.date)}</span>
+        <span class="rd-top-hl">${escapeHtml(lead.headline)}</span>
+        <span class="rd-top-p">${escapeHtml(arr(lead.body)[0] || '')}</span>
+        ${chips.length ? `<span class="rd-chips">${chips.map((c) => `<span>${escapeHtml(c)}</span>`).join('')}</span>` : ''}
+        <span class="rd-top-more">기사 읽기 ›</span>
+      </a>` : '';
+    // 나머지는 날짜별로 묶는다. 처음 12건만 보이고 나머지는 단추로.
+    const group = (items) => {
+      const out = []; let d = '';
+      for (const a of items) {
+        if (a.date !== d) { d = a.date; out.push(`<div class="rd-day">${mdKo(d)}</div>`); }
+        out.push(art(a, false));
+      }
+      return out.join('');
+    };
+    const head = rest.slice(0, 12), tail = rest.slice(12);
+    // 머리 기사도 목록 안에 넣어 둔다 - 메일 링크(#/x/radar/<id>)가 펼칠 자리가 있어야 한다.
+    const leadHidden = lead ? `<div class="rd-hidden-lead" hidden>${art(lead, false)}</div>` : '';
+    const nNew = news.filter((a) => a.kind === 'new').length;
+    const nExt = news.filter((a) => a.kind === 'extend').length;
+    newsSec = `
+      <section class="rd-sec">
+        <h2>부동산 PF 업계 동향</h2>
+        <p class="rd-lead">최근 45일 신규 ${nNew}건 · 만기연장 ${nExt}건. 신용평가사 공개 평가의견서와 금융투자협회 발행 내역을 바탕으로 기사 형식으로 작성한 내용입니다.</p>
+        ${leadHtml}
+        <div class="rd-arts">${group(head)}</div>
+        ${tail.length ? `<div class="rd-tools">${tool('news-more', `기사 ${tail.length}건 더 보기`)}</div>${panel('news-more', `<div class="rd-arts">${group(tail)}</div>`)}` : ''}
+        ${leadHidden}
+      </section>`;
+  }
 
   // ---- 시공사 신용 온도계 ----
   // 금리(시공사별 평균 발행금리)는 full 전용 - lite 묶음에는 값이 없어 칸째 뺀다.
@@ -1164,6 +1207,11 @@ function renderRadarSlide(r) {
     <tr><td>${escapeHtml(d.name)}</td><td class="num">${n(d.total)}</td>
       <td class="num">${d.pfLimit ? n(d.pfLimit) : '-'}</td><td class="num">${d.pfUnused != null && d.pfLimit ? n(d.pfUnused) : '-'}</td>
       <td class="num">${md(d.date)}</td></tr>`).join('');
+  const bTools = [
+    bRows.length > 12 ? tool('bld-more', `시공사 ${bRows.length - 12}곳 더`) : '',
+    trig ? tool('bld-trig', '트리거 문구') : '',
+    dartRows ? tool('bld-dart', 'DART 채무보증') : '',
+  ].filter(Boolean).join('');
   const bldSec = bRows.length ? `
     <section class="rd-sec">
       <h2>시공사 신용 온도계</h2>
@@ -1175,25 +1223,34 @@ function renderRadarSlide(r) {
       </ul>
       ${cap('시공사별 PF 유동화 현황', showRate ? '억원, %' : '억원')}
       ${bTable(bRows.slice(0, 12))}
-      ${bRows.length > 12 ? `<details class="rd-more"><summary>시공사 ${bRows.length - 12}곳 더 보기</summary>${bTable(bRows.slice(12))}</details>` : ''}
-      ${trig ? `<details class="rd-more"><summary>등급 트리거 문구 보기</summary><ul class="rd-trig">${trig}</ul></details>` : ''}
-      ${dartRows ? `<details class="rd-more"><summary>DART 채무보증 총잔액 · PF 보증한도</summary>
-        ${cap('시공사 채무보증 (최근 공시)', '억원')}
-        <div class="table-wrap rd-table"><table><thead><tr><th>시공사</th><th>보증잔액</th><th>PF한도</th><th>미사용</th><th>공시</th></tr></thead><tbody>${dartRows}</tbody></table></div></details>` : ''}
+      ${bTools ? `<div class="rd-tools">${bTools}</div>` : ''}
+      ${bRows.length > 12 ? panel('bld-more', bTable(bRows.slice(12))) : ''}
+      ${trig ? panel('bld-trig', `<ul class="rd-trig">${trig}</ul>`) : ''}
+      ${dartRows ? panel('bld-dart', `${cap('시공사 채무보증 (최근 공시)', '억원')}
+        <div class="table-wrap rd-table"><table><thead><tr><th>시공사</th><th>보증잔액</th><th>PF한도</th><th>미사용</th><th>공시</th></tr></thead><tbody>${dartRows}</tbody></table></div>`) : ''}
     </section>` : '';
 
   // ---- 분양 성과 레이더 ----
   const ps = r.presaleStat || { total: 0, short: 0 };
+  const typeLabel = (t) => { const m = String(t || '').match(/^0*(\d+)(?:\.\d+)?([A-Z]*)/); return m ? `${m[1]}${m[2]}` : String(t || ''); };
   const pRows = arr(r.presale).map((p) => {
+    const types = arr(p.types);
     let res;
     if (p.result === '미달') {
       const pct = p.supply ? (p.short / p.supply * 100) : null;
-      res = `<td class="num up">${pct != null ? `${n(pct, 1)}%` : '미달'}<small>(${n(p.short)}세대)</small></td>`;
+      res = `${pct != null ? `${n(pct, 1)}%` : '미달'}${types.length ? '<i aria-hidden="true"></i>' : ''}<small>(${n(p.short)}세대)</small>`;
     } else {
-      res = `<td class="num">${p.rate1 ? `${n(p.rate1, 1)} : 1` : '마감'}</td>`;
+      res = (p.rate1 ? `${n(p.rate1, 1)} : 1` : '마감') + (types.length ? '<i aria-hidden="true"></i>' : '');
     }
+    const detail = types.length ? `
+      <tr class="rd-types" hidden><td colspan="5">
+        <table class="rd-typetbl"><thead><tr><th>주택형</th><th>공급</th><th>1순위 접수</th><th>결과</th></tr></thead><tbody>
+        ${types.map((t) => `<tr${t.short ? ' class="sh"' : ''}><td>${escapeHtml(typeLabel(t.type))}</td><td>${n(t.supply)}</td><td>${n(t.req1)}</td>
+          <td>${t.short ? `미달 ${n(t.short)}세대` : (t.rate1 ? `${n(t.rate1, 2)} : 1` : '마감')}</td></tr>`).join('')}
+        </tbody></table></td></tr>` : '';
     return `<tr><td class="num">${md(p.notice)}</td><td>${escapeHtml(p.name)}<small>${escapeHtml(p.area || '')}</small></td>
-      <td>${escapeHtml(p.builder || '-')}</td><td class="num">${n(p.supply)}</td>${res}</tr>`;
+      <td>${escapeHtml(p.builder || '-')}</td><td class="num">${n(p.supply)}</td>
+      <td class="num rd-res${p.result === '미달' ? ' up' : ''}${types.length ? ' can' : ''}">${res}</td></tr>${detail}`;
   });
   const pHead = '<thead><tr><th>공고</th><th>단지</th><th>시공사</th><th>공급</th><th>미달률 · 경쟁률</th></tr></thead>';
   const pTable = (rows) => `<div class="table-wrap rd-table rd-ps"><table>${pHead}<tbody>${rows.join('')}</tbody></table></div>`;
@@ -1201,14 +1258,49 @@ function renderRadarSlide(r) {
     <section class="rd-sec">
       <h2>분양 성과 레이더</h2>
       <p class="rd-lead">최근 60일 민영 아파트 ${n(ps.total)}곳 중 1·2순위에서 세대가 남은 곳 ${n(ps.short)}곳${ps.total ? ` (${Math.round(ps.short / ps.total * 100)}%)` : ''}.
-        미달률은 공급 세대 대비 1·2순위 마감 후 남은 세대 비율입니다.</p>
+        미달률은 공급 세대 대비 1·2순위 마감 후 남은 세대 비율입니다. 결과 칸을 누르면 주택형별 결과가 열립니다.</p>
       ${cap('민영 아파트 청약 결과', '세대')}
       ${pTable(pRows.slice(0, 12))}
-      ${pRows.length > 12 ? `<details class="rd-more"><summary>${pRows.length - 12}곳 더 보기</summary>${pTable(pRows.slice(12))}</details>` : ''}
+      ${pRows.length > 12 ? `<div class="rd-tools">${tool('ps-more', `${pRows.length - 12}곳 더 보기`)}</div>${panel('ps-more', pTable(pRows.slice(12)))}` : ''}
     </section>` : '';
 
   return `<div class="rd-sheet">${newsSec}${bldSec}${psSec}
     <p class="rd-foot">신용평가사(NICE·한국신용평가·한국기업평가) 공개 평가의견서, 금융투자협회 단기사채 발행정보, DART, 청약홈을 자동으로 읽어 매일 갱신합니다. 해석이 틀릴 수 있으니 중요한 판단은 원문을 확인하세요.</p></div>`;
+}
+
+/* 레이더 화면의 단추들: 펼침 알약, 머리 기사, 분양 결과 칸 */
+function mountRadar(root) {
+  const sheet = root.querySelector('.rd-sheet');
+  if (!sheet) return;
+  sheet.addEventListener('click', (e) => {
+    const t = e.target.closest('.rd-tool');
+    if (t) {
+      const sec = t.closest('.rd-sec');
+      const p = sec && sec.querySelector(`.rd-panel[data-panel="${t.dataset.panel}"]`);
+      if (!p) return;
+      const open = p.hidden;
+      // 한 섹션에서 펼침은 하나만 - 여러 개가 한꺼번에 열리면 무엇을 눌렀는지 헷갈린다.
+      sec.querySelectorAll('.rd-panel').forEach((x) => { x.hidden = true; });
+      sec.querySelectorAll('.rd-tool').forEach((x) => x.classList.remove('on'));
+      p.hidden = !open;
+      t.classList.toggle('on', open);
+      return;
+    }
+    const lead = e.target.closest('.rd-top');
+    if (lead && lead.dataset.open) {
+      e.preventDefault();
+      openRadarArticle(lead.dataset.open);
+      return;
+    }
+    const res = e.target.closest('td.rd-res.can');
+    if (res) {
+      const next = res.parentElement.nextElementSibling;
+      if (next && next.classList.contains('rd-types')) {
+        next.hidden = !next.hidden;
+        res.classList.toggle('on', !next.hidden);
+      }
+    }
+  });
 }
 
 /* 상시 페이지 본문을 카드로 나눈다.
@@ -1357,8 +1449,11 @@ function renderPage(slug, item) {
 function openRadarArticle(id) {
   const el = [...els.view.querySelectorAll('.rd-art[data-id]')].find((d) => d.dataset.id === id);
   if (!el) return;
-  const fold = el.closest('details.rd-more');
-  if (fold) fold.open = true;
+  // 단추 뒤에 접힌 칸(.rd-panel)이나 숨겨 둔 머리 기사 자리에 있으면 그것부터 연다.
+  const pnl = el.closest('.rd-panel');
+  if (pnl) { pnl.hidden = false; const sec = pnl.closest('.rd-sec'); const btn = sec && sec.querySelector(`.rd-tool[data-panel="${pnl.dataset.panel}"]`); if (btn) btn.classList.add('on'); }
+  const hid = el.closest('.rd-hidden-lead');
+  if (hid) hid.hidden = false;
   el.open = true;
   el.classList.add('rd-hit');
   setTimeout(() => el.scrollIntoView({ block: 'start', behavior: 'smooth' }), 120);
