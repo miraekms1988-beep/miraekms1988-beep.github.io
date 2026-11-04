@@ -2854,7 +2854,7 @@ html:has(.view > article) .topbar {
 
 .a2hs-bar {
   display: flex; align-items: center; gap: 11px;
-  width: calc(100% - 32px); max-width: 640px; margin: 10px auto 0;
+  width: calc(100% - 36px); max-width: calc(var(--maxw) - 36px); margin: 10px auto 0;   /* 본문(.view) 좌우 여백과 같게 - 탭 폭에 맞춘다 */
   padding: 10px 10px 10px 12px;
   background: #111113; color: #fff; border-radius: 16px;
   box-shadow: 0 10px 24px -16px rgba(0,0,0,.6);
@@ -2912,3 +2912,5 @@ html:has(.view > article) .topbar {
 @keyframes a2gBob { 50% { transform: translateY(7px); } }
 .a2g-top .a2g-arrow { animation-name: a2gBobUp; }
 @keyframes a2gBobUp { 50% { transform: translateY(-7px); } }
+@media (max-width: 480px) { .a2hs-bar { width: calc(100% - 32px); max-width: none; } }
+@media (min-width: 720px) { .a2hs-bar { width: calc(100% - 40px); max-width: calc(var(--maxw) - 40px); margin-top: 14px; } }
