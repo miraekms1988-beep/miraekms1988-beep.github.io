@@ -673,7 +673,8 @@ let listShown = LIST_PAGE;
 function renderList(startTab) {
   els.backBtn.hidden = true;
   els.view.classList.add('deck-mode');
-  state.tab = startTab || 'posts';
+  // 첫 화면은 PF 레이더 (매일 바뀌는 칸이 앞에 와야 다시 온다 - 2026-11-04). 레이더 자료가 없으면 채권동향.
+  state.tab = startTab || (state.radar ? 'radar' : 'posts');
   document.title = (state.tab === 'posts' || state.tab === 'radar')
     ? SITE_NAME
     : `${(tabList().find((p) => p.slug === state.tab) || {}).title} · ${SITE_NAME}`;
@@ -817,7 +818,7 @@ function renderList(startTab) {
 
   els.view.innerHTML = `
     ${renderTabs()}
-    <div class="deck">${postsSlide}${radarSlide}${policySlide}${pageSlides}</div>
+    <div class="deck">${radarSlide}${postsSlide}${policySlide}${pageSlides}</div>
     ${renderNext()}`;
 
   mountDeck();
@@ -976,9 +977,10 @@ function nextRefreshAt() {
 /* 발행글 / 제도·규제 / 용어 노트를 옆으로 넘겨 오간다.
  * 세 화면이 같은 틀을 쓰므로 탭 줄을 각 화면이 똑같이 그린다. */
 function tabList() {
-  const list = [{ slug: 'posts', title: '주간 채권동향' }];
-  // PF 레이더를 채권동향 바로 다음에 둔다 (사용자 요청 2026-11-04).
-  if (state.radar) list.push({ slug: 'radar', title: 'PF 레이더' });
+  // PF 레이더가 첫 칸, 주간 채권동향이 둘째 칸 (2026-11-04).
+  const list = [];
+  if (state.radar) list.push({ slug: 'radar', title: 'PF 레이더', dot: radarTodayCount() > 0 });
+  list.push({ slug: 'posts', title: '주간 채권동향' });
   if (state.policy.length) list.push({ slug: 'policy', title: '부동산 제도 규제' });
   return list.concat(state.pages.map((p) => ({ slug: p.slug, title: p.title })));
 }
@@ -994,7 +996,7 @@ function renderTabs() {
   const cur = tabs.some((t) => t.slug === state.tab) ? state.tab : 'posts';
   return `<nav class="dtabs" aria-label="화면 이동">${tabs.map((t) => `
     <button type="button" class="dtab${t.slug === cur ? ' on' : ''}" data-slug="${escapeHtml(t.slug)}"
-            ${t.slug === cur ? 'aria-current="page"' : ''}>${escapeHtml(t.title)}</button>`).join('')}
+            ${t.slug === cur ? 'aria-current="page"' : ''}>${escapeHtml(t.title)}${t.dot ? '<i class="dtab-dot" aria-label="오늘 새 소식"></i>' : ''}</button>`).join('')}
   </nav>`;
 }
 
@@ -1302,6 +1304,19 @@ function mountUnsold(root) {
   });
 }
 
+/* ---- '오늘' 표시: 우리 화면에 처음 뜬 지 24시간 안 (build-radar-view.ps1 의 seen) ---- */
+function isTodaySeen(s) { const t = Date.parse(s || ''); return !!t && Date.now() - t < 864e5; }
+function radarToday() {
+  const r = state.radar || {};
+  const news = Array.isArray(r.news) ? r.news : [];
+  const ps = Array.isArray(r.presale) ? r.presale : [];
+  return {
+    n: news.filter((a) => a.kind !== 'extend' && isTodaySeen(a.seen)).length,
+    x: news.filter((a) => a.kind === 'extend' && isTodaySeen(a.seen)).length,
+    p: ps.filter((a) => isTodaySeen(a.seen)).length,
+  };
+}
+function radarTodayCount() { const t = radarToday(); return t.n + t.x + t.p; }
 /* ================= PF 레이더 ================= */
 
 /* 채권동향 글 화면과 같은 결로 그린다 (사용자 피드백 2026-11-04):
@@ -1340,7 +1355,7 @@ function renderRadarSlide(r) {
     return `
       <details class="rd-art ${k[1]}"${a.id ? ` data-id="${escapeHtml(a.id)}"` : ''}>
         <summary>
-          <span class="rd-a-top"><span class="rd-kind ${k[1]}">${k[0]}</span><span class="rd-date">${mdKo(a.date)}</span></span>
+          <span class="rd-a-top"><span class="rd-kind ${k[1]}">${k[0]}</span><span class="rd-date">${mdKo(a.date)}</span>${isTodaySeen(a.seen) ? '<span class="rd-new">NEW</span>' : ''}</span>
           <span class="rd-a-hl">${escapeHtml(a.headline)}</span>
           ${chips.length ? `<span class="rd-a-chips">${chips.map((c) => `<span>${escapeHtml(c)}</span>`).join('')}</span>` : ''}
         </summary>
@@ -1455,7 +1470,7 @@ function renderRadarSlide(r) {
         ${types.map((t) => `<tr${t.short ? ' class="sh"' : ''}><td>${escapeHtml(typeLabel(t.type))}</td><td>${n(t.supply)}</td><td>${n(t.req1)}</td>
           <td>${t.short ? `미달 ${n(t.short)}세대` : (t.rate1 ? `${n(t.rate1, 2)} : 1` : '마감')}</td></tr>`).join('')}
         </tbody></table></td></tr>` : '';
-    return `<tr><td class="num">${md(p.notice)}</td><td>${p.area ? `(${escapeHtml(p.area)}) ` : ''}${escapeHtml(p.name)}</td>
+    return `<tr><td class="num">${md(p.notice)}</td><td>${p.area ? `(${escapeHtml(p.area)}) ` : ''}${escapeHtml(p.name)}${isTodaySeen(p.seen) ? ' <span class="rd-new">NEW</span>' : ''}</td>
       <td>${escapeHtml(p.builder || '-')}</td><td class="num">${n(p.supply)}</td>
       <td class="num rd-res${p.result === '미달' ? ' up' : ''}${types.length ? ' can' : ''}">${res}</td></tr>${detail}`;
   });
@@ -1472,7 +1487,20 @@ function renderRadarSlide(r) {
     </section>` : '';
 
   const mapSec = renderUnsoldSection(r.unsold);
-  return `<div class="rd-sheet">${newsSec}${mapSec}${psSec}${bldSec}
+  // 맨 위: 오늘 새로 들어온 것 한 줄 + (발행 주간이면) 이번 주 채권동향 카드
+  const td = radarToday();
+  const todayLine = (td.n + td.x + td.p)
+    ? `<div class="rd-today"><i></i><b>오늘</b>${[td.n && `신규 ${td.n}`, td.x && `만기연장 ${td.x}`, td.p && `청약 결과 ${td.p}`].filter(Boolean).join(' · ')}</div>`
+    : `<div class="rd-today quiet"><i></i><b>오늘</b>새로 들어온 소식은 아직 없습니다 · 매일 아침 업데이트</div>`;
+  const wk = (state.index || [])[0];
+  const weekCard = wk && isFresh(wk.date) ? `
+    <a class="rd-week" href="#/p/${encodeURIComponent(wk.slug)}">
+      <span class="rd-week-k">이번 주 채권동향 · ${formatDate(wk.date)}</span>
+      <span class="rd-week-t">${escapeHtml(wk.title)}</span>
+      ${wk.summary ? `<span class="rd-week-s">${escapeHtml(wk.summary)}</span>` : ''}
+      <span class="rd-week-m">읽기 ›</span>
+    </a>` : '';
+  return `<div class="rd-sheet">${todayLine}${weekCard}${newsSec}${mapSec}${psSec}${bldSec}
     <p class="rd-foot">신용평가사(NICE·한국신용평가·한국기업평가) 공개 평가의견서, 금융투자협회 단기사채 발행정보, DART, 청약홈을 자동으로 읽어 매일 갱신합니다. 해석이 틀릴 수 있으니 중요한 판단은 원문을 확인하세요.</p></div>`;
 }
 
@@ -1607,7 +1635,7 @@ function mountDeck() {
       : `${(tabList().find((p) => p.slug === slug) || {}).title} · ${SITE_NAME}`;
     // 뒤로가기로 돌아올 자리를 남긴다. 히스토리를 쌓지는 않는다 -
     // 쌓으면 옆으로 몇 번 넘긴 만큼 뒤로가기를 눌러야 사이트를 빠져나간다.
-    const hash = slug === 'posts' ? '#/' : `#/x/${encodeURIComponent(slug)}`;
+    const hash = slug === slugs[0] ? '#/' : `#/x/${encodeURIComponent(slug)}`;
     if (location.hash !== hash) history.replaceState(null, '', hash);
   };
 
@@ -2496,7 +2524,8 @@ if (!SIGNUP_URL) {
 
 els.themeBtn.addEventListener('click', toggleTheme);
 els.lockBtn.addEventListener('click', lockUp);
-els.backBtn.addEventListener('click', () => { location.hash = '#/'; });
+// 글에서 뒤로 가면 채권동향 목록으로 (첫 칸이 레이더가 된 뒤로 #/ 은 레이더다)
+els.backBtn.addEventListener('click', () => { location.hash = state.radar ? '#/x/posts' : '#/'; });
 els.brand.addEventListener('click', () => { location.hash = '#/'; });
 window.addEventListener('hashchange', route);
 window.addEventListener('scroll', onScroll, { passive: true });
