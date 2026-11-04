@@ -1,7 +1,7 @@
 {
-  "name": "주간 채권동향",
-  "short_name": "채권동향",
-  "description": "매주 정리하는 국내 채권시장 동향",
+  "name": "PF 레이더 · 주간 채권동향",
+  "short_name": "PF 레이더",
+  "description": "매일 업데이트하는 부동산 PF 업계 동향과 매주 채권시장 동향",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

@@ -98,6 +98,9 @@ function b64ToBytes(s) {
   return out;
 }
 
+// 사이트 이름. PF 레이더를 앞에 세운다 (2026-11-04). 첫 칸 이름표는 그대로 '주간 채권동향'.
+const SITE_NAME = 'PF 레이더 · 주간 채권동향';
+
 function escapeHtml(s) {
   return String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
@@ -671,9 +674,9 @@ function renderList(startTab) {
   els.backBtn.hidden = true;
   els.view.classList.add('deck-mode');
   state.tab = startTab || 'posts';
-  document.title = state.tab === 'posts'
-    ? '주간 채권동향'
-    : `${(tabList().find((p) => p.slug === state.tab) || {}).title} · 주간 채권동향`;
+  document.title = (state.tab === 'posts' || state.tab === 'radar')
+    ? SITE_NAME
+    : `${(tabList().find((p) => p.slug === state.tab) || {}).title} · ${SITE_NAME}`;
 
   if (!state.index.length) {
     els.view.classList.remove('deck-mode');
@@ -1345,6 +1348,7 @@ function renderRadarSlide(r) {
           ${arr(a.body).map((t) => `<p>${escapeHtml(t)}</p>`).join('')}
           ${tbl}
           ${arr(a.sources).length ? `<p class="rd-src">자료: ${escapeHtml(a.sources.join(', '))}</p>` : ''}
+          ${a.id ? `<button type="button" class="rd-share" data-share="${escapeHtml(a.id)}" data-hl="${escapeHtml(a.headline)}"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 3v12M7 8l5-5 5 5M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>공유하기</button>` : ''}
         </div>
       </details>`;
   };
@@ -1477,6 +1481,22 @@ function mountRadar(root) {
   const sheet = root.querySelector('.rd-sheet');
   if (!sheet) return;
   sheet.addEventListener('click', (e) => {
+    // 기사 공유: 휴대폰은 공유창(카톡 등), PC 는 링크 복사. 받은 사람이 링크를 누르면
+    // 잠금 화면을 거쳐 그 기사가 펼쳐진 채로 열린다(#/x/radar/<id>). 구독 안 한 사람은 신청 화면으로.
+    const sh = e.target.closest('.rd-share');
+    if (sh) {
+      e.preventDefault();
+      const url = `${location.origin}${location.pathname}#/x/radar/${encodeURIComponent(sh.dataset.share)}`;
+      const text = `[PF 레이더] ${sh.dataset.hl}`;
+      if (navigator.share) {
+        navigator.share({ title: 'PF 레이더 · 주간 채권동향', text, url }).catch(() => { /* 사용자가 닫음 */ });
+      } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(`${text}\n${url}`).then(() => toast('기사 링크를 복사했습니다. 카톡에 붙여넣으세요.'), () => toast('복사하지 못했습니다'));
+      } else {
+        window.prompt('아래 링크를 복사하세요', `${text}\n${url}`);
+      }
+      return;
+    }
     const kb = e.target.closest('.rd-kinds .rd-kcard');
     if (kb) {
       const sec = kb.closest('.rd-sec');
@@ -1582,9 +1602,9 @@ function mountDeck() {
     const nxt  = els.view.querySelector('.navbtn.next');
     if (prev) prev.classList.toggle('off', i <= 0);
     if (nxt)  nxt.classList.toggle('off', i >= slugs.length - 1);
-    document.title = slug === 'posts'
-      ? '주간 채권동향'
-      : `${(tabList().find((p) => p.slug === slug) || {}).title} · 주간 채권동향`;
+    document.title = (slug === 'posts' || slug === 'radar')
+      ? SITE_NAME
+      : `${(tabList().find((p) => p.slug === slug) || {}).title} · ${SITE_NAME}`;
     // 뒤로가기로 돌아올 자리를 남긴다. 히스토리를 쌓지는 않는다 -
     // 쌓으면 옆으로 몇 번 넘긴 만큼 뒤로가기를 눌러야 사이트를 빠져나간다.
     const hash = slug === 'posts' ? '#/' : `#/x/${encodeURIComponent(slug)}`;
@@ -1794,7 +1814,7 @@ async function renderPost(slug) {
   els.view.classList.remove('deck-mode');
 
   els.backBtn.hidden = false;
-  document.title = `${meta.title} · 주간 채권동향`;
+  document.title = `${meta.title} · ${SITE_NAME}`;
   els.view.innerHTML = '<div class="empty"><p>불러오는 중…</p></div>';
 
   let md = state.cache.get(slug);
@@ -1947,7 +1967,7 @@ function openPromoViewer(start) {
     v.className = 'pv';
     v.setAttribute('role', 'dialog');
     v.setAttribute('aria-modal', 'true');
-    v.setAttribute('aria-label', '주간 채권동향 안내 카드');
+    v.setAttribute('aria-label', `${SITE_NAME} 안내 카드`);
     v.innerHTML = `
       <div class="pv-top"><span class="pv-count"></span>
         <button type="button" class="pv-close" aria-label="닫기">✕</button></div>

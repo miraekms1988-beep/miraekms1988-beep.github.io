@@ -2779,3 +2779,10 @@ html:has(.view > article) .topbar {
 .rd-kcard.on .rd-kc-s { color: #c7c7cc; }
 .rd-kcard.on .rd-kc-s2 { color: #8e8e93; }
 .rd-kc-t b { font-size: 22px; }
+
+/* 기사 공유 단추 (펼친 본문 끝) */
+.rd-share { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; appearance: none; border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-size: 12.5px; font-weight: 700; border-radius: 999px; padding: 7px 14px; cursor: pointer; }
+.rd-share:active { transform: scale(.97); }
+.rd-share svg { flex: none; }
+/* 사이트 이름이 길어져 휴대폰 머리줄에서 넘치지 않게 */
+.brand-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
