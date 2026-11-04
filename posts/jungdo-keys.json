@@ -1,0 +1,12 @@
+{
+    "v":  1,
+    "iterations":  200000,
+    "entries":  {
+                    "own":  {
+                                "salt":  "fyFWXs2rAbxB0bNKgfd96w==",
+                                "iv":  "xxQPmPFPDOKwbH6B9RujeQ==",
+                                "ct":  "ES91kVf11YfFh53clxjV4uZwyGAKs9SPZtytxKbcaYmYxpaHmwt1tHfInq+L9DVaTd/j3pWEMggWVe7CGo3CgJ6UwieU1OrmNtIeJphrpmA/XvC/cup1/TmDiQe6hs3zpI+W2XPDZCJGVgmxQHI+Jg==",
+                                "mac":  "N5Z66t/fWmaMqQ5COVW/M2HArrUzO3QnK+6z6F05sIQ="
+                            }
+                }
+}

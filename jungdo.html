@@ -7,8 +7,8 @@
 <meta name="referrer" content="no-referrer">
 <title>중도금 주선 리스트</title>
 <style>
-/* 개인 영업용 - 사이트 메뉴에 연결하지 않는다. 데이터는 posts/jungdo.enc.json 암호문뿐이고
-   비밀번호(secrets\jungdo-pass.txt)가 있어야 열린다. 사이트 구독자 비밀번호로는 안 열린다. */
+/* 중도금 주선 리스트 - 사이트 메뉴에 연결하지 않는다. 데이터는 posts/jungdo.enc.json 암호문뿐이고
+   운영자가 승인한 사람만 자기 비밀번호로 연다(scripts/jungdo-access.ps1). 구독자 비밀번호로는 안 열린다. */
 :root {
   --bg: #f4f5f7; --surface: #fff; --surface-2: #eef0f4; --border: #dfe3ea;
   --text: #151a24; --text-2: #4a5464; --text-3: #7d8798;
@@ -105,7 +105,7 @@ button, input, select { font: inherit; color: inherit; }
 <body>
 <div id="lock" class="lock" hidden>
   <h1>중도금 주선 리스트</h1>
-  <p class="sub" style="text-align:center">개인 자료입니다. 비밀번호로 엽니다.</p>
+  <p class="sub" style="text-align:center">승인된 분만 보실 수 있습니다. 받으신 비밀번호를 넣어 주세요.</p>
   <form id="lockForm" autocomplete="on">
     <input id="pass" type="password" autocomplete="current-password" placeholder="비밀번호" required>
     <label><input id="keep" type="checkbox" checked> 이 기기에서 기억</label>
@@ -153,26 +153,45 @@ const $ = (id) => document.getElementById(id);
 function b64(s) { const b = atob(s); const u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
 function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
-async function openBox(pass, box) {
+// 사람마다 다른 비밀번호 (scripts/jungdo-lib.ps1). 목록은 콘텐츠 키 K 로 잠겨 있고,
+// jungdo-keys.json 에 사람별로 K 를 감싼 꾸러미가 있다. 비밀번호 앞 세 글자가 꾸러미 번호(k3f-…),
+// 번호가 없는 운영자 비밀번호는 'own' 꾸러미로 연다.
+const KEYS_URL = 'posts/jungdo-keys.json';
+async function derive(pass, saltB64, iterations) {
   const base = await crypto.subtle.importKey('raw', enc.encode(pass), 'PBKDF2', false, ['deriveBits']);
-  const bits = new Uint8Array(await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', salt: b64(box.salt), iterations: box.iterations, hash: 'SHA-256' }, base, 512));
-  const aes = await crypto.subtle.importKey('raw', bits.slice(0, 32), { name: 'AES-CBC' }, false, ['decrypt']);
-  const mac = await crypto.subtle.importKey('raw', bits.slice(32, 64), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']);
+  const bits = new Uint8Array(await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: b64(saltB64), iterations, hash: 'SHA-256' }, base, 512));
+  return keysFrom(bits.slice(0, 32), bits.slice(32, 64));
+}
+async function keysFrom(aesRaw, macRaw) {
+  return {
+    aes: await crypto.subtle.importKey('raw', aesRaw, { name: 'AES-CBC' }, false, ['decrypt']),
+    mac: await crypto.subtle.importKey('raw', macRaw, { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']),
+  };
+}
+async function openEnv(keys, box) {
   const iv = b64(box.iv), ct = b64(box.ct);
   const signed = new Uint8Array(iv.length + ct.length); signed.set(iv, 0); signed.set(ct, iv.length);
-  if (!await crypto.subtle.verify('HMAC', mac, b64(box.mac), signed)) throw new Error('AUTH');
-  return JSON.parse(dec.decode(await crypto.subtle.decrypt({ name: 'AES-CBC', iv }, aes, ct)));
+  if (!await crypto.subtle.verify('HMAC', keys.mac, b64(box.mac), signed)) throw new Error('AUTH');
+  return dec.decode(await crypto.subtle.decrypt({ name: 'AES-CBC', iv }, keys.aes, ct));
+}
+async function getJson(url) {
+  const res = await fetch(url + '?t=' + Date.now(), { cache: 'no-store' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
 }
 
 async function load(pass, keep) {
-  const res = await fetch(DATA_URL + '?t=' + Date.now(), { cache: 'no-store' });
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-  const data = await openBox(pass, await res.json());
+  const [ks, box] = await Promise.all([getJson(KEYS_URL), getJson(DATA_URL)]);
+  const m = pass.match(/^([a-z2-9]{3})-/);
+  const entry = (m && ks.entries[m[1]]) || ks.entries.own;
+  if (!entry) throw new Error('AUTH');
+  const wrap = await derive(pass, entry.salt, ks.iterations);
+  const kj = JSON.parse(await openEnv(wrap, entry));
+  const K = await keysFrom(b64(kj.aes), b64(kj.mac));
+  const data = JSON.parse(await openEnv(K, box));
   try { (keep ? localStorage : sessionStorage).setItem(PASS_KEY, pass); } catch (e) { /* 저장 못 해도 연다 */ }
   return data;
 }
-
 const state = { data: null, f: 'all', q: '', sort: 'first' };
 const today = () => { const d = new Date(Date.now() + 9 * 3600e3); return d.toISOString().slice(0, 10); };
 function daysTo(s) { return Math.round((Date.parse(s) - Date.parse(today())) / 86400e3); }
