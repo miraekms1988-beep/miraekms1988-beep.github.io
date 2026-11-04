@@ -292,13 +292,15 @@ html.pv-open, html.pv-open body { overflow: hidden; }
   width: 56px; height: 56px;
   margin: 0 auto 20px;
   border-radius: 17px;
-  background: linear-gradient(150deg, var(--accent-2), var(--navy));
-  color: #fff;
+  background: linear-gradient(180deg, #1f1f23, #0b0b0d);
+  color: #d6a94e;
   display: grid; place-items: center;
   font-size: 25px; font-weight: 700;
   letter-spacing: -.03em;
-  box-shadow: 0 6px 18px -6px rgba(27,58,99,.55);
+  box-shadow: 0 6px 18px -6px rgba(0,0,0,.45);
 }
+/* 잠금 화면 첫 카드는 앱 아이콘 그림을 그대로 쓴다 */
+img.lock-mark { display: block; width: 64px; height: 64px; border-radius: 15px; background: none; }
 
 .lock-title {
   font-size: 21px; font-weight: 750;
@@ -323,7 +325,7 @@ html.pv-open, html.pv-open body { overflow: hidden; }
 }
 .lock-card input[type="password"]::placeholder { color: var(--text-3); }
 .lock-card input[type="password"]:focus {
-  border-color: var(--accent-2);
+  border-color: var(--text-3);
   background: var(--surface);
 }
 
@@ -333,20 +335,21 @@ html.pv-open, html.pv-open body { overflow: hidden; }
   margin: 15px 2px 20px;
   cursor: pointer; user-select: none;
 }
-.lock-remember input { accent-color: var(--accent); width: 15px; height: 15px; }
+.lock-remember input { accent-color: var(--text); width: 15px; height: 15px; }
 
+/* 앱 아이콘·메일과 같은 결: 검은 버튼 (다크 모드에선 var(--text) 가 흰색이라 뒤집힌다) */
 .lock-card button {
   width: 100%;
   padding: 14px;
   font-size: 15.5px; font-weight: 650; font-family: inherit;
   letter-spacing: -.01em;
-  color: #fff;
-  background: var(--accent);
+  color: var(--bg);
+  background: var(--text);
   border: 0; border-radius: 12px;
   cursor: pointer;
-  transition: background .16s, transform .1s;
+  transition: opacity .16s, transform .1s;
 }
-.lock-card button:hover { background: var(--navy); }
+.lock-card button:hover { opacity: .86; }
 .lock-card button:active { transform: scale(.985); }
 .lock-card button:disabled { opacity: .5; cursor: progress; }
 
@@ -370,15 +373,16 @@ html.pv-open, html.pv-open body { overflow: hidden; }
   padding: 2px 1px;
   font-size: 13px;
   font-weight: 600;
-  color: var(--accent);
+  color: var(--text);
   background: none;
   border-radius: 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, #d6a94e 70%, transparent);
 }
 .lock-alt button:hover {
   background: none;
-  color: var(--navy);
-  border-bottom-color: var(--navy);
+  opacity: 1;
+  color: var(--text);
+  border-bottom-color: #b4832a;
 }
 
 .signup-card { max-width: 460px; text-align: left; padding: 32px 30px 26px; }
