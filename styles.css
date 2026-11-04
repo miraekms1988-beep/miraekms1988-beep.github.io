@@ -20,6 +20,7 @@
   --navy:        #1c1c1e;   /* 표 머리글, 브랜드 */
   --accent:      #1c1c1e;
   --accent-2:    #b4832a;
+  --chart:       #2f6db5;   /* 지표 추이선 - 파랑 유지(사용자) */
   --accent-bg:   #f5eedf;
   --gold:        #b4832a;   /* 신용등급 칸 */
   --gold-bg:     #fbf3e0;
@@ -58,6 +59,7 @@
     --navy:        #3a3a3c;
     --accent:      #d6a94e;
     --accent-2:    #e7bd62;
+  --chart:       #a3c8f5;
     --accent-bg:   #241f15;
     --gold:        #d6a94e;
     --gold-bg:     #2c2413;
@@ -86,6 +88,7 @@
   --navy:        #3a3a3c;
   --accent:      #d6a94e;
   --accent-2:    #e7bd62;
+  --chart:       #a3c8f5;
   --accent-bg:   #241f15;
   --gold:        #d6a94e;
   --gold-bg:     #2c2413;
@@ -1293,7 +1296,7 @@ img.brand-mark { display: block; width: 28px; height: 28px; flex: none; border-r
   grid-area: spark;
   width: 100%; height: 20px;
   margin: 5px 0 3px;
-  color: var(--accent-2);
+  color: var(--chart);
   opacity: .55;
 }
 
@@ -1457,13 +1460,31 @@ img.brand-mark { display: block; width: 28px; height: 28px; flex: none; border-r
   border: 0;
   border-radius: 9px;
   cursor: pointer;
-  transition: background .16s, color .16s;
+  transition: background .2s, color .2s, box-shadow .2s;
 }
 .dtab:hover { color: var(--text); }
+/* 선택 칸은 흰 알약 + 금색 밑줄 (iOS 분할 단추 결).
+   검은 칸이면 바로 아래 검은 표지와 겹쳐 '검검'해 보였다(사용자). */
 .dtab.on {
-  color: #fff;
-  background: var(--navy);
-  box-shadow: var(--shadow-sm);
+  color: var(--text);
+  font-weight: 700;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0,0,0,.10), 0 0 0 .5px rgba(0,0,0,.05);
+}
+.dtab::after {
+  content: '';
+  position: absolute; left: 50%; bottom: 4px;
+  width: 0; height: 2px; border-radius: 2px;
+  background: #b4832a;
+  transform: translateX(-50%);
+  transition: width .28s cubic-bezier(.2,.8,.2,1);
+}
+.dtab.on::after { width: 16px; }
+:root[data-theme="dark"] .dtab.on { background: #3a3a3c; box-shadow: 0 1px 3px rgba(0,0,0,.5); }
+:root[data-theme="dark"] .dtab::after { background: #e7bd62; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .dtab.on { background: #3a3a3c; box-shadow: 0 1px 3px rgba(0,0,0,.5); }
+  :root:not([data-theme="light"]) .dtab::after { background: #e7bd62; }
 }
 @media (max-width: 360px) {
   .dtab { font-size: 12px; letter-spacing: -.04em; padding: 8px 2px; }
@@ -2095,12 +2116,12 @@ img.brand-mark { display: block; width: 28px; height: 28px; flex: none; border-r
 
 .bn-dot {
   position: absolute; width: 6px; height: 6px; margin: -3px 0 0 -3px;
-  border-radius: 50%; background: var(--accent-2);
+  border-radius: 50%; background: var(--chart);
   opacity: 0; transition: opacity .4s ease 1.6s;
 }
 .bn-dot::after {
   content: ""; position: absolute; inset: -4px; border-radius: 50%;
-  background: var(--accent-2); opacity: 0;
+  background: var(--chart); opacity: 0;
   animation: ping 2.4s ease-out 1.8s infinite;
 }
 .bn-item.in .bn-dot { opacity: 1; }
