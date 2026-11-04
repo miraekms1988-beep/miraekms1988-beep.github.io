@@ -2590,3 +2590,40 @@ html:has(.view > article) .topbar {
 .rd-typetbl tr.sh td { color: var(--up); font-weight: 600; }
 .rd-sheet .rd-ps .rd-typetbl thead th { color: var(--text-3) !important; font-size: 11px; }
 .rd-sheet .rd-ps td.rd-res.can i::after { vertical-align: 1px; }
+
+/* ===== PF 레이더 4차 (2026-11-04): 기사 카드 · 떠오르는 움직임 · 표 간격 ===== */
+.rd-sheet .rd-arts { border-top: 0; display: flex; flex-direction: column; gap: 10px; }
+.rd-sheet .rd-art { position: relative; border: 1px solid var(--border-soft); border-bottom: 1px solid var(--border-soft); border-radius: 16px;
+  background: var(--surface); box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 10px 24px -18px rgba(0,0,0,.35); overflow: hidden; }
+.rd-sheet .rd-art::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--gold); opacity: .9; }
+.rd-sheet .rd-art.ext::before { background: var(--up); }
+.rd-sheet .rd-art > summary { display: block; padding: 14px 16px 13px 18px; cursor: pointer; }
+.rd-a-top { display: flex; align-items: center; gap: 8px; }
+.rd-a-top .rd-date { font-size: 11.5px; color: var(--text-3); }
+.rd-a-hl { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 6px;
+  font-size: 14.5px; font-weight: 700; line-height: 1.45; letter-spacing: -.03em; color: var(--text); word-break: keep-all; overflow-wrap: anywhere; }
+.rd-sheet .rd-art[open] .rd-a-hl { -webkit-line-clamp: unset; display: block; }
+.rd-a-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 9px; }
+.rd-a-chips span { font-size: 11px; font-weight: 600; color: var(--text-2); background: var(--surface-2); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+.rd-sheet .rd-art[open] > summary { padding-bottom: 6px; }
+.rd-sheet .rd-art .rd-art-body { padding: 4px 16px 14px 18px; }
+.rd-sheet .rd-art .rd-art-body p { font-size: 13.5px; line-height: 1.75; }
+.rd-sheet .rd-art.rd-hit { box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 55%, transparent), 0 10px 24px -18px rgba(0,0,0,.35); }
+.rd-sheet .rd-art.rd-hit > summary { background: none; }
+.rd-sheet .rd-art:active > summary { opacity: .85; }
+
+/* 떠오르는 움직임 (채권동향 목록과 같은 곡선) */
+.rd-sheet .rd-art.reveal, .rd-sheet .rd-sec > h2.reveal, .rd-sheet .rd-table.reveal {
+  opacity: 0; transform: translateY(22px); transition: opacity .9s var(--ease, ease), transform .9s var(--ease, ease); }
+.rd-sheet .rd-art.reveal.in, .rd-sheet .rd-sec > h2.reveal.in, .rd-sheet .rd-table.reveal.in { opacity: 1; transform: none; }
+
+/* 온도계 표 행 간격 좁게 */
+.rd-sheet .rd-bld th, .rd-sheet .rd-bld td { padding-top: 6px; padding-bottom: 6px; }
+.rd-sheet .rd-bld td { font-size: 12.5px; }
+
+/* 분양 표: 단지명 가운데, 주택형 펼침은 작게 */
+.rd-sheet .rd-ps tbody td:nth-child(2) { text-align: center; }
+.rd-sheet .rd-ps tr.rd-types > td { padding: 6px 10px 8px; }
+.rd-sheet .rd-ps .rd-typetbl { width: auto; margin: 0 auto; font-size: 11px; }
+.rd-sheet .rd-ps .rd-typetbl th, .rd-sheet .rd-ps .rd-typetbl td { padding: 3px 9px; font-size: 11px; line-height: 1.4; }
+.rd-sheet .rd-ps .rd-typetbl thead th { font-size: 10.5px; }

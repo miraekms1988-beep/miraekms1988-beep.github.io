@@ -1108,8 +1108,7 @@ function renderPolicySlide() {
 
 /* 채권동향 글 화면과 같은 결로 그린다 (사용자 피드백 2026-11-04):
  * 카드 상자 대신 하얀 바탕 한 장, 큰 굵은 소제목, 표 제목 옆 오른쪽에 작은 단위, 차콜 머리글 표.
- * '부동산 PF 업계 동향'은 이번 주 가장 큰 딜을 머리 기사로 크게 세우고, 나머지는 날짜별로 묶은
- * 작은 제목 목록으로 둔다 - 다 같은 크기로 늘어놓으면 눈에 걸리는 게 없다.
+ * '부동산 PF 업계 동향'은 기사마다 카드 하나 - 누르면 그 자리에서 펼쳐지고, 내려가면 차례로 떠오른다.
  * 펼침 단추는 표 아래 한 줄에 작은 알약으로 모은다 (줄마다 넓게 띄우면 산만하다).
  * 분양 표는 미달률·경쟁률 칸을 누르면 주택형별 결과가 그 아래 펼쳐진다. */
 function renderRadarSlide(r) {
@@ -1122,19 +1121,31 @@ function renderRadarSlide(r) {
   const panel = (key, html) => `<div class="rd-panel" data-panel="${key}" hidden>${html}</div>`;
 
   // ---- 부동산 PF 업계 동향 ----
+  // 기사 하나가 카드 하나다. 앞면은 종류·날짜, 두 줄 제목, 핵심 수치 알약. 누르면 그 카드 안에서
+  // 본문이 펼쳐진다 (아래로 옮겨 가지 않는다). 채권동향 목록처럼 내려가면 차례로 떠오른다(mountMotion).
   const KIND = { new: ['신규', 'new'], extend: ['만기연장', 'ext'] };
   const news = arr(r.news);
-  const amt = (a) => { const m = String(a.headline || '').match(/PF ([\d,]+)억/); return m ? Number(m[1].replace(/,/g, '')) : 0; };
   const row = (a, k) => (arr(a.table).find((x) => x[0] === k) || [])[1] || '';
-  const art = (a, withDate) => {
+  const chipsOf = (a) => [
+    row(a, '대출 약정액') && `대출 ${row(a, '대출 약정액')}`,
+    row(a, '변경 만기') && `만기 ${row(a, '변경 만기').replace(/\s*\(.*\)$/, '')}`,
+    row(a, '신용등급') && row(a, '신용등급').replace(/\s*\(.*\)$/, ''),
+    (row(a, '첫 발행').match(/연 [\d.]+%/) || [])[0],
+    row(a, '시공사') && row(a, '시공사').split(',')[0],
+  ].filter(Boolean).slice(0, 4);
+  const art = (a) => {
     const k = KIND[a.kind] || ['PF', 'new'];
     const tbl = arr(a.table).length
       ? `<dl class="rd-kv">${a.table.map((x) => `<dt>${escapeHtml(x[0])}</dt><dd>${escapeHtml(x[1])}</dd>`).join('')}</dl>` : '';
+    const chips = chipsOf(a);
     return `
-      <details class="rd-art"${a.id ? ` data-id="${escapeHtml(a.id)}"` : ''}>
-        <summary><span class="rd-kind ${k[1]}">${k[0]}</span><span class="rd-hl">${escapeHtml(a.headline)}</span>${withDate ? `<span class="rd-date">${md(a.date)}</span>` : ''}</summary>
+      <details class="rd-art ${k[1]}"${a.id ? ` data-id="${escapeHtml(a.id)}"` : ''}>
+        <summary>
+          <span class="rd-a-top"><span class="rd-kind ${k[1]}">${k[0]}</span><span class="rd-date">${mdKo(a.date)}</span></span>
+          <span class="rd-a-hl">${escapeHtml(a.headline)}</span>
+          ${chips.length ? `<span class="rd-a-chips">${chips.map((c) => `<span>${escapeHtml(c)}</span>`).join('')}</span>` : ''}
+        </summary>
         <div class="rd-art-body">
-          <h3>${escapeHtml(a.headline)}</h3>
           ${arr(a.body).map((t) => `<p>${escapeHtml(t)}</p>`).join('')}
           ${tbl}
           ${arr(a.sources).length ? `<p class="rd-src">자료: ${escapeHtml(a.sources.join(', '))}</p>` : ''}
@@ -1143,47 +1154,15 @@ function renderRadarSlide(r) {
   };
   let newsSec = '';
   if (news.length) {
-    // 머리 기사: 가장 최근 7일(기사 날짜 기준) 신규 딜 중 대출 규모가 가장 큰 것
-    const latest = news[0].date;
-    const wk = new Date(Date.parse(latest) - 7 * 864e5).toISOString().slice(0, 10);
-    const lead = news.filter((a) => a.kind === 'new' && a.date >= wk).sort((x, y) => amt(y) - amt(x))[0];
-    const rest = news.filter((a) => a !== lead);
-    const chips = lead ? [
-      row(lead, '대출 약정액') && `대출 ${row(lead, '대출 약정액')}`,
-      row(lead, '신용등급') && row(lead, '신용등급').replace(/\s*\(.*\)$/, ''),
-      (row(lead, '첫 발행').match(/연 [\d.]+%/) || [])[0],
-      row(lead, '시공사') && `시공 ${row(lead, '시공사')}`,
-    ].filter(Boolean) : [];
-    const leadHtml = lead ? `
-      <a class="rd-top" href="#/x/radar/${encodeURIComponent(lead.id || '')}" data-open="${escapeHtml(lead.id || '')}">
-        <span class="rd-top-kick">이번 주 최대 딜 · ${mdKo(lead.date)}</span>
-        <span class="rd-top-hl">${escapeHtml(lead.headline)}</span>
-        <span class="rd-top-p">${escapeHtml(arr(lead.body)[0] || '')}</span>
-        ${chips.length ? `<span class="rd-chips">${chips.map((c) => `<span>${escapeHtml(c)}</span>`).join('')}</span>` : ''}
-        <span class="rd-top-more">기사 읽기 ›</span>
-      </a>` : '';
-    // 나머지는 날짜별로 묶는다. 처음 12건만 보이고 나머지는 단추로.
-    const group = (items) => {
-      const out = []; let d = '';
-      for (const a of items) {
-        if (a.date !== d) { d = a.date; out.push(`<div class="rd-day">${mdKo(d)}</div>`); }
-        out.push(art(a, false));
-      }
-      return out.join('');
-    };
-    const head = rest.slice(0, 12), tail = rest.slice(12);
-    // 머리 기사도 목록 안에 넣어 둔다 - 메일 링크(#/x/radar/<id>)가 펼칠 자리가 있어야 한다.
-    const leadHidden = lead ? `<div class="rd-hidden-lead" hidden>${art(lead, false)}</div>` : '';
+    const head = news.slice(0, 10), tail = news.slice(10);
     const nNew = news.filter((a) => a.kind === 'new').length;
     const nExt = news.filter((a) => a.kind === 'extend').length;
     newsSec = `
       <section class="rd-sec">
         <h2>부동산 PF 업계 동향</h2>
         <p class="rd-lead">최근 45일 신규 ${nNew}건 · 만기연장 ${nExt}건. 신용평가사 공개 평가의견서와 금융투자협회 발행 내역을 바탕으로 기사 형식으로 작성한 내용입니다.</p>
-        ${leadHtml}
-        <div class="rd-arts">${group(head)}</div>
-        ${tail.length ? `<div class="rd-tools">${tool('news-more', `기사 ${tail.length}건 더 보기`)}</div>${panel('news-more', `<div class="rd-arts">${group(tail)}</div>`)}` : ''}
-        ${leadHidden}
+        <div class="rd-arts">${head.map(art).join('')}</div>
+        ${tail.length ? `<div class="rd-tools">${tool('news-more', `기사 ${tail.length}건 더 보기`)}</div>${panel('news-more', `<div class="rd-arts">${tail.map(art).join('')}</div>`)}` : ''}
       </section>`;
   }
 
@@ -1284,12 +1263,6 @@ function mountRadar(root) {
       sec.querySelectorAll('.rd-tool').forEach((x) => x.classList.remove('on'));
       p.hidden = !open;
       t.classList.toggle('on', open);
-      return;
-    }
-    const lead = e.target.closest('.rd-top');
-    if (lead && lead.dataset.open) {
-      e.preventDefault();
-      openRadarArticle(lead.dataset.open);
       return;
     }
     const res = e.target.closest('td.rd-res.can');
@@ -1818,7 +1791,7 @@ function mountMotion(root, calm) {
   const isPost = !!root.querySelector(':scope > article');
   const sel = isPost
     ? 'article .post-head, article .digest, article .prose > *, article .signoff'
-    : '.bn-item, .list-head, .card, .more, .slide:not([data-slug="posts"]) .pcard, .pc-foot';
+    : '.bn-item, .list-head, .card, .more, .slide:not([data-slug="posts"]) .pcard, .pc-foot, .rd-art, .rd-sec > h2, .rd-table';
   const targets = [...root.querySelectorAll(sel)];
   // 같은 화면을 다시 그린 것이면 움직임 없이 그대로 둔다
   if (calm) return;
