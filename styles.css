@@ -2416,3 +2416,86 @@ html:has(.view > article) .topbar {
 @media (prefers-reduced-motion: reduce) {
   .bn-dot::after { display: none; }
 }
+
+/* ================= PF 레이더 (full 전용 탭) =================
+   제도 카드와 같은 상자·접기를 쓰고, 표는 글 화면처럼 차콜 머리글·볼록 상자.
+   표 색 변수(--tb-*)는 글 화면에서만 정의돼 있어 대체값을 같이 준다. */
+.slide[data-slug="radar"] .pc-head h2 { font-size: 19px; font-weight: 700; letter-spacing: -.045em; line-height: 1.35; }
+.slide[data-slug="radar"] .pc-digest { background: var(--surface-2); border: 0; border-radius: 16px; padding: 16px 17px 14px; }
+.slide[data-slug="radar"] .pc-digest .digest-label {
+  background: linear-gradient(90deg, #ff7a45, #e64d8c, #8a5cff, #3d7bff);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  padding: 0; margin-bottom: 10px; font-size: 12.5px; font-weight: 700; letter-spacing: 0;
+}
+.rd-stats { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; }
+.rd-stats li { display: flex; flex-direction: column; min-width: 0; }
+.rd-stats b { font-size: 21px; font-weight: 700; letter-spacing: -.03em; font-variant-numeric: tabular-nums; color: var(--text); }
+.rd-stats span { font-size: 12px; color: var(--text-3); }
+.rd-count { font-size: 14px; font-weight: 600; color: var(--text-3); margin-left: 4px; letter-spacing: 0; }
+
+.rd-list { list-style: none; margin: 4px 0 0; padding: 0; }
+.rd-row { padding: 11px 0; border-top: 1px solid var(--border-soft); }
+.rd-list > .rd-row:first-child { border-top: 0; }
+.rd-more .rd-row:first-of-type { border-top: 1px solid var(--border-soft); }
+.rd-top { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.rd-top b { font-size: 15px; font-weight: 700; letter-spacing: -.02em; color: var(--text); word-break: keep-all; }
+.rd-date { flex: none; font-size: 12.5px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.rd-sub { font-size: 13.5px; color: var(--text-2); margin-top: 2px; word-break: keep-all; overflow-wrap: anywhere; }
+.rd-sub span { color: var(--text-3); }
+.rd-who { font-size: 12.5px; color: var(--text-3); margin-top: 3px; word-break: keep-all; overflow-wrap: anywhere; }
+.rd-num { font-size: 13px; color: var(--text); font-weight: 600; margin-top: 3px; font-variant-numeric: tabular-nums; }
+.rd-tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 6px; background: var(--gold-bg); color: var(--gold); margin-right: 2px; }
+.rd-tag.down { background: color-mix(in srgb, var(--up) 14%, transparent); color: var(--up); }
+.rd-empty, .rd-note { font-size: 12px; color: var(--text-3); margin: 10px 2px 2px; line-height: 1.55; }
+
+.rd-table { margin: 12px 0 0; overflow-x: auto; border-radius: 14px; background: var(--surface);
+  box-shadow: var(--tb-lift, 0 0 0 1px rgba(0,0,0,.07), 0 4px 10px -4px rgba(0,0,0,.10), 0 18px 34px -16px rgba(0,0,0,.22)); }
+.rd-table table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.rd-table th, .rd-table td { padding: 8px 7px; border-bottom: 1px solid var(--border-soft); white-space: nowrap; text-align: center; }
+.rd-table thead th {
+  background: linear-gradient(180deg, var(--tb-h1, #3a3a3c) 0%, var(--tb-h2, #1d1d1f) 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.17), inset 0 -1px 0 rgba(0,0,0,.2);
+  color: #fff; font-weight: 650; font-size: 12px; letter-spacing: -.015em; border-bottom: 0;
+}
+.rd-table tbody tr:last-child td { border-bottom: 0; }
+.rd-table tbody td:first-child { font-weight: 620; color: var(--text); }
+.rd-table td.up { color: var(--up); font-weight: 650; }
+.rd-table td small { font-size: 10.5px; color: var(--text-3); font-weight: 500; }
+.rd-table td.up small { color: inherit; opacity: .8; }
+/* 분양 표의 단지·시공사 이름은 길다. 줄바꿈을 허용해 표가 옆으로 넘치지 않게 */
+.rd-ps tbody td:nth-child(2) { white-space: normal; word-break: keep-all; overflow-wrap: anywhere; text-align: left; min-width: 6.5em; }
+.rd-ps tbody td:nth-child(3) { white-space: normal; word-break: keep-all; overflow-wrap: anywhere; font-size: .92em; }
+.rd-ps td small { display: block; }
+/* 트리거 잔액은 숫자 밑 둘째 줄로 - 한 줄에 두면 칸이 넓어져 마지막 칸이 잘린다 */
+.rd-bld td small { display: block; line-height: 1.2; }
+@media (max-width: 420px) {
+  .rd-table th, .rd-table td { padding: 7px 3px; font-size: 12px; }
+  .rd-table thead th { font-size: 11px; letter-spacing: -.03em; }
+  .rd-bld tbody td:first-child { font-size: 11.5px; letter-spacing: -.03em; white-space: normal; word-break: keep-all; }
+}
+.rd-trig { list-style: none; margin: 0; padding: 0 2px 6px; }
+.rd-trig li { padding: 9px 0; border-top: 1px solid var(--border-soft); font-size: 13px; }
+.rd-trig li:first-child { border-top: 0; }
+.rd-trig span { color: var(--text-3); font-size: 12px; }
+.rd-trig p { margin: 4px 0 0; color: var(--text-2); font-size: 12.5px; line-height: 1.55; }
+
+/* PF 딜 뉴스: 제목 줄을 누르면 기사 본문·요약 표가 펼쳐진다 */
+.rd-arts { margin-top: 4px; }
+.rd-art { border-top: 1px solid var(--border-soft); }
+.rd-arts > .rd-art:first-child { border-top: 0; }
+.rd-art > summary { list-style: none; cursor: pointer; padding: 12px 2px; display: grid; grid-template-columns: auto 1fr auto; gap: 4px 8px; align-items: baseline; }
+.rd-art > summary::-webkit-details-marker { display: none; }
+.rd-art > summary b { font-size: 14.5px; font-weight: 650; line-height: 1.45; letter-spacing: -.02em; color: var(--text); word-break: keep-all; overflow-wrap: anywhere; }
+.rd-art[open] > summary b { color: var(--text); }
+.rd-kind { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 6px; white-space: nowrap; align-self: center; }
+.rd-kind.new { background: var(--gold-bg); color: var(--gold); }
+.rd-kind.ext { background: color-mix(in srgb, var(--up) 13%, transparent); color: var(--up); }
+.rd-art-body { padding: 0 2px 14px; }
+.rd-art-body p { margin: 0 0 10px; font-size: 14px; line-height: 1.75; color: var(--text-2); word-break: keep-all; overflow-wrap: anywhere; }
+.rd-kv { display: grid; grid-template-columns: max-content 1fr; gap: 0; margin: 6px 0 8px; border-radius: 12px; overflow: hidden; background: var(--surface-2); font-size: 12.5px; }
+.rd-kv dt, .rd-kv dd { margin: 0; padding: 7px 10px; border-top: 1px solid var(--border-soft); }
+.rd-kv dt:first-of-type, .rd-kv dt:first-of-type + dd { border-top: 0; }
+.rd-kv dt { color: var(--text-3); font-weight: 600; white-space: nowrap; }
+.rd-kv dd { color: var(--text); word-break: keep-all; overflow-wrap: anywhere; }
+.rd-src { font-size: 11.5px !important; color: var(--text-3) !important; margin-top: 4px !important; }
+.rd-more .rd-art:first-child { border-top: 1px solid var(--border-soft); }
