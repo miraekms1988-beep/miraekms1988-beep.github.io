@@ -2627,3 +2627,6 @@ html:has(.view > article) .topbar {
 .rd-sheet .rd-ps .rd-typetbl { width: auto; margin: 0 auto; font-size: 11px; }
 .rd-sheet .rd-ps .rd-typetbl th, .rd-sheet .rd-ps .rd-typetbl td { padding: 3px 9px; font-size: 11px; line-height: 1.4; }
 .rd-sheet .rd-ps .rd-typetbl thead th { font-size: 10.5px; }
+/* 주택형 펼침 표: 바깥 분양 표의 2·3번째 칸 규칙(단지명 폭·줄바꿈, 시공사 글씨)이 안쪽 표에 새지 않게 막는다 */
+.rd-sheet .rd-ps .rd-typetbl tbody td, .rd-sheet .rd-ps .rd-typetbl thead th { text-align: center !important; min-width: 0 !important; white-space: nowrap !important; font-size: 11px !important; letter-spacing: 0 !important; font-weight: inherit; }
+.rd-sheet .rd-ps .rd-typetbl tr.sh td { font-weight: 600; }
