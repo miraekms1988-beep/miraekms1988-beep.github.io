@@ -2649,3 +2649,6 @@ html:has(.view > article) .topbar {
 .rd-sheet .rd-art .rd-art-body p.rd-src { text-align: left; }
 /* 카드 제목은 줄이지 않고 전부 보인다 (… 없이) */
 .rd-sheet .rd-a-hl { display: block; -webkit-line-clamp: unset; overflow: visible; }
+/* 주택형 펼침 표는 처음처럼 칸 전체 너비로 (사용자 요청 2026-11-04). 글씨는 작게 둔다 */
+.rd-sheet .rd-ps .rd-typetbl { width: 100% !important; margin: 0 !important; }
+.rd-sheet .rd-ps tr.rd-types > td { padding: 8px 8px 10px !important; }
