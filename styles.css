@@ -2867,9 +2867,12 @@ html:has(.view > article) .topbar {
 .a2hs-bar p b { display: block; font-size: 14px; font-weight: 700; letter-spacing: -.02em; }
 .a2hs-bar p span { display: block; font-size: 11.5px; color: #a1a1a6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .a2hs-go {
-  flex: none; padding: 8px 15px; border: 0; border-radius: 999px; cursor: pointer;
-  font: inherit; font-size: 13px; font-weight: 700; color: #111113; background: #d6a94e;
+  /* 흰 알약 (앱스토어 '받기' 결). 금색 큰 알약은 어색하다고 함(2026-11-06) */
+  flex: none; padding: 6px 16px; border: 0; border-radius: 999px; cursor: pointer;
+  font: inherit; font-size: 13px; font-weight: 700; color: #111113; background: #ffffff;
+  transition: opacity .15s, transform .1s;
 }
+.a2hs-go:active { transform: scale(.96); opacity: .85; }
 .a2hs-x { flex: none; width: 28px; height: 28px; border: 0; background: none; color: #8e8e93; font-size: 14px; cursor: pointer; }
 
 /* 안내 시트 */
