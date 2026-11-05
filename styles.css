@@ -2861,7 +2861,8 @@ html:has(.view > article) .topbar {
   animation: rdUp .5s cubic-bezier(.2,.8,.2,1) both;
 }
 .a2hs-bar[hidden] { display: none; }
-.a2hs-bar img { border-radius: 8px; flex: none; }
+/* 검은 줄 위에서 검은 아이콘이 묻혀 네모 얼룩처럼 보였다 - 얇은 테두리로 앱 아이콘 윤곽을 살린다 */
+.a2hs-bar img { width: 38px; height: 38px; border-radius: 9px; flex: none; box-shadow: 0 0 0 1px rgba(255,255,255,.18), 0 2px 6px rgba(0,0,0,.5); }
 .a2hs-bar p { margin: 0; flex: 1; min-width: 0; line-height: 1.35; }
 .a2hs-bar p b { display: block; font-size: 14px; font-weight: 700; letter-spacing: -.02em; }
 .a2hs-bar p span { display: block; font-size: 11.5px; color: #a1a1a6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
